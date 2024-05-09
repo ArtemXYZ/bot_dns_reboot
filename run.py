@@ -28,7 +28,7 @@ import os
 # -------------------------------- Сторонние библиотеки
 import asyncio
 
-from aiogram import Bot, Dispatcher, types
+from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import CommandStart, Command  # Фильтр только для старта
 from aiogram.client.default import DefaultBotProperties  # Обработка текста HTML разметкой
 
@@ -37,7 +37,7 @@ from dotenv import find_dotenv, load_dotenv  # Для переменных ок�
 load_dotenv(find_dotenv()) # Загружаем переменную окружения
 
 from handlers.user_private import user_private_router
-from menu.buttons_menu import default_buttons # Кнопки меню для всех типов чартов
+from menu.links_menu import default_menu # Кнопки меню для всех типов чартов
 # --------------------------------
 ALLOWED_UPDATES = ['message, edited_message'] # !!! Добавить типы фильтров
 
@@ -67,7 +67,8 @@ dp.include_routers(user_private_router) # admin_private_router,
 # Отслеживание событий на сервере тг бота:
 async def run_bot():
     await bot.delete_webhook(drop_pending_updates=True)  # Сброс отправленных сообщений, за время, что бот был офлайн.
-    await bot.set_my_commands(commands=default_buttons, scope=types.BotCommandScopeDefault())
+    # await bot.delete_my_commands(scope=types.BotCommandScopeAllPrivateChats()) # если надо удалить  команды из меню.
+    await bot.set_my_commands(commands=default_menu, scope=types.BotCommandScopeDefault()) # Список команд в меню.
     # BotCommandScopeAllPrivateChats - для приват чартов
     # BotCommandScopeDefault - для всех чартов
     await dp.start_polling(bot, allowed_updates=ALLOWED_UPDATES, interval=1)

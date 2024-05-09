@@ -2,15 +2,15 @@
 Модуль обработки событий для обычных пользователей (филиалы)
 """
 
-
 # ----------------------------------------------------------------------------------------------------------------------
 import asyncio
 # --------------------------------
 
-from aiogram import types, Router
+from aiogram import types, Router, F
 from aiogram.filters import CommandStart, Command
 
 user_private_router = Router()
+
 
 # -------------------------------------------------  Тело модуля
 # Обработка событий на команду /start
@@ -32,37 +32,31 @@ async def start_cmd(message: types.Message):
     # здесь вызвать кнопки контекстные: создать обращение, вызвать справку.
 
 
-
-
-
-
-
-
-
-
-
-# /new
+# Реагирование на сообщение из текста (как через регулярку)
+# @user_private_router.message((F.text.lower().contains('обращен'))
+#                              | (F.text.lower().contains('заяв'))
+#                              | (F.text.lower() == 'Создать новое обращение'))
+# Реагирование на обычную команду (точное совпадение) # /new
 @user_private_router.message(Command('new'))
 async def new_cmd(message: types.Message):
-
     #  0. Окно выбора категории обращения +
     # пробелы не трогать внутри текста (настроено методом подбора)! Иначе, собъется выравнивание (ТЛГ сжимает пробелы)
-    await message.answer(f'Выбери тему обращения (категорию вопроса / проблемы):\n'     
-                                                                   
-                         f'\n'     
+    await message.answer(f'Выбери тему обращения (категорию вопроса / проблемы):\n'
+
+                         f'\n'
                          # ---------------------- Отпрвить к Аналитикам:                   
-                         f'<b><u>I. АНАЛИТИКА</u></b>\n' # Жирный, подчеркнутый
-                         f'Вопросы (проблемы) с:\n' 
-                         f' *  <b>Дашбордами:</b>                            <em>/dashboards</em>.\n' # 17
+                         f'<b><u>I. АНАЛИТИКА</u></b>\n'  # Жирный, подчеркнутый
+                         f'Вопросы (проблемы) с:\n'
+                         f' *  <b>Дашбордами:</b>                            <em>/dashboards</em>.\n'  # 17
                          f' *  <b>Ценниками:</b>                                <em>/price_tags_tool</em>\n'
-                         f' *  <b>Telegram-ботами:</b>                     <em>/bots</em>\n'   # 14
+                         f' *  <b>Telegram-ботами:</b>                     <em>/bots</em>\n'  # 14
                          f' *  <b>Ценниками:</b>                                <em>/analytics</em>\n'  # 18
-                                                  
-                         f'\n' 
+
+                         f'\n'
                          # ---------------------- Отпрвить к Форматам:
                          f'<b><u>II. ФОРМАТЫ</u></b>\n'
-                         f'Вопросы (проблемы) по:\n' 
-                         f' *  <b>АР (везет товар):</b>                       <em>/prod_coming</em>.\n' 
+                         f'Вопросы (проблемы) по:\n'
+                         f' *  <b>АР (везет товар):</b>                       <em>/prod_coming</em>.\n'
                          f' *  <b>АР (не везет товар):</b>                 <em>/not_prod_coming</em>\n'
                          f' *  <b>СЕ:</b>                                                   <em>/ce</em>\n'
                          f' *  <b>Границам категорий:</b>             <em>/borders</em>\n'
@@ -70,12 +64,12 @@ async def new_cmd(message: types.Message):
 
                          f'\n'
                          # ---------------------- Отпрвить товарообору:
-                         f'<b><u>III. ТОВАРООБОРОТ</u></b>\n' 
-                         f'Вопросы (проблемы) по:\n'                                     
-                         f' *  <b>МП:</b>                                                 <em>/sales</em>.\n' 
+                         f'<b><u>III. ТОВАРООБОРОТ</u></b>\n'
+                         f'Вопросы (проблемы) по:\n'
+                         f' *  <b>МП:</b>                                                 <em>/sales</em>.\n'
                          f' *  <b>Мерчам (не везет товар):</b>      <em>/merch</em>\n'
                          f' *  <b>Ценам на товар:</b>                        <em>/price</em>\n'
-                         f' *  <b>Закупке товара:</b>                        <em>/purchase</em>\n'                         
+                         f' *  <b>Закупке товара:</b>                        <em>/purchase</em>\n'
                          f' *  <b>ВЕ:</b>                                                  <em>/be</em>\n'
                          f' *  <b>СТМ:</b>                                               <em>/stm</em>\n'
                          f' *  <b>Уценке:</b>                                         <em>/discount</em>\n'
@@ -84,14 +78,11 @@ async def new_cmd(message: types.Message):
                          f'и я направлю твою <b>"БОЛЬ"</b> нужным людям!')
 
 
-
-
 # Кнопка создать обращение.
 
 
 # инлайн кнопка выбрать обращение
 # копка клавиатура внизу создать обращение
-
 
 
 # Ответ на вариации входящих сообщений:
@@ -106,10 +97,3 @@ async def echo(message: types.Message):
         await message.answer('И тебе пока!')
     else:
         await message.answer(message.text)
-
-
-
-
-# @user_private_router.message(CommandStart())
-# async def start_cmd(message: types.Message):
-#     await message.answer("Привет, я виртуальный помощник")
