@@ -24,140 +24,59 @@ DNSHelper -
 """
 # --------------------------------
 import os
-# --------------------------------
 import asyncio
-from aiogram import Bot, Dispatcher, types
-from aiogram.filters import CommandStart, Command  # Фильтор только для старта
-from aiogram.client.default import DefaultBotProperties # Обработка текста HTML разметкой
 # --------------------------------
-from config_bot import *
+
+from aiogram import Bot, Dispatcher, types
+from aiogram.filters import CommandStart, Command  # Фильтр только для старта
+from aiogram.client.default import DefaultBotProperties  # Обработка текста HTML разметкой
+
 # -------------------------------- Для переменных окружения (после выгрузки)
-# from dotenv import find_dotenv, load_dotenv
-# load_dotenv(find_dotenv())  # Загружаем переменную окружения
-# from handlers.user_private import user_private_router
+from dotenv import find_dotenv, load_dotenv
+load_dotenv(find_dotenv()) # Загружаем переменную окружения
 
+from handlers.user_private import user_private_router
 
-
+# --------------------------------
+ALLOWED_UPDATES = ['message, edited_message'] # !!! Добавить типы фильтров
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+bot = Bot(token=os.getenv('API_TOKEN'), default=DefaultBotProperties(parse_mode='HTML'))  # Для переменных окружения
 
-# bot = Bot(token=os.getenv('API_TOKEN'))  # Для переменных окружения
-bot = Bot(token=API_TOKEN, default=DefaultBotProperties(parse_mode='HTML')) # Обработка текста HTML разметкой
 # --------------------------------------------- Инициализация диспетчера событий
-# (принимает все собыфтия и отвечает за порядок их обработки в асинхронном режиме)
+# Принимает все события и отвечает за порядок их обработки в асинхронном режиме.
 dp = Dispatcher()
-# dp.include_router(user_private_router)
+dp.include_routers()
+
 # --------------------------------------------- Тело бота:
-# Обработка событий на команду /start
-@dp.message(CommandStart())
-async def start_cmd(message: types.Message):
-    user = message.from_user.first_name  # Имя пользователя
-    await message.answer(f'<b>Привет</b>, {user}!  На связи <b>"Tasks bot meneger".</b>\n'
-                         f'Я помогаю в решении вопросов и проблем, возникающих в ходе повседневной деятельности '
-                         f'филиалов по дивизиону "Средняя Волга".\n'
-                         f'Создаю заявки и распределяю их на исполнителей в соответствии с их компетенцией, '
-                         f'исходя из категории обращения. '
-                         f'Направляю уведомления по завершении обработки заявки заказчику, и много другое...')
 
-    await asyncio.sleep(1)  # Добавляем задержку для второго сообщения.
 
-    # Краткое описание возможностей бота, зачем нужен:
-    await message.answer(f'Давай попробуем решить твой вопрос!')
 
-    # здесь вызвать кнопки контекстные: создать обращение, вызвать справку.
+
+
+#
 
 
 
 
 
 
-
-
-
-
-
-# /new
-@dp.message(Command('new'))
-async def new_cmd(message: types.Message):
-
-    #  0. Окно выбора категории обращения +
-    # пробелы не трогать внутри текста (настроено методом подбора)! Иначе, собъется выравнивание (ТЛГ сжимает пробелы)
-    await message.answer(f'Выбери тему обращения (категорию вопроса / проблемы):\n'     
-                                                                   
-                         f'\n'     
-                         # ---------------------- Отпрвить к Аналитикам:                   
-                         f'<b><u>I. АНАЛИТИКА</u></b>\n' # Жирный, подчеркнутый
-                         f'Вопросы (проблемы) с:\n' 
-                         f' *  <b>Дашбордами:</b>                            <em>/dashboards</em>.\n' # 17
-                         f' *  <b>Ценниками:</b>                                <em>/price_tags_tool</em>\n'
-                         f' *  <b>Telegram-ботами:</b>                     <em>/bots</em>\n'   # 14
-                         f' *  <b>Ценниками:</b>                                <em>/analytics</em>\n'  # 18
-                                                  
-                         f'\n' 
-                         # ---------------------- Отпрвить к Форматам:
-                         f'<b><u>II. ФОРМАТЫ</u></b>\n'
-                         f'Вопросы (проблемы) по:\n' 
-                         f' *  <b>АР (везет товар):</b>                       <em>/prod_coming</em>.\n' 
-                         f' *  <b>АР (не везет товар):</b>                 <em>/not_prod_coming</em>\n'
-                         f' *  <b>СЕ:</b>                                                   <em>/ce</em>\n'
-                         f' *  <b>Границам категорий:</b>             <em>/borders</em>\n'
-                         f' *  <b>Лежакам:</b>                                     <em>/unsold</em>\n'
-
-                         f'\n'
-                         # ---------------------- Отпрвить товарообору:
-                         f'<b><u>III. ТОВАРООБОРОТ</u></b>\n' 
-                         f'Вопросы (проблемы) по:\n'                                     
-                         f' *  <b>МП:</b>                                                 <em>/sales</em>.\n' 
-                         f' *  <b>Мерчам (не везет товар):</b>      <em>/merch</em>\n'
-                         f' *  <b>Ценам на товар:</b>                        <em>/price</em>\n'
-                         f' *  <b>Закупке товара:</b>                        <em>/purchase</em>\n'                         
-                         f' *  <b>ВЕ:</b>                                                  <em>/be</em>\n'
-                         f' *  <b>СТМ:</b>                                               <em>/stm</em>\n'
-                         f' *  <b>Уценке:</b>                                         <em>/discount</em>\n'
-                         # f'или напиши мне прямо в чарт '
-                         f'\n'
-                         f'и я направлю твою <b>"БОЛЬ"</b> нужным людям!')
-
-
-
-
-# Кнопка создать обращение.
-
-
-# инлайн кнопка выбрать обращение
-# копка клавиатура внизу создать обращение
-
-
-
-# Ответ на вариации входящих сообщений:
-# Только жесткое совпадение по словам, нужно доделать разделитель слов в сообщении потозже!
-@dp.message()
-async def echo(message: types.Message):
-    text = message.text
-
-    if text in ['Привет', 'привет', 'hi', 'hello']:
-        await message.answer('И тебе привет!')
-    elif text in ['Пока', 'пока', 'До свидания']:
-        await message.answer('И тебе пока!')
-    else:
-        await message.answer(message.text)
-
-
-
-
-
-
-# ------------------------ Зацикливание работы бота
+# ---------------------------------------------------- Зацикливание работы бота
 # Отслеживание событий на сервере тг бота:
 async def run_bot():
     await bot.delete_webhook(drop_pending_updates=True)  # Сброс отправленных сообщений, за время, что бот был офлайн.
-    await dp.start_polling(bot, interval=1)  # , interval=2 интервал запросов на обновление.
+    await dp.start_polling(bot, allowed_updates=ALLOWED_UPDATES, interval=1)
+    # , interval=2 интервал запросов на обновление.
 
 
 # Запуск асинхронной функции run_bot:
 if __name__ == "__main__":
     asyncio.run(run_bot())
+
+
+#
+
 
 # --------------------------------------------- Огрызки
 # def get_keyboard_directions():
