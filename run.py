@@ -139,6 +139,7 @@ async def echo(message: types.Message):
 # ------------------------ Зацикливание работы бота
 # Отслеживание событий на сервере тг бота:
 async def run_bot():
+    await bot.delete_webhook(drop_pending_updates=True)  # Сброс тарых сообщений, за время, что бот был офлайн
     await dp.start_polling(bot, interval=1)  # , interval=2 интервал запросов на обновление
 
 
