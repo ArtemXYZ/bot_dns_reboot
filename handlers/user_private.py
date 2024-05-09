@@ -28,7 +28,8 @@ async def start_cmd(message: types.Message):
     await asyncio.sleep(1)  # Добавляем задержку для второго сообщения.
 
     # Краткое описание возможностей бота, зачем нужен:
-    await message.answer(f'Давай попробуем решить твой вопрос!')
+    await message.answer(f'Давай попробуем решить твой вопрос!',
+                         reply_markup=keyboard_menu.menu_kb)
 
     # здесь вызвать кнопки контекстные: создать обращение, вызвать справку.
 
@@ -48,36 +49,35 @@ async def new_cmd(message: types.Message):
                          # ---------------------- Отпрвить к Аналитикам:                   
                          f'<b><u>I. АНАЛИТИКА</u></b>\n'  # Жирный, подчеркнутый
                          f'Вопросы (проблемы) с:\n'
-                         f' *  <b>Дашбордами:</b>   <em>/dashboards</em>.\n'  # 17
-                         f' *  <b>Ценниками:</b>    <em>/price_tags_tool</em>\n'
-                         f' *  <b>Telegram-ботами:</b>  <em>/bots</em>\n'  # 14
-                         f' *  <b>Ценниками:</b>    <em>/analytics</em>\n'  # 18
+                         f' *  <b>Дашбордами:</b> <em>/dashboards</em>.\n'  # 17
+                         f' *  <b>Ценниками:</b> <em>/price_tags_tool</em>\n'
+                         f' *  <b>Telegram-ботами:</b> <em>/bots</em>\n'  # 14
+                         f' *  <b>Ценниками:</b> <em>/analytics</em>\n'  # 18
 
                          f'\n'
                          # ---------------------- Отпрвить к Форматам:
                          f'<b><u>II. ФОРМАТЫ</u></b>\n'
                          f'Вопросы (проблемы) по:\n'
-                         f' *  <b>АР (везет товар):</b>     <em>/coming</em>.\n' # prod_coming
-                         f' *  <b>АР (не везет товар):</b>  <em>/not_coming</em>\n' # not_prod_coming
-                         f' *  <b>СЕ:</b>   <em>/ce</em>\n'
-                         f' *  <b>Границам категорий:</b>   <em>/borders</em>\n'
-                         f' *  <b>Лежакам:</b>  <em>/unsold</em>\n'
+                         f' *  <b>АР (везет товар):</b> <em>/coming</em>.\n' # prod_coming
+                         f' *  <b>АР (не везет товар):</b> <em>/no_coming</em>\n' # not_prod_coming
+                         f' *  <b>СЕ:</b> <em>/ce</em>\n'
+                         f' *  <b>Границам категорий:</b> <em>/borders</em>\n'
+                         f' *  <b>Лежакам:</b> <em>/unsold</em>\n'
 
                          f'\n'
                          # ---------------------- Отпрвить товарообору:
                          f'<b><u>III. ТОВАРООБОРОТ</u></b>\n'
                          f'Вопросы (проблемы) по:\n'
-                         f' *  <b>МП:</b>   <em>/sales</em>.\n'
-                         f' *  <b>Мерчам:</b>  <em>/merch</em>\n'
-                         f' *  <b>Ценам на товар:</b>   <em>/price</em>\n'
-                         f' *  <b>Закупке товара:</b>   <em>/purchase</em>\n'
-                         f' *  <b>ВЕ:</b>   <em>/be</em>\n'
-                         f' *  <b>СТМ:</b>  <em>/stm</em>\n'
-                         f' *  <b>Уценке:</b>   <em>/discount</em>\n'
+                         f' *  <b>МП:</b> <em>/sales</em>.\n'
+                         f' *  <b>Мерчам:</b> <em>/merch</em>\n'
+                         f' *  <b>Ценам на товар:</b> <em>/price</em>\n'
+                         f' *  <b>Закупке товара:</b> <em>/purchase</em>\n'
+                         f' *  <b>ВЕ:</b> <em>/be</em>\n'
+                         f' *  <b>СТМ:</b> <em>/stm</em>\n'
+                         f' *  <b>Уценке:</b> <em>/discount</em>\n'
                          # f'или напиши мне прямо в чарт '
                          f'\n'
-                         f'и я направлю твою <b>"БОЛЬ"</b> нужным людям!',
-                         reply_markup=keyboard_menu.menu_kb)
+                         f'и я направлю твою <b>"БОЛЬ"</b> нужным людям!')
 
 
 # Кнопка создать обращение.
