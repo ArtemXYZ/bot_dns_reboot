@@ -22,20 +22,32 @@ DNSHelper -
 @HelperDNSBot !
 @tasksOAiTSVBot (https://t.me/tasksOAiTSVBot)
 """
-
+# --------------------------------
+import os
+# --------------------------------
 import asyncio
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import CommandStart, Command  # Фильтор только для старта
 from aiogram.client.default import DefaultBotProperties # Обработка текста HTML разметкой
 # --------------------------------
 from config_bot import *
+# -------------------------------- Для переменных окружения (после выгрузки)
+# from dotenv import find_dotenv, load_dotenv
+# load_dotenv(find_dotenv())  # Загружаем переменную окружения
+# from handlers.user_private import user_private_router
+
+
+
 
 # ----------------------------------------------------------------------------------------------------------------------
+
+
+# bot = Bot(token=os.getenv('TOKEN'))  # Для переменных окружения
 bot = Bot(token=API_TOKEN, default=DefaultBotProperties(parse_mode='HTML')) # Обработка текста HTML разметкой
 # --------------------------------------------- Инициализация диспетчера событий
 # (принимает все собыфтия и отвечает за порядок их обработки в асинхронном режиме)
 dp = Dispatcher()
-
+# dp.include_router(user_private_router)
 # --------------------------------------------- Тело бота:
 # Обработка событий на команду /start
 @dp.message(CommandStart())
@@ -139,8 +151,8 @@ async def echo(message: types.Message):
 # ------------------------ Зацикливание работы бота
 # Отслеживание событий на сервере тг бота:
 async def run_bot():
-    await bot.delete_webhook(drop_pending_updates=True)  # Сброс тарых сообщений, за время, что бот был офлайн
-    await dp.start_polling(bot, interval=1)  # , interval=2 интервал запросов на обновление
+    await bot.delete_webhook(drop_pending_updates=True)  # Сброс отправленных сообщений, за время, что бот был офлайн.
+    await dp.start_polling(bot, interval=1)  # , interval=2 интервал запросов на обновление.
 
 
 # Запуск асинхронной функции run_bot:
