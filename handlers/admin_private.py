@@ -6,6 +6,6 @@
 from aiogram import types, Router
 from aiogram.filters import CommandStart, Command
 
-user_private_router = Router()
+admin_private_router = Router()
 
 # -------------------------------------------------  Тело модуля

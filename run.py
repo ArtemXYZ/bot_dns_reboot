@@ -22,21 +22,22 @@ DNSHelper -
 @HelperDNSBot !
 @tasksOAiTSVBot (https://t.me/tasksOAiTSVBot)
 """
-# --------------------------------
+# -------------------------------- Стандартные модули
 import os
+
+# -------------------------------- Сторонние библиотеки
 import asyncio
-# --------------------------------
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import CommandStart, Command  # Фильтр только для старта
 from aiogram.client.default import DefaultBotProperties  # Обработка текста HTML разметкой
 
-# -------------------------------- Для переменных окружения (после выгрузки)
-from dotenv import find_dotenv, load_dotenv
+# -------------------------------- Локальные модули
+from dotenv import find_dotenv, load_dotenv  # Для переменных окружения
 load_dotenv(find_dotenv()) # Загружаем переменную окружения
 
 from handlers.user_private import user_private_router
-
+from menu.buttons_menu import default_buttons # Кнопки меню для всех типов чартов
 # --------------------------------
 ALLOWED_UPDATES = ['message, edited_message'] # !!! Добавить типы фильтров
 
@@ -47,7 +48,7 @@ bot = Bot(token=os.getenv('API_TOKEN'), default=DefaultBotProperties(parse_mode=
 # --------------------------------------------- Инициализация диспетчера событий
 # Принимает все события и отвечает за порядок их обработки в асинхронном режиме.
 dp = Dispatcher()
-dp.include_routers()
+dp.include_routers(user_private_router) # admin_private_router,
 
 # --------------------------------------------- Тело бота:
 
@@ -66,6 +67,9 @@ dp.include_routers()
 # Отслеживание событий на сервере тг бота:
 async def run_bot():
     await bot.delete_webhook(drop_pending_updates=True)  # Сброс отправленных сообщений, за время, что бот был офлайн.
+    await bot.set_my_commands(commands=default_buttons, scope=types.BotCommandScopeDefault())
+    # BotCommandScopeAllPrivateChats - для приват чартов
+    # BotCommandScopeDefault - для всех чартов
     await dp.start_polling(bot, allowed_updates=ALLOWED_UPDATES, interval=1)
     # , interval=2 интервал запросов на обновление.
 
