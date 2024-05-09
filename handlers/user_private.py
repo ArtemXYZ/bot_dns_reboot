@@ -18,12 +18,14 @@ user_private_router = Router()
 @user_private_router.message(CommandStart())
 async def start_cmd(message: types.Message):
     user = message.from_user.first_name  # Имя пользователя
-    await message.answer(f'<b>Привет</b>, {user}!  На связи <b>"Tasks bot meneger".</b>\n'
-                         f'Я помогаю в решении вопросов и проблем, возникающих в ходе повседневной деятельности '
-                         f'филиалов по дивизиону "Средняя Волга".\n'
-                         f'Создаю заявки и распределяю их на исполнителей в соответствии с их компетенцией, '
-                         f'исходя из категории обращения. '
-                         f'Направляю уведомления по завершении обработки заявки заказчику, и много другое...')
+    await message.answer(f'     <b>Привет</b>, {user}!\n'
+                         f'     На связи <b>"Tasks bot meneger".</b>\n'
+                         f'  *   Я помогаю в решении вопросов и проблем розничных подразделений'
+                         f', возникающих в ходе повседневной деятельности.\n'
+                         f'   *  Создаю заявки по обращениям и распределяю их на исполнителей в отделе ОАиТ СВ '
+                         f'в соответствии с их профилем деятельности, сходя из категории обращения. '
+                         f'   *  Направляю уведомления по завершении обработки заявки заказчику, и много другое...')
+                            #  по дивизиону "Средняя Волга"
 
     await asyncio.sleep(1)  # Добавляем задержку для второго сообщения.
 
@@ -31,13 +33,13 @@ async def start_cmd(message: types.Message):
     await message.answer(f'Давай попробуем решить твой вопрос!',
                          reply_markup=keyboard_menu.menu_kb)
 
-    # здесь вызвать кнопки контекстные: создать обращение, вызвать справку.
+    # здесь вызвать кнопки контекстные: создать обращение, вызвать справку. +
+#     Продумать пункты меню.
 
 
 # Реагирование на сообщение из текста (как через регулярку)
-# @user_private_router.message((F.text.lower().contains('обращен'))
-#                              | (F.text.lower().contains('заяв'))
-#                              | (F.text.lower() == 'Создать новое обращение'))
+@user_private_router.message(F.text.lower() == 'Создать новое обращение') #
+
 # Реагирование на обычную команду (точное совпадение) # /new
 @user_private_router.message(Command('new'))
 async def new_cmd(message: types.Message):
@@ -139,3 +141,8 @@ async def echo(message: types.Message):
 #                          f'\n'
 #                          f'и я направлю твою <b>"БОЛЬ"</b> нужным людям!',
 #                          reply_markup=keyboard_menu.menu_kb)
+
+
+# # @user_private_router.message((F.text.lower().contains('обращен'))
+# #                              | (F.text.lower().contains('заяв'))
+# #                              | (F.text.lower() == 'Создать новое обращение'))
