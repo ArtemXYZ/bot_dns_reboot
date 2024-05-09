@@ -42,7 +42,7 @@ from menu.links_menu import default_menu # Кнопки меню для всех
 
 
 # --------------------------------
-ALLOWED_UPDATES = ['message, edited_message'] # !!! Добавить типы фильтров
+ALLOWED_UPDATES = ['message, edited_message', 'callback_query'] # !!! Добавить типы фильтров
 
 # ----------------------------------------------------------------------------------------------------------------------
 
