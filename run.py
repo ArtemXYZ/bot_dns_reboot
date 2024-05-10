@@ -53,7 +53,8 @@ bot = Bot(token=os.getenv('API_TOKEN'), default=DefaultBotProperties(parse_mode=
 dp = Dispatcher()
 dp.include_routers(user_private_router)  # admin_private_router,
 
-
+# user_group_router.message.filter(ChatTypeFilter(['group', 'supergroup']))
+# user_group_router.edited_message.filter(ChatTypeFilter(['group', 'supergroup']))
 # --------------------------------------------- Тело бота:
 
 
@@ -64,8 +65,8 @@ def clean_text(text: str):
 
 
 # Ловим все сообщения, ищем в них ругательства:
-# @dp.edited_message()
-@dp.message()
+@dp.edited_message() # даже если сообщение редактируется
+@dp.message()  # все входящие
 async def cleaner(message: types.Message):
     if swearing_list.intersection(clean_text(message.text.lower()).split()):
         await message.answer(f'{message.from_user.first_name}, попрошу конструктивно и без брани! \n'
