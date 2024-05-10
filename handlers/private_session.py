@@ -20,50 +20,14 @@ from handlers.text_message import *
 from filters.chats_filters import ChatTypeFilter
 
 # Назначаем роутер для чата под розницу:
-user_private_router = Router()
+private_router = Router()
 
 # Фильтруем события на этом роутере:
-user_private_router.message.filter(ChatTypeFilter(['private']))
-user_private_router.edited_message.filter(ChatTypeFilter(['private']))
+private_router.message.filter(ChatTypeFilter(['private']))
+private_router.edited_message.filter(ChatTypeFilter(['private']))
 
 # -------------------------------------------------  Тело модуля
-# Обработка событий на команду /start
-@user_private_router.message(CommandStart())
-async def start_cmd(message: types.Message):
-    user = message.from_user.first_name  # Имя пользователя
 
-    # Краткое описание возможностей бота, зачем нужен:
-    await message.answer((hello_users_supervisor.format(user)), parse_mode='HTML') # .as_html()
-
-
-    await asyncio.sleep(1)  # Добавляем задержку для второго сообщения.
-
-    #
-    await message.answer(f'Давай попробуем решить твой вопрос! 💆‍♂️',
-                         reply_markup=keyboard_menu.menu_kb)
-
-    await asyncio.sleep(1)
-
-    # здесь вызвать кнопки контекстные: создать обращение, вызвать справку. +
-    # Инлайн кнопка:
-    await message.answer(f'Создать новое обращение ✍️ ?',
-                         reply_markup=inline_menu.get_callback_btns(btns={
-                             'Создать': 'new',
-                             'Позже': 'none'
-                         }))  # create
-                        # сделать друг на друга кнопки#
-
-
-
-# Реакция на нажатие кнопки Новая заявка: (or_f(Command("menu"), (F.text.lower() == "меню")))
-@user_private_router.callback_query(F.data.startswith('new'))
-async def callback_new(callback: types.CallbackQuery): # для бд -   , session: AsyncSession
-    # product_id = callback.data.split("_")[-1]
-    # await orm_delete_product(session, int(product_id))
-
-    #  0. Окно выбора категории обращения +
-    await callback.answer()  # для сервера ответ
-    await callback.message.answer(category_problem, parse_mode='HTML') #.as_html() - похоже не работает с f строкой
 
 
 
@@ -73,7 +37,7 @@ async def callback_new(callback: types.CallbackQuery): # для бд -   , sessi
 
 # Ответ на вариации входящих сообщений:
 # Только жесткое совпадение по словам, нужно доделать разделитель слов в сообщении потозже!
-@user_private_router.message()
+@private_router.message()
 async def echo(message: types.Message):
     text = message.text
 

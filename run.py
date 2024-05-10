@@ -20,9 +20,10 @@ DNSHelper -
 @HelperDNSBot !
 @tasksOAiTSVBot (https://t.me/tasksOAiTSVBot)
 """
+
 # -------------------------------- Стандартные модули
 import os
-from string import punctuation
+
 # -------------------------------- Сторонние библиотеки
 import asyncio
 
@@ -32,12 +33,18 @@ from aiogram.client.default import DefaultBotProperties  # Обработка т
 
 # -------------------------------- Локальные модули
 from dotenv import find_dotenv, load_dotenv  # Для переменных окружения
-
 load_dotenv(find_dotenv())  # Загружаем переменную окружения
 
-from handlers.private_session import user_private_router
+from handlers.admin_session import admin_router
+from handlers.general_session import general_router
+from handlers.supervisor_session import supervisor_router
+from handlers.retail_session import retail_router
+from handlers.private_session import private_router
+
+
+
 from menu.cmds_list_menu import default_menu  # Кнопки меню для всех типов чартов
-from handlers.text_message import swearing_list  # Список ругательств:
+
 
 # --------------------------------
 ALLOWED_UPDATES = ['message, edited_message', 'callback_query']  # !!! Добавить типы фильтров
@@ -50,33 +57,19 @@ bot = Bot(token=os.getenv('API_TOKEN'), default=DefaultBotProperties(parse_mode=
 # Принимает все события и отвечает за порядок их обработки в асинхронном режиме.
 dp = Dispatcher()
 
+# Назначаем роутеры:
+# dp.include_routers(retail_router) # admin_router, general_router, supervisor_router,  , private_router
+dp.include_router(general_router)
 
-# dp.include_routers(user_private_router)  # admin_private_router,
+
+
 
 # user_group_router.message.filter(ChatTypeFilter(['group', 'supergroup']))
 # user_group_router.edited_message.filter(ChatTypeFilter(['group', 'supergroup']))
 # --------------------------------------------- Тело бота:
 
 
-# -------------------------- Очистка сообщений от ругательств для всех типов чартов:
-# Отлавливает сиволы в ругательствах (замаскированные ругательства):
-def clean_text(text: str):
-    return text.translate(str.maketrans('', '', punctuation))
-
-
-# Ловим все сообщения, ищем в них ругательства:
-@dp.edited_message()  # даже если сообщение редактируется
-@dp.message()  # все входящие
-async def cleaner(message: types.Message):
-    if swearing_list.intersection(clean_text(message.text.lower()).split()):
-        await message.answer(f'<b>Сообщение удалено!</b>\n'
-                             f'<b>{message.from_user.first_name}</b>, попрошу конструктивно и без брани!')
-        # Подобные сообщения, будут удалены!
-        await message.delete()  # Удаляем непристойные сообщения.
-        # await message.chat.ban(message.from_user.id) # Если нужно, то в бан!
-
-
-# ------------------------------------------------------------------------------
+# пусто
 
 
 # ---------------------------------------------------- Зацикливание работы бота

@@ -1,11 +1,17 @@
 """
-Модуль обработки событий для обычных пользователей (филиалы)
+Модуль обработки событий для дмина
 """
 
+# -------------------------------- Стандартные модули
 
-from aiogram import types, Router
-from aiogram.filters import CommandStart, Command
+# -------------------------------- Сторонние библиотеки
+from aiogram import types, Router, F
+from aiogram.filters import CommandStart, Command, StateFilter, or_f
+from aiogram.client.default import DefaultBotProperties  # Обработка текста HTML разметкой
 
-admin_private_router = Router()
+# -------------------------------- Локальные модули
+from filters.chats_filters import ChatTypeFilter
+
+admin_router = Router()
 
 # -------------------------------------------------  Тело модуля
