@@ -1,8 +1,6 @@
 """
 Чат бот телеграмм
 
-ЗадаЧа:
-
 1. Приветственные сообщения (сразу без лишней воды:
 Tasks bot OAiT SV
 OAiTSVManagerBot !
@@ -37,9 +35,9 @@ from dotenv import find_dotenv, load_dotenv  # Для переменных ок�
 
 load_dotenv(find_dotenv())  # Загружаем переменную окружения
 
-from handlers.user_private import user_private_router
+from handlers.private_session import user_private_router
 from menu.cmds_list_menu import default_menu  # Кнопки меню для всех типов чартов
-from handlers.all_text_message import swearing_list  # Список ругательств:
+from handlers.text_message import swearing_list  # Список ругательств:
 
 # --------------------------------
 ALLOWED_UPDATES = ['message, edited_message', 'callback_query']  # !!! Добавить типы фильтров
@@ -51,7 +49,9 @@ bot = Bot(token=os.getenv('API_TOKEN'), default=DefaultBotProperties(parse_mode=
 # --------------------------------------------- Инициализация диспетчера событий
 # Принимает все события и отвечает за порядок их обработки в асинхронном режиме.
 dp = Dispatcher()
-dp.include_routers(user_private_router)  # admin_private_router,
+
+
+# dp.include_routers(user_private_router)  # admin_private_router,
 
 # user_group_router.message.filter(ChatTypeFilter(['group', 'supergroup']))
 # user_group_router.edited_message.filter(ChatTypeFilter(['group', 'supergroup']))
@@ -65,15 +65,17 @@ def clean_text(text: str):
 
 
 # Ловим все сообщения, ищем в них ругательства:
-@dp.edited_message() # даже если сообщение редактируется
+@dp.edited_message()  # даже если сообщение редактируется
 @dp.message()  # все входящие
 async def cleaner(message: types.Message):
     if swearing_list.intersection(clean_text(message.text.lower()).split()):
-        await message.answer(f'{message.from_user.first_name}, попрошу конструктивно и без брани! \n'
-                             f' Подобные сообщения, будут удалены!')
-
+        await message.answer(f'<b>Сообщение удалено!</b>\n'
+                             f'<b>{message.from_user.first_name}</b>, попрошу конструктивно и без брани!')
+        # Подобные сообщения, будут удалены!
         await message.delete()  # Удаляем непристойные сообщения.
         # await message.chat.ban(message.from_user.id) # Если нужно, то в бан!
+
+
 # ------------------------------------------------------------------------------
 
 
@@ -85,7 +87,7 @@ async def run_bot():
     await bot.set_my_commands(commands=default_menu, scope=types.BotCommandScopeDefault())  # Список команд в меню.
     # BotCommandScopeAllPrivateChats - для приват чартов
     # BotCommandScopeDefault - для всех чартов
-    await dp.start_polling(bot, allowed_updates=ALLOWED_UPDATES, interval=1)
+    await dp.start_polling(bot, interval=1)  # allowed_updates=ALLOWED_UPDATES, - Блокирует мне код
     # , interval=2 интервал запросов на обновление.
 
 

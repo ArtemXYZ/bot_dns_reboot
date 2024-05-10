@@ -15,7 +15,7 @@ from aiogram.filters import CommandStart, Command, StateFilter, or_f
 from menu import keyboard_menu  # Кнопки меню - клавиатура внизу
 from menu import inline_menu  # Кнопки встроенного меню - для сообщений
 
-from handlers.all_text_message import *
+from handlers.text_message import *
 
 from filters.chats_filters import ChatTypeFilter
 
