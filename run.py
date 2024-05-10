@@ -24,7 +24,7 @@ DNSHelper -
 """
 # -------------------------------- Стандартные модули
 import os
-
+from string import punctuation
 # -------------------------------- Сторонние библиотеки
 import asyncio
 
@@ -34,15 +34,15 @@ from aiogram.client.default import DefaultBotProperties  # Обработка т
 
 # -------------------------------- Локальные модули
 from dotenv import find_dotenv, load_dotenv  # Для переменных окружения
-load_dotenv(find_dotenv()) # Загружаем переменную окружения
+
+load_dotenv(find_dotenv())  # Загружаем переменную окружения
 
 from handlers.user_private import user_private_router
-from menu.links_menu import default_menu # Кнопки меню для всех типов чартов
-
-
+from menu.cmds_list_menu import default_menu  # Кнопки меню для всех типов чартов
+from handlers.all_text_message import swearing_list  # Список ругательств:
 
 # --------------------------------
-ALLOWED_UPDATES = ['message, edited_message', 'callback_query'] # !!! Добавить типы фильтров
+ALLOWED_UPDATES = ['message, edited_message', 'callback_query']  # !!! Добавить типы фильтров
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -51,19 +51,29 @@ bot = Bot(token=os.getenv('API_TOKEN'), default=DefaultBotProperties(parse_mode=
 # --------------------------------------------- Инициализация диспетчера событий
 # Принимает все события и отвечает за порядок их обработки в асинхронном режиме.
 dp = Dispatcher()
-dp.include_routers(user_private_router) # admin_private_router,
+dp.include_routers(user_private_router)  # admin_private_router,
+
 
 # --------------------------------------------- Тело бота:
 
 
+# -------------------------- Очистка сообщений от ругательств для всех типов чартов:
+# Отлавливает сиволы в ругательствах (замаскированные ругательства):
+def clean_text(text: str):
+    return text.translate(str.maketrans('', '', punctuation))
 
 
+# Ловим все сообщения, ищем в них ругательства:
+# @dp.edited_message()
+@dp.message()
+async def cleaner(message: types.Message):
+    if swearing_list.intersection(clean_text(message.text.lower()).split()):
+        await message.answer(f'{message.from_user.first_name}, попрошу конструктивно и без брани! \n'
+                             f' Подобные сообщения, будут удалены!')
 
-#
-
-
-
-
+        await message.delete()  # Удаляем непристойные сообщения.
+        # await message.chat.ban(message.from_user.id) # Если нужно, то в бан!
+# ------------------------------------------------------------------------------
 
 
 # ---------------------------------------------------- Зацикливание работы бота
@@ -71,7 +81,7 @@ dp.include_routers(user_private_router) # admin_private_router,
 async def run_bot():
     await bot.delete_webhook(drop_pending_updates=True)  # Сброс отправленных сообщений, за время, что бот был офлайн.
     # await bot.delete_my_commands(scope=types.BotCommandScopeAllPrivateChats()) # если надо удалить  команды из меню.
-    await bot.set_my_commands(commands=default_menu, scope=types.BotCommandScopeDefault()) # Список команд в меню.
+    await bot.set_my_commands(commands=default_menu, scope=types.BotCommandScopeDefault())  # Список команд в меню.
     # BotCommandScopeAllPrivateChats - для приват чартов
     # BotCommandScopeDefault - для всех чартов
     await dp.start_polling(bot, allowed_updates=ALLOWED_UPDATES, interval=1)
@@ -81,7 +91,6 @@ async def run_bot():
 # Запуск асинхронной функции run_bot:
 if __name__ == "__main__":
     asyncio.run(run_bot())
-
 
 #
 
@@ -115,16 +124,13 @@ if __name__ == "__main__":
 #     await call.answer()  # сервер Telegram ждёт от нас подтверждения о доставке колбэка, иначе в течение 30 секунд будет показывать специальную иконку.
 
 
-
-
 # f' *  <em>/дашборды</em> - обращение по <b>дашбордам</b>.\n'
-                         # f' *  <em>/инструмент_ценники</em> - Вопросы (проблемы) с <b>ценниками</b>.\n'  #- Вопросы (проблемы) с
-                         # f' *  <em>/боты</em> - Вопросы (проблемы) с <b>Telegram-ботами</b>.\n'
-                         # f' *  <em>/аналитика</em> - Вопросы (проблемы) с <b>ценниками</b>.\n'
+# f' *  <em>/инструмент_ценники</em> - Вопросы (проблемы) с <b>ценниками</b>.\n'  #- Вопросы (проблемы) с
+# f' *  <em>/боты</em> - Вопросы (проблемы) с <b>Telegram-ботами</b>.\n'
+# f' *  <em>/аналитика</em> - Вопросы (проблемы) с <b>ценниками</b>.\n'
 
 
-
-                         # ,  reply_markup=in_kb
+# ,  reply_markup=in_kb
 
 # -------------------------------------------
 
