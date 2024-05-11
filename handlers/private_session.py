@@ -23,8 +23,8 @@ from filters.chats_filters import ChatTypeFilter
 private_router = Router()
 
 # Фильтруем события на этом роутере:
-private_router.message.filter(ChatTypeFilter(['private']))
-private_router.edited_message.filter(ChatTypeFilter(['private']))
+# private_router.message.filter(ChatTypeFilter(['private']))
+# private_router.edited_message.filter(ChatTypeFilter(['private']))
 
 # -------------------------------------------------  Тело модуля
 

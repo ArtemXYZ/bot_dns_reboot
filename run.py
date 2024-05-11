@@ -11,6 +11,9 @@ DNS_help_manager_bot
 help_manager_DNS_bot
 helpManagerDNSBot
 
+retail_helper_bot
+retail_help_bot
+
 DNSHelpManager
 helpDNSManager
 helpManagerDNS !
@@ -47,7 +50,7 @@ from menu.cmds_list_menu import default_menu  # Кнопки меню для в�
 
 
 # --------------------------------
-ALLOWED_UPDATES = ['message, edited_message', 'callback_query']  # !!! Добавить типы фильтров
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -58,10 +61,11 @@ bot = Bot(token=os.getenv('API_TOKEN'), default=DefaultBotProperties(parse_mode=
 dp = Dispatcher()
 
 # Назначаем роутеры:
-# dp.include_routers(retail_router) # admin_router, general_router, supervisor_router,  , private_router
+# dp.include_routers(admin_router, general_router, supervisor_router, retail_router, private_router) #
+#
+
+dp.include_router(retail_router)
 dp.include_router(general_router)
-
-
 
 
 # user_group_router.message.filter(ChatTypeFilter(['group', 'supergroup']))
@@ -77,10 +81,14 @@ dp.include_router(general_router)
 async def run_bot():
     await bot.delete_webhook(drop_pending_updates=True)  # Сброс отправленных сообщений, за время, что бот был офлайн.
     # await bot.delete_my_commands(scope=types.BotCommandScopeAllPrivateChats()) # если надо удалить  команды из меню.
+
     await bot.set_my_commands(commands=default_menu, scope=types.BotCommandScopeDefault())  # Список команд в меню.
-    # BotCommandScopeAllPrivateChats - для приват чартов
+    # BotCommandScopeAllPrivateChats - для приват чартов  # todo здесь разобраться!
     # BotCommandScopeDefault - для всех чартов
-    await dp.start_polling(bot, interval=1)  # allowed_updates=ALLOWED_UPDATES, - Блокирует мне код
+
+    await dp.start_polling(bot, interval=1, allowed_updates=['message', 'edited_message', 'callback_query'])
+    # todo allowed_updates=ALLOWED_UPDATES, - Блокирует мне кодсейчас!!! - передаем туда список разрешенных
+    #  событий для бота с сервера
     # , interval=2 интервал запросов на обновление.
 
 
@@ -133,3 +141,8 @@ if __name__ == "__main__":
 # \u2002\u2002\u2002\u2002\u2002\u2002\u2002\u2002\u2002\u2002\u2002\u2002\u2002\u2002\u2002\u2002\u2002\u2002 18
 
 # \u2002\u2002\u2002\u2002\u2002\u2002\u2002\u2002\u2002\u2002\u2002\u2002\u2002\u2002\u2002\u2002\u2002 17
+
+
+# В этой переменной содержатся все типы обновлений на сервере которые мы пропускаем (не фильтруем) на бота
+# остальные мимо
+# ALLOWED_UPDATES = ['message', 'edited_message', 'callback_query']  # !!! Добавить типы фильтров

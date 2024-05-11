@@ -22,5 +22,5 @@ from filters.chats_filters import ChatTypeFilter
 supervisor_router = Router()
 
 # Фильтруем события на этом роутере:
-supervisor_router.message.filter(ChatTypeFilter(['supervisor']))
-supervisor_router.edited_message.filter(ChatTypeFilter(['supervisor']))
+# supervisor_router.message.filter(ChatTypeFilter(['supervisor']))
+# supervisor_router.edited_message.filter(ChatTypeFilter(['supervisor']))

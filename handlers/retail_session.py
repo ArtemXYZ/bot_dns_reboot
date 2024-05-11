@@ -26,8 +26,8 @@ from menu import inline_menu  # Кнопки встроенного меню - �
 retail_router = Router()
 
 # Фильтруем события на этом роутере:
-retail_router.message.filter(ChatTypeFilter(['retail']))
-retail_router.edited_message.filter(ChatTypeFilter(['retail']))
+# retail_router.message.filter(ChatTypeFilter(['retail']))
+# retail_router.edited_message.filter(ChatTypeFilter(['retail']))
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -37,7 +37,7 @@ async def start_cmd(message: types.Message):
     user = message.from_user.first_name  # Имя пользователя
 
     # Краткое описание возможностей бота, зачем нужен:
-    await message.answer((hello_users_retail.format(user)), parse_mode='HTML') # .as_html()
+    await message.answer((hello_users_retail.format(user)), parse_mode='HTML')   # .as_html()
 
 
     await asyncio.sleep(1)  # Добавляем задержку для второго сообщения.
@@ -72,6 +72,8 @@ async def callback_new(callback: types.CallbackQuery): # для бд -   , sessi
 
 
 
-
+# @retail_router.message(CommandStart())
+# async def start_cmd(message: types.Message):
+#     await message.answer("Привет, я виртуальный помощник")
 
 
