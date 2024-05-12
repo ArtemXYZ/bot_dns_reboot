@@ -26,8 +26,10 @@ from menu import inline_menu  # Кнопки встроенного меню - �
 retail_router = Router()
 
 # Фильтруем события на этом роутере:
-# retail_router.message.filter(ChatTypeFilter(['retail']))
-# retail_router.edited_message.filter(ChatTypeFilter(['retail']))
+# Тип чата может быть “приватным”, ”групповым“, ”супергрупповым“ или "каналом” - >
+# ( “private”, “group”, “supergroup”, “channel”)
+retail_router.message.filter(ChatTypeFilter(['private']))
+retail_router.edited_message.filter(ChatTypeFilter(['private']))
 
 # ----------------------------------------------------------------------------------------------------------------------
 

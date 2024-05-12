@@ -64,14 +64,17 @@ dp = Dispatcher()
 # dp.include_routers(admin_router, general_router, supervisor_router, retail_router, private_router) #
 #
 
-dp.include_router(retail_router)
-dp.include_router(general_router)
+
+#  Распределение роутеров - порядок записи имеет значение. не трогать! (3й урок)
+# dp.include_router(retail_router)
+dp.include_router(admin_router)
+# dp.include_router(general_router)
+# todo перенести в главный команду старт? наверное или прям в ран
 
 
-# user_group_router.message.filter(ChatTypeFilter(['group', 'supergroup']))
-# user_group_router.edited_message.filter(ChatTypeFilter(['group', 'supergroup']))
+
 # --------------------------------------------- Тело бота:
-
+my_admins_list =[] # наполняем адишниками админов переменную.
 
 # пусто
 
@@ -87,7 +90,7 @@ async def run_bot():
     # BotCommandScopeDefault - для всех чартов
 
     await dp.start_polling(bot, interval=1, allowed_updates=['message', 'edited_message', 'callback_query'])
-    # todo allowed_updates=ALLOWED_UPDATES, - Блокирует мне кодсейчас!!! - передаем туда список разрешенных
+    # todo allowed_updates=ALLOWED_UPDATES, - передаем туда список разрешенных
     #  событий для бота с сервера
     # , interval=2 интервал запросов на обновление.
 
@@ -96,7 +99,12 @@ async def run_bot():
 if __name__ == "__main__":
     asyncio.run(run_bot())
 
-#
+
+# todo типы message
+# todo message_reaction()
+# todo channel_post() .edited_channel_post() - надо запретить постить все
+# .chat_boost() Поддержка чата
+# .errors()
 
 
 # --------------------------------------------- Огрызки
@@ -126,7 +134,6 @@ if __name__ == "__main__":
 # async def send_random_value(call: types.CallbackQuery):
 #     await call.message.answer('Отлично')
 #     await call.answer()  # сервер Telegram ждёт от нас подтверждения о доставке колбэка, иначе в течение 30 секунд будет показывать специальную иконку.
-
 
 # f' *  <em>/дашборды</em> - обращение по <b>дашбордам</b>.\n'
 # f' *  <em>/инструмент_ценники</em> - Вопросы (проблемы) с <b>ценниками</b>.\n'  #- Вопросы (проблемы) с
