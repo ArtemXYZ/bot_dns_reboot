@@ -34,30 +34,30 @@ retail_router.edited_message.filter(ChatTypeFilter(['private']))
 # ----------------------------------------------------------------------------------------------------------------------
 
 # Обработка событий на команду /start
-@retail_router.message(CommandStart())
-async def start_cmd(message: types.Message):
-    user = message.from_user.first_name  # Имя пользователя
+# @retail_router.message(CommandStart())
+# async def start_cmd(message: types.Message):
+#     user = message.from_user.first_name  # Имя пользователя
+#
+#     # Краткое описание возможностей бота, зачем нужен:
+#     await message.answer((hello_users_retail.format(user)), parse_mode='HTML')   # .as_html()
+#
+#
+#     await asyncio.sleep(1)  # Добавляем задержку для второго сообщения.
 
-    # Краткое описание возможностей бота, зачем нужен:
-    await message.answer((hello_users_retail.format(user)), parse_mode='HTML')   # .as_html()
+    # #
+    # await message.answer(f'Давай попробуем решить твой вопрос! 💆‍♂️',
+    #                      reply_markup=keyboard_menu.menu_kb)
 
-
-    await asyncio.sleep(1)  # Добавляем задержку для второго сообщения.
-
-    #
-    await message.answer(f'Давай попробуем решить твой вопрос! 💆‍♂️',
-                         reply_markup=keyboard_menu.menu_kb)
-
-    await asyncio.sleep(1)
+    # await asyncio.sleep(1)
 
     # здесь вызвать кнопки контекстные: создать обращение, вызвать справку. +
     # Инлайн кнопка:
-    await message.answer(f'Создать новое обращение ✍️ ?',
-                         reply_markup=inline_menu.get_callback_btns(btns={
-                             'Создать': 'new',
-                             'Позже': 'none'
-                         }))  # create
-                        # сделать друг на друга кнопки#
+    # await message.answer(f'Создать новое обращение ✍️ ?',
+    #                      reply_markup=inline_menu.get_callback_btns(btns={
+    #                          'Создать': 'new',
+    #                          'Позже': 'none'
+    #                      }))  # create
+    #                     # сделать друг на друга кнопки#
 
 
 

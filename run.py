@@ -2,7 +2,7 @@
 Чат бот телеграмм
 
 1. Приветственные сообщения (сразу без лишней воды:
-Tasks bot OAiT SV
+Tasks bot OAiT SV -
 OAiTSVManagerBot !
 problem helper -
 helper_bot
@@ -14,7 +14,8 @@ helpManagerDNSBot
 retail_helper_bot
 retail_help_bot
 
-DNSHelpManager
+DNSHelpManager +++
+
 helpDNSManager
 helpManagerDNS !
 
@@ -22,6 +23,16 @@ DNSHelper -
 
 @HelperDNSBot !
 @tasksOAiTSVBot (https://t.me/tasksOAiTSVBot)
+
+DNS request handler
+DNS request Helper BotManager
+DNS Request Help Manager
+DNS requests Helper ++++
+DNS Help requests Bot
+DNS Help requests handler
+DNS requests handler Bot
+
+requests Helper Bot manager
 """
 
 # -------------------------------- Стандартные модули
@@ -50,7 +61,7 @@ from menu.cmds_list_menu import default_menu  # Кнопки меню для в�
 
 
 # --------------------------------
-
+# phone_number_id = message.сontact.phone_number # достать номер телефона
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -66,15 +77,33 @@ dp = Dispatcher()
 
 
 #  Распределение роутеров - порядок записи имеет значение. не трогать! (3й урок)
-# dp.include_router(retail_router)
-dp.include_router(admin_router)
-# dp.include_router(general_router)
+# # dp.include_router(retail_router)
+# dp.include_router(admin_router)
+dp.include_router(general_router)
 # todo перенести в главный команду старт? наверное или прям в ран
 
 
 
 # --------------------------------------------- Тело бота:
-my_admins_list =[] # наполняем адишниками админов переменную.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # пусто
 
@@ -153,3 +182,8 @@ if __name__ == "__main__":
 # В этой переменной содержатся все типы обновлений на сервере которые мы пропускаем (не фильтруем) на бота
 # остальные мимо
 # ALLOWED_UPDATES = ['message', 'edited_message', 'callback_query']  # !!! Добавить типы фильтров
+
+
+
+
+# my_admins_list =[] # наполняем адишниками админов переменную.

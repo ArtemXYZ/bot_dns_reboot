@@ -23,7 +23,7 @@
 """
 
 from aiogram.filters import Filter
-from aiogram import types
+from aiogram import types, Bot
 
 
 # chats_filters
