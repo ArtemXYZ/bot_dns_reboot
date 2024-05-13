@@ -40,7 +40,7 @@ def get_async_sessionmaker(ANY_CONFIG: dict | URL | str):
             url_string = None
 
         # 2. Создаем переменную  асинхронного подключения к БД.
-        async_engine = create_async_engine(url_string, echo=True)  # , echo=True
+        async_engine = create_async_engine(url_string, echo=True)  # , echo=True - работает
 
         async_session = async_sessionmaker(bind=async_engine, class_=AsyncSession, expire_on_commit=False)
         # ! параметр expire_on_commit=False - сразу не закрывается ссесия после коммита для повторного использования.
@@ -61,7 +61,7 @@ def get_async_sessionmaker(ANY_CONFIG: dict | URL | str):
 
 # check_telegram_id:
 async def get_telegram_id(ANY_CONFIG, tb_name: str, columns_search: str, where_columns_name: str,
-                          where_columns_value: any, results_aal_or: str, ):
+                          where_columns_value: any, results_aal_or: str):
     """
         Функция выбирает данные по идентификатору (id) через сырой запрос.
         # tuple[int, str, float]
@@ -95,27 +95,31 @@ async def get_telegram_id(ANY_CONFIG, tb_name: str, columns_search: str, where_c
         # SQL Сырой запрос на выборку данных (+ условие фильтрации выборки):
         SQL = text(f"SELECT {columns_search} FROM {tb_name} WHERE {where_columns_name} = {where_columns_value}")
 
-        result_temp = async_session.execute(SQL)
+        result_temp: list[Row] = []  # Объявить переменную
+
+        result_temp.extend(await async_session.execute(SQL))  # Извлечь данные из запроса
 
         # Варианты выдачи выборки:
         if results_aal_or == 'all':
-            result = result_temp.all()
+            result = [row.scalar() for row in result_temp]
 
         elif results_aal_or == 'first':
-            result = result_temp.first()
+            result = result_temp[0].scalar() if result_temp else None
 
         elif results_aal_or == 'one':
-            result = result_temp.one()
+            result = result_temp[0].scalar()
 
         elif results_aal_or == 'one_or_none':
-            result = result_temp.one_or_none()
+            result = result_temp[0].scalar() if result_temp else None
 
-    return result.scalar()  # Выдать скалярные (очищенные) величины
+    return result
+
+    # return result.scalar()  # Выдать скалярные (очищенные) величины
 
 
 async def get_():
     f = get_telegram_id(CONFIG_JAR, 'inlet.staff_for_bot',
-                        'tg', 'tg', '49295383', 'one')
+                        'tg', 'tg', 49295383, 'one')
 
     print(f)
 
