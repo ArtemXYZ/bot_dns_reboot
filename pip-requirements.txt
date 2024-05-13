@@ -1,0 +1,8 @@
+# Вызов pip install -r pip-requirements.txt
+# aiogram==3.6.0
+# dotenv==0.0.5
+# sqlalchemy==1.4.42
+# psycopg2-binary==2.9.5
+
+
+
