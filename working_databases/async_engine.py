@@ -18,7 +18,7 @@ from sqlalchemy import text  # , insert
 from working_databases.configs import *
 
 
-
+#  postgresql+asyncpg
 # ----------------------------------------------------------------------------------------------------------------------
 # Асинхронное подключение к базе данных (sessionmaker):
 def get_async_sessionmaker(ANY_CONFIG: dict | URL | str):
@@ -39,13 +39,14 @@ def get_async_sessionmaker(ANY_CONFIG: dict | URL | str):
         else:
             url_string = None
 
-        # 2. Создаем переменную  асинхронного подключения к БД.
+        # 2. Создаем переменную асинхронного подключения к БД.
         async_engine = create_async_engine(url_string, echo=True)  # , echo=True - работает
 
-        async_session = async_sessionmaker(bind=async_engine, class_=AsyncSession, expire_on_commit=False)
+        async_session = async_sessionmaker(bind=async_engine)  # , class_=AsyncSession, expire_on_commit=False
         # ! параметр expire_on_commit=False - сразу не закрывается ссесия после коммита для повторного использования.
 
         ## async_connection = async_engine.connect() - можно так (вроде то же самое, но без ролбека транзакций)
+        # connect() в этом методе явно надо прописывать комит, а в аналогичной begin - есть автокомит.
 
         return async_session
 
