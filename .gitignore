@@ -1,4 +1,4 @@
 config_bot.py
 .env
-.idea
-.venv
+.idea/*.*
+.venv/*.*
