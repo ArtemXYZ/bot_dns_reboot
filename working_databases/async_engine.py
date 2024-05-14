@@ -1,5 +1,9 @@
 """
 Модуль содержит функции асинхронного подключения к базам данных.
+
+!!! Обязательно в конфиге CONFIG_JAR_DRIVERNAME=postgresql+asyncpg.
+!!!! Обязательна установка библиотеки asyncpg.
+
 """
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -20,9 +24,12 @@ from working_databases.configs import *
 
 #  postgresql+asyncpg
 # ----------------------------------------------------------------------------------------------------------------------
-# Асинхронное подключение к базе данных (sessionmaker):
+# Асинхронное подключение к базе данных (sessionmaker): !- работает
 def get_async_sessionmaker(ANY_CONFIG: dict | URL | str):
-    """Функция создает АСИНХРОННОЕ подключение к базе данных. На вход принимает файл конфигурации."""
+    """Функция создает АСИНХРОННОЕ подключение к базе данных. На вход принимает файл конфигурации.
+    !!! Обязательно в конфиге CONFIG_JAR_DRIVERNAME=postgresql+asyncpg,
+    Несмотря на то, что используется Алхимия, необходима установка библиотеки asyncpg!!!!
+    """
 
     try:  # Блок исключений ошибок при осуществлении подключения:
         # any_config # 1.Проверка на отсутствие файла концигурации подкючения: если нет данных на вход: !!
@@ -42,7 +49,8 @@ def get_async_sessionmaker(ANY_CONFIG: dict | URL | str):
         # 2. Создаем переменную асинхронного подключения к БД.
         async_engine = create_async_engine(url_string, echo=True)  # , echo=True - работает
 
-        async_session = async_sessionmaker(bind=async_engine)  # , class_=AsyncSession, expire_on_commit=False
+        async_session = async_sessionmaker(bind=async_engine , class_=AsyncSession, expire_on_commit=False)
+        # , class_=AsyncSession, expire_on_commit=False
         # ! параметр expire_on_commit=False - сразу не закрывается ссесия после коммита для повторного использования.
 
         ## async_connection = async_engine.connect() - можно так (вроде то же самое, но без ролбека транзакций)
@@ -60,23 +68,23 @@ def get_async_sessionmaker(ANY_CONFIG: dict | URL | str):
         print(f'Ошибка: {type(error).__name__}, сообщение: {str(error)}!')
 
 
-# check_telegram_id:
+# Проверяем есть ли зарегистрированныйц телеграм id на удаленной базе:
 async def get_telegram_id(ANY_CONFIG, tb_name: str, columns_search: str, where_columns_name: str,
                           where_columns_value: any, results_aal_or: str):
     """
         Функция выбирает данные по идентификатору (id) через сырой запрос.
         # tuple[int, str, float]
 
-        :param tb_name: Имя таблицы где ищем. (branch_coefficients_data)
+        :param tb_name: Имя таблицы где ищем. (inlet.staff_for_bot)
         :type tb_name: str
 
-        :param columns_search: Имя колонки где ищем. (closed - колонка)
+        :param columns_search: Имя колонки где ищем. (* - колонка)
         :type columns_search: str
 
-        :param where_columns_name: Фильтруем по колонке (branch_1c_id - колонка)
+        :param where_columns_name: Фильтруем по колонке (* - колонка)
         :type where_columns_name: str
 
-        :param where_columns_value: Значение для  фильтрации (branch_1c_id - колонка)
+        :param where_columns_value: Значение для  фильтрации (* - колонка)
         :type where_columns_value: any
 
         :param results_aal_or: Показать все строки или варианты: #  all() - показать все записи, first - первая строка,
@@ -115,12 +123,13 @@ async def get_telegram_id(ANY_CONFIG, tb_name: str, columns_search: str, where_c
 
     return result
 
-    # return result.scalar()  # Выдать скалярные (очищенные) величины
+    # # return result.scalar()  # Выдать скалярные (очищенные) величины
 
 
 async def get_():
     f = get_telegram_id(CONFIG_JAR, 'inlet.staff_for_bot',
                         'tg', 'tg', 49295383, 'one')
+    # f = get_async_sessionmaker(CONFIG_JAR)
 
     print(f)
 
