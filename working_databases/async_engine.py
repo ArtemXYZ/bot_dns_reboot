@@ -5,7 +5,7 @@
 !!!! Обязательна установка библиотеки asyncpg.
 
 """
-
+# check_telegram_id
 # ----------------------------------------------------------------------------------------------------------------------
 # ---------------------------------- Импорт стандартных библиотек Пайтона
 import os
@@ -53,13 +53,15 @@ def get_async_engine(ANY_CONFIG: dict | URL | str) -> object:
 
 
 # Проверяем есть ли зарегистрированныйц телеграм id на удаленной базе:
-async def get_telegram_id(ANY_CONFIG, tb_name: str, columns_search: str, where_columns_name: str,
+# async_get_telegram_id
+async def async_select(ANY_CONFIG, tb_name: str, columns_search: str, where_columns_name: str,
                           where_columns_value: any):  # , results_aal_or: str
 
     # SQL Сырой запрос на выборку данных (+ условие фильтрации выборки):
     # Это работает.
     SQL = text(
-        f"SELECT {tb_name}.{columns_search} FROM {tb_name} WHERE {tb_name}.{where_columns_name} = '{where_columns_value}'")
+        f"SELECT {tb_name}.{columns_search} FROM {tb_name} "
+        f"WHERE {tb_name}.{where_columns_name} = '{where_columns_value}'")
     # {schema_and_table} WHERE {where_columns_name} = {where_columns_value} # - Работает
 
     # Ключ подключения:
@@ -77,15 +79,12 @@ async def get_telegram_id(ANY_CONFIG, tb_name: str, columns_search: str, where_c
     # return async_engine
     return result_temp.scalar()
 
-
+# ---------------------- Тесты:
 async def get():
-
-
-    aws = await get_telegram_id(CONFIG_MART_SV_ASYNCPG, 'inlet.staff_for_bot', 'tg',
+    aws = await async_get_telegram_id(CONFIG_MART_SV_ASYNCPG, 'inlet.staff_for_bot', 'tg',
                           'tg', 49295383)
     # return aws
     print(aws)
-
 
 asyncio.run(get())
 
