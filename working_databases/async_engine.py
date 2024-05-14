@@ -23,10 +23,11 @@ from working_databases.configs import *
 
 from sqlalchemy.pool import AsyncAdaptedQueuePool
 
+
 #  postgresql+asyncpg
 # ----------------------------------------------------------------------------------------------------------------------
 # 0/ Асинхронное подключение к базе данных : !- работает
-async def get_async_engine(ANY_CONFIG: dict | URL | str) -> object:
+def get_async_engine(ANY_CONFIG: dict | URL | str) -> object:
     """Функция создает АСИНХРОННОЕ подключение к базе данных. На вход принимает файл конфигурации.
     !!! Обязательно в конфиге CONFIG_JAR_DRIVERNAME=postgresql+asyncpg,
     Несмотря на то, что используется Алхимия, необходима установка библиотеки asyncpg!!!!
@@ -45,87 +46,100 @@ async def get_async_engine(ANY_CONFIG: dict | URL | str) -> object:
         url_string = None
 
     # 2. Создаем переменную асинхронного подключения к БД.
-    async_engine = create_async_engine(url_string, echo=True)  # , echo=True - работает,  poolclass=AsyncAdaptedQueuePool, future=True - ?
+    async_engine = create_async_engine(url_string,
+                                       echo=True)  # , echo=True - работает,  poolclass=AsyncAdaptedQueuePool, future=True - ?
     # connection = async_engine.connect()
     return async_engine
 
 
+# Проверяем есть ли зарегистрированныйц телеграм id на удаленной базе:
+async def get_telegram_id(ANY_CONFIG, tb_name: str, columns_search: str, where_columns_name: str,
+                          where_columns_value: any):  # , results_aal_or: str
+
+    # SQL Сырой запрос на выборку данных (+ условие фильтрации выборки):
+    # Это работает.
+    SQL = text(
+        f"SELECT {tb_name}.{columns_search} FROM {tb_name} WHERE {tb_name}.{where_columns_name} = '{where_columns_value}'")
+    # {schema_and_table} WHERE {where_columns_name} = {where_columns_value} # - Работает
+
+    # Ключ подключения:
+    async_engine = get_async_engine(ANY_CONFIG)
+
+    async with async_engine.connect() as async_connection:
+        result_temp = await async_connection.execute(SQL)
+
+        # async_connection.close() - не нужно
+        # await async_connection.dispose()
+        # async_connection.commit()
+        # async_connection = async_engine.connect() - можно так (вроде то же самое, но без ролбека транзакций)
+        # connect() в этом методе явно надо прописывать комит, а в аналогичной begin - есть автокомит.
+
+    # return async_engine
+    return result_temp.scalar()
 
 
+async def get():
 
 
+    aws = await get_telegram_id(CONFIG_MART_SV_ASYNCPG, 'inlet.staff_for_bot', 'tg',
+                          'tg', 49295383)
+    # return aws
+    print(aws)
 
 
+asyncio.run(get())
+
+# async_sessionmaker = get_async_sessionmaker(config)
+# async def get_telegram_id(session: AsyncSession, tg_id: int):
+#     query = select(staff_for_bot).where(staff_for_bot.tg == tg_id)
+#
+#     result = await session.execute(query)
+#     return result.scalar()
+
+# ----------------------------------------------------- разобрать потом
 # Асинхронное подключение к базе данных (sessionmaker): !- работает
 # async def get_async_sessionmaker(ANY_CONFIG: dict | URL | str):
 #     """Функция создает АСИНХРОННОЕ подключение к базе данных. На вход принимает файл конфигурации.
 #     !!! Обязательно в конфиге CONFIG_JAR_DRIVERNAME=postgresql+asyncpg,
 #     Несмотря на то, что используется Алхимия, необходима установка библиотеки asyncpg!!!!
 #     """
-# 
+#
 #     try:  # Блок исключений ошибок при осуществлении подключения:
 #         # any_config # 1.Проверка на отсутствие файла концигурации подкючения: если нет данных на вход: !!
-# 
+#
 #         # Проверка типа входной конфигурации подключения:
 #         # Если на вход конфигурация в словаре:
 #         if isinstance(ANY_CONFIG, dict) == True:
 #             url_string = URL.create(**ANY_CONFIG)  # 1. Формируем URL-строку соединения с БД.
 #             #  Эквивалент: url_string = (f'{drivername}://{username}:{password}@{host}:{port}/{database}')
-# 
+#
 #         # Если на вход url_string:
 #         elif isinstance(ANY_CONFIG, str) == True:
 #             url_string = ANY_CONFIG
 #         else:
 #             url_string = None
-# 
+#
 #         # 2. Создаем переменную асинхронного подключения к БД.
 #         async_engine = create_async_engine(url_string, poolclass=AsyncAdaptedQueuePool, future=True,
 #                                            echo=True)  # , echo=True - работает,  poolclass=AsyncAdaptedQueuePool, future=True - ?
-# 
+#
 #         async_session = async_sessionmaker(bind=async_engine, class_=AsyncSession, expire_on_commit=False)
 #         # , class_=AsyncSession, expire_on_commit=False
 #         # ! параметр expire_on_commit=False - сразу не закрывается ссесия после коммита для повторного использования.
-# 
+#
 #         # async_connection = async_engine.connect() - можно так (вроде то же самое, но без ролбека транзакций)
 #         # connect() в этом методе явно надо прописывать комит, а в аналогичной begin - есть автокомит.
-# 
+#
 #         return async_session
-# 
+#
 #     #  Если наступит ошибка в значениях:
 #     except (ValueError, TypeError):
 #         print(f'Ошибка создания ссесии подключения к базе данных! Проверьте входные данные {ANY_CONFIG} \n'
 #               f'и зависимые переменные: формирование url_string: {url_string}, async_engine: {async_engine}')
-# 
+#
 #     #  Другие любые ошибки (скорее всего будут относиться к синтаксису):
 #     except Exception as error:
 #         print(f'Ошибка: {type(error).__name__}, сообщение: {str(error)}!')
-
-
-# Проверяем есть ли зарегистрированныйц телеграм id на удаленной базе:
-async def get_telegram_id(ANY_CONFIG, tb_name: str, columns_search: str, where_columns_name: str,
-                          where_columns_value: any): # , results_aal_or: str
-
-    # SQL Сырой запрос на выборку данных (+ условие фильтрации выборки):
-    SQL = text(f"SELECT {columns_search} FROM {tb_name} WHERE {where_columns_name} = {where_columns_value}") # - Работает
-
-    # Ключ подключения:
-    async_engine = await get_async_engine(ANY_CONFIG)
-
-    with async_engine.connect() as async_connection:
-        result_temp = await async_connection.execute(SQL)
-        # result_temp = await async_connection.execute(select(Table(tb_name)columns_search).where(t1.c.name == "some name 1"))
-        await engine.dispose()
-        # async_connection.commit()
-        # async_connection = async_engine.connect() - можно так (вроде то же самое, но без ролбека транзакций)
-        # connect() в этом методе явно надо прописывать комит, а в аналогичной begin - есть автокомит.
-    #
-    return await result_temp.scalar()
-
-
-
-
-
-
 
 # Проверяем есть ли зарегистрированныйц телеграм id на удаленной базе:
 # async def get_telegram_id(ANY_CONFIG, tb_name: str, columns_search: str, where_columns_name: str,
@@ -181,12 +195,8 @@ async def get_telegram_id(ANY_CONFIG, tb_name: str, columns_search: str, where_c
 #     return result_temp
 
 
-
-
-
-
-    # _______________________ пробы
-    # # return result.scalar()  # Выдать скалярные (очищенные) величины
+# _______________________ пробы
+# # return result.scalar()  # Выдать скалярные (очищенные) величины
 # def g(ANY_CONFIG, tb_name: str, columns_search: str, where_columns_name: str,
 #                           where_columns_value: any):
 #     SQL = text(f"SELECT {columns_search} FROM {tb_name} WHERE {where_columns_name} = {where_columns_value}")
@@ -207,23 +217,3 @@ async def get_telegram_id(ANY_CONFIG, tb_name: str, columns_search: str, where_c
 #     f = get_telegram_id(CONFIG_JAR, 'inlet.staff_for_bot',
 #                         'tg', 'tg', '49295383')
 #     print(f)
-
-async def get():
-    aws = get_telegram_id(CONFIG_JAR, 'inlet.staff_for_bot','tg', 'tg', 49295383)
-    return aws
-    print(aws)
-
-
-
-
-
-
-
-
-asyncio.run(get())
-# async_sessionmaker = get_async_sessionmaker(config)
-# async def get_telegram_id(session: AsyncSession, tg_id: int):
-#     query = select(staff_for_bot).where(staff_for_bot.tg == tg_id)
-#
-#     result = await session.execute(query)
-#     return result.scalar()
