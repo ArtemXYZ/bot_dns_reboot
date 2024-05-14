@@ -54,23 +54,28 @@ async def start_cmd(message: types.Message):
     #
     #     # todo Добавить приветственную картинку и отредактить текст.
 
+    # ---------------------------------------- Подготовка данных:
     # Вытаскиваем id пользователя при старте:
-    where_value: int = message.from_user.id # Тут все норм.
+    # where_value: int = message.from_user.id  # Тут все норм.
 
+    where_value: int = 460378146
     # Проверяем tg_id на серваке (если пользователь регился в авторизационном боте, то tg_id будет в базе.
-    async_check_telegram_id = async_select(
+    async_check_telegram_id = await async_select(
         CONFIG_JAR_ASYNCPG, 'inlet.staff_for_bot', 'tg',
         'tg', where_columns_value=where_value)
+    # ----------------------------------------
 
-    # await message.answer(f'✅ <b>{where_value}</b>', parse_mode='HTML') - тест tg_id
 
+    await message.answer(f'✅ <b>Ваш tg_id: {where_value}</b>', parse_mode='HTML')  # - тест tg_id
+
+    # ---------------------------------------- Условия проверки пользователя на регистрацию.
     # Если tg_id - отсутствует - отправляем регаться
-    if not async_check_telegram_id == where_value:
+    if async_check_telegram_id == where_value:
         await message.answer(f'✅ <b>Доступ разрешен!</b>', parse_mode='HTML')
 
     elif async_check_telegram_id is None:
         await message.answer(f'❌ <b>Доступ закрыт! Пройдите аутентификацию '
-                              f'в <a> href="@authorize_sv_bot"</a></b>', parse_mode='HTML')
+                              f'в <a>@authorize_sv_bot</a></b>', parse_mode='HTML')
     else:
         await message.answer(f'✅ <b>Ошибка подключения!</b>', parse_mode='HTML')
 
