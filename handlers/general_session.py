@@ -56,15 +56,15 @@ async def start_cmd(message: types.Message):
 
     # ---------------------------------------- Подготовка данных:
     # Вытаскиваем id пользователя при старте:
-    # where_value: int = message.from_user.id  # Тут все норм.
+    where_value: int = message.from_user.id  # Тут все норм.
+    # where_value: int = 460378146 (Димон для теста)
 
-    where_value: int = 460378146
+
     # Проверяем tg_id на серваке (если пользователь регился в авторизационном боте, то tg_id будет в базе.
     async_check_telegram_id = await async_select(
         CONFIG_JAR_ASYNCPG, 'inlet.staff_for_bot', 'tg',
         'tg', where_columns_value=where_value)
     # ----------------------------------------
-
 
     await message.answer(f'✅ <b>Ваш tg_id: {where_value}</b>', parse_mode='HTML')  # - тест tg_id
 
@@ -74,10 +74,14 @@ async def start_cmd(message: types.Message):
         await message.answer(f'✅ <b>Доступ разрешен!</b>', parse_mode='HTML')
 
     elif async_check_telegram_id is None:
-        await message.answer(f'❌ <b>Доступ закрыт! Пройдите аутентификацию '
-                              f'в <a>@authorize_sv_bot</a></b>', parse_mode='HTML')
+        await message.answer(f'❌ <b>Доступ закрыт!'
+                             f'\n Пройдите аутентификацию в <a>@authorize_sv_bot</a></b>'
+                             , parse_mode='HTML')
+
+    # Если tg_id - отсутствует - отправляем регаться
     else:
         await message.answer(f'✅ <b>Ошибка подключения!</b>', parse_mode='HTML')
+
 
 # 0. -------------------------- Очистка сообщений от ругательств для всех типов чартов:
 # Отлавливает символы в ругательствах (замаскированные ругательства):
