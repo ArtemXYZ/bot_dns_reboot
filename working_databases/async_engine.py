@@ -80,13 +80,13 @@ async def async_select(ANY_CONFIG, tb_name: str, columns_search: str, where_colu
     return result_temp.scalar()
 
 # ---------------------- Тесты:
-async def get():
-    aws = await async_get_telegram_id(CONFIG_MART_SV_ASYNCPG, 'inlet.staff_for_bot', 'tg',
-                          'tg', 49295383)
-    # return aws
-    print(aws)
-
-asyncio.run(get())
+# async def get():
+#     aws = await async_select(CONFIG_JAR_ASYNCPG, 'inlet.staff_for_bot', 'tg',
+#                           'tg', 1034809823)
+#     # return aws
+#     print(aws)
+#
+# asyncio.run(get())
 
 # async_sessionmaker = get_async_sessionmaker(config)
 # async def get_telegram_id(session: AsyncSession, tg_id: int):
