@@ -19,3 +19,32 @@ CONFIG_JAR = {
     'port': os.environ.get("CONFIG_JAR_PORT"),
     'database': os.environ.get("CONFIG_JAR_DATABASE")
 }
+
+CONFIG_JAR_ASYNCPG = {
+    'drivername': os.environ.get("CONFIG_JAR_DRIVERNAME_ASYNCPG"),
+    'username': os.environ.get("CONFIG_JAR_USERNAME"),
+    'password': os.environ.get("CONFIG_JAR_PASSWORD"),
+    'host': os.environ.get("CONFIG_JAR_HOST"),
+    'port': os.environ.get("CONFIG_JAR_PORT"),
+    'database': os.environ.get("CONFIG_JAR_DATABASE")
+}
+
+
+CONFIG_MART_SV = {
+    'drivername': os.environ.get("CONFIG_MART_SV_DRIVERNAME"),
+    'username': os.environ.get("CONFIG_MART_SV_USERNAME"),
+    'password': os.environ.get("CONFIG_MART_SV_PASSWORD"),
+    'host': os.environ.get("CONFIG_MART_SV_HOST"),
+    'port': os.environ.get("CONFIG_MART_SV_PORT"),
+    'database': os.environ.get("CONFIG_MART_SV_DATABASE")
+}
+
+
+CONFIG_MART_SV_ASYNCPG = {
+    'drivername': os.environ.get("CONFIG_MART_SV_DRIVERNAME_ASYNCPG"),
+    'username': os.environ.get("CONFIG_MART_SV_USERNAME"),
+    'password': os.environ.get("CONFIG_MART_SV_PASSWORD"),
+    'host': os.environ.get("CONFIG_MART_SV_HOST"),
+    'port': os.environ.get("CONFIG_MART_SV_PORT"),
+    'database': os.environ.get("CONFIG_MART_SV_DATABASE")
+}
