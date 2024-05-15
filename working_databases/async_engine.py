@@ -27,7 +27,7 @@ from sqlalchemy.pool import AsyncAdaptedQueuePool
 #  postgresql+asyncpg
 # ----------------------------------------------------------------------------------------------------------------------
 # 0/ Асинхронное подключение к базе данных : !- работает
-def get_async_engine(ANY_CONFIG: dict | URL | str) -> object:
+async def get_async_engine(ANY_CONFIG: dict | URL | str) -> object:
     """Функция создает АСИНХРОННОЕ подключение к базе данных. На вход принимает файл конфигурации.
     !!! Обязательно в конфиге CONFIG_JAR_DRIVERNAME=postgresql+asyncpg,
     Несмотря на то, что используется Алхимия, необходима установка библиотеки asyncpg!!!!
@@ -49,6 +49,10 @@ def get_async_engine(ANY_CONFIG: dict | URL | str) -> object:
     async_engine = create_async_engine(url_string)  # , echo=True - работает,  poolclass=AsyncAdaptedQueuePool, future=True - ?
     # connection = async_engine.connect()
     return async_engine
+
+
+
+
 
 session_maker = async_sessionmaker(bind=async_engine, class_=AsyncSession, expire_on_commit=False)
 
@@ -86,6 +90,8 @@ async def async_select(ANY_CONFIG, tb_name: str, columns_search: str, where_colu
         fin = result
 
     return fin
+
+
 
 # Check Type User
 async def orm_async_select(ANY_CONFIG, session_maker, tb_name):
