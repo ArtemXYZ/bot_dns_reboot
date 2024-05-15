@@ -72,7 +72,7 @@ bot = Bot(token=os.getenv('API_TOKEN'), default=DefaultBotProperties(parse_mode=
 dp = Dispatcher()
 
 # Назначаем роутеры:
-# dp.include_routers(admin_router, general_router, supervisor_router, retail_router, private_router) #
+# dp.include_routers(general_router, admin_router, general_router, supervisor_router, retail_router, private_router) #
 #
 
 

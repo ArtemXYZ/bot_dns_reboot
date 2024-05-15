@@ -109,6 +109,18 @@ async def on_start(message: types.Message):
 
 
 
+# -------------------------------------- Ответ на вариации входящих сообщений:
+# Только жесткое совпадение по словам, нужно доделать разделитель слов в сообщении потозже!
+@general_router.message()
+async def echo(message: types.Message):
+    text = message.text
+
+    if text in ['Привет', 'привет', 'hi', 'hello']:
+        await message.answer('И тебе привет!')
+    elif text in ['Пока', 'пока', 'До свидания']:
+        await message.answer('И тебе пока!')
+    else:
+        await message.answer(message.text)
 
 
 
@@ -132,34 +144,14 @@ async def cleaner(message: types.Message):
         # Подобные сообщения, будут удалены!
         await message.delete()  # Удаляем непристойные сообщения.
         # await message.chat.ban(message.from_user.id)  # Если нужно, то в бан!
-
-
-
-
-
 # ------------------------------------------------------------------------------
-# async def chek_registration(message: types.Message, where_value, async_check_telegram_id):
-#     # ---------------------------------------- Условия проверки пользователя на регистрацию.
-#     # Если tg_id - отсутствует - отправляем регаться
-#     if int(where_value) == async_check_telegram_id:
-#         await message.answer(f'✅ <b>Доступ разрешен!</b>', parse_mode='HTML')
-#
-#
-#         # Если tg_id - отсутствует - отправляем регаться
-#     else:
-#         if async_check_telegram_id is not None:
-#             await message.answer(
-#                 f'❌ <b>Ошибка в данных на сервере, обратитесь в службу поддержку!</b>'
-#                 , parse_mode='HTML', reply_markup=inline_menu.get_callback_btns(
-#                     btns={'Оставить заявку': 'support'})
-#             )  # прикрутить кнопку поддержки +
-#
-#         else:
-#             await message.answer(
-#                 f'❌ <b>Доступ закрыт!'
-#                 f'\n Пройдите аутентификацию в <a>@authorize_sv_bot</a></b>'
-#                 , parse_mode='HTML', reply_markup=inline_menu.get_callback_btns(
-#                     btns={'Я прошел аутентификацию, продолжить!': 'next'}))
+
+
+
+
+
+
+
 
 
 # # 0. Первичное приветствие всех пользователей при старте.
