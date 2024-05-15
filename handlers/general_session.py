@@ -41,79 +41,74 @@ general_router = Router()
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-# 0. Первичное приветствие всех пользователей при старте.
-@general_router.message(CommandStart())
-async def start_cmd(message: types.Message):
-    # await message.answer(
-    #     f'Вас приветствует корпоративный бот <b>"DNS requests Helper"</b> одноименной торговой розничной сети.\n'
-    #     f'Я создан для веддения служебных обращений по возникающим вопросам подразделений '
-    #     f'в ходе их повседневной деятельности..добавить....:\n'
-    #     f'Для дальнейшей работы, необходимо пройти атентификацию, доступ разрешен <b>только сотрудникам сети</b>.'
-    #     , parse_mode='HTML', reply_markup=inline_menu.get_callback_btns(btns={
-    #                          'Пройти атентификацию': 'get_type_users'}))   # , parse_mode='HTML'
-    #
-    #     # todo Добавить приветственную картинку и отредактить текст.
+# Вспомогательная функция проверки регистрации:
+async def chek_registration(message: types.Message):
+    while True:  # Цикличная проверка:
 
-    # ---------------------------------------- Подготовка данных:
-    # Вытаскиваем id пользователя при старте:
-    # where_value: int = message.from_user.id  # Тут все норм.
-    where_value: int = 460378146 # (Димон для теста)
+        # ---------------------------------------- Подготовка данных:
+        # Вытаскиваем id пользователя при старте:
+        where_value: int = message.from_user.id  # Тут все норм.
+        # where_value: int = 460378146 # (Димон для теста)
 
-    # Проверяем tg_id на серваке_DNS (если пользователь регился в авторизационном боте, то tg_id будет в базе.
-    async_check_telegram_id = await async_select(
-        CONFIG_JAR_ASYNCPG, 'inlet.staff_for_bot', 'tg',
-        'tg', where_columns_value=where_value)  # на выходе: либо Нул либо telegram_id
-    # ----------------------------------------
+        # Проверяем tg_id на серваке_DNS (если пользователь регился в авторизационном боте, то tg_id будет в базе.
+        async_check_telegram_id = await async_select(
+            CONFIG_JAR_ASYNCPG, 'inlet.staff_for_bot', 'tg',
+            'tg', where_columns_value=where_value)  # на выходе: либо Нул либо telegram_id
+        # ----------------------------------------
 
-    await message.answer(f'✅ <b>Ваш tg_id: {where_value}</b>', parse_mode='HTML')  # - тест tg_id
+        await message.answer(f'✅ <b>Ваш tg_id: {where_value}</b>', parse_mode='HTML')  # - тест tg_id
 
-    # ---------------------------------------- Условия проверки пользователя на регистрацию.
-    # Если tg_id - отсутствует - отправляем регаться
-    if int(where_value) == async_check_telegram_id:
+        # ---------------------------------------- Условия проверки пользователя на регистрацию.
+        # Если tg_id - отсутствует - отправляем регаться
+        if int(where_value) == async_check_telegram_id:
 
-        # 1 Проверяем тип айдишника (админ или зам. или розница)
-        # * добавить в режиме админа регистрацию сотрудников по типу пользователя и режим входа под другими оболочками
+            # 1 Проверяем тип айдишника (админ или зам. или розница)
+            # * добавить в режиме админа регистрацию сотрудников по типу пользователя и режим входа под другими оболочками
 
-        # Ссылаемся на внутреннюю базу или удаленную.
+            # Ссылаемся на внутреннюю базу или удаленную.
 
-        # если на внутреннюю, то лезем в бд, где находится клон (или запускаем клонирование сразу)
-        # * придумать механизм аутентификации если сотрудник удален.
+            # если на внутреннюю, то лезем в бд, где находится клон (или запускаем клонирование сразу)
+            # * придумать механизм аутентификации если сотрудник удален.
 
-        # создание базы при запуске бюота = тестовую программу, какую нибудь.
+            # создание базы при запуске бюота = тестовую программу, какую нибудь.
 
-        # Выводим приветствие в зависимости от типа айдишника
-        await message.answer(f'✅ <b>Доступ разрешен!</b>', parse_mode='HTML')
+            # Выводим приветствие в зависимости от типа айдишника
+            await message.answer(f'✅ <b>Доступ разрешен!</b>', parse_mode='HTML')
 
-    # Если tg_id - отсутствует - отправляем регаться
-    else:
-        if async_check_telegram_id is not None:
-            await message.answer(
-                f'❌ <b>Ошибка в данных на сервере, обратитесь в службу поддержку!</b>'
-                , parse_mode='HTML', reply_markup=inline_menu.get_callback_btns(
-                    btns={'Оставить заявку': 'support'})
-            )  # прикрутить кнопку поддержки +
+            break  # Прерываем цикл, если доступ разрешен:
 
+        # Если tg_id - отсутствует - отправляем регаться
         else:
-            await message.answer(
-                f'❌ <b>Доступ закрыт!'
-                f'\n Пройдите аутентификацию в <a>@authorize_sv_bot</a></b>'
-                , parse_mode='HTML', reply_markup=inline_menu.get_callback_btns(
-                    btns={'Я прошел аутентификацию, продолжить!': 'next'}))
+            if async_check_telegram_id is not None:
+                await message.answer(
+                    f'❌ <b>Ошибка в данных на сервере, обратитесь в службу поддержку!</b>'
+                    , parse_mode='HTML', reply_markup=inline_menu.get_callback_btns(
+                        btns={'Оставить заявку': 'support'})
+                )  # прикрутить кнопку поддержки +
+
+            else:
+                await message.answer(
+                    f'❌ <b>Доступ закрыт!'
+                    f'\n Пройдите аутентификацию в <a>@authorize_sv_bot</a></b>'
+                    , parse_mode='HTML', reply_markup=inline_menu.get_callback_btns(
+                        btns={'Я прошел аутентификацию, продолжить!': 'next'}))
+
+            # Ожидание следующего сообщения пользователя
+            @general_router.callback_query(lambda call: call.data == 'next')
+            async def on_next(call: types.CallbackQuery):
+                await chek_registration(call.message)  # Запускаем проверку заново
+                await call.answer()  # Закрываем кнопку 'next' чтобы предотвратить повторные нажатия
+
+            break  # Прерываем цикл, чтобы избежать бесконечного ожидания сообщений
+
+
+@general_router.message(CommandStart())
+async def on_start(message: types.Message):
+    await chek_registration(message)
+        #  todo удалять кнопки и все сообщение раньше, выводить приветствие!
 
 
 
-
-
-
-
-
-
-
-
-
-        #  отловить кнопку продолжить
-        # если норм то ответить
-        # если нет то запустить код выше
 
 
 
@@ -138,6 +133,10 @@ async def cleaner(message: types.Message):
         await message.delete()  # Удаляем непристойные сообщения.
         # await message.chat.ban(message.from_user.id)  # Если нужно, то в бан!
 
+
+
+
+
 # ------------------------------------------------------------------------------
 # async def chek_registration(message: types.Message, where_value, async_check_telegram_id):
 #     # ---------------------------------------- Условия проверки пользователя на регистрацию.
@@ -161,3 +160,15 @@ async def cleaner(message: types.Message):
 #                 f'\n Пройдите аутентификацию в <a>@authorize_sv_bot</a></b>'
 #                 , parse_mode='HTML', reply_markup=inline_menu.get_callback_btns(
 #                     btns={'Я прошел аутентификацию, продолжить!': 'next'}))
+
+
+# # 0. Первичное приветствие всех пользователей при старте.
+# # await message.answer(
+#         #     f'Вас приветствует корпоративный бот <b>"DNS requests Helper"</b> одноименной торговой розничной сети.\n'
+#         #     f'Я создан для веддения служебных обращений по возникающим вопросам подразделений '
+#         #     f'в ходе их повседневной деятельности..добавить....:\n'
+#         #     f'Для дальнейшей работы, необходимо пройти атентификацию, доступ разрешен <b>только сотрудникам сети</b>.'
+#         #     , parse_mode='HTML', reply_markup=inline_menu.get_callback_btns(btns={
+#         #                          'Пройти атентификацию': 'get_type_users'}))   # , parse_mode='HTML'
+#         #
+#         #     # todo Добавить приветственную картинку и отредактить текст.
