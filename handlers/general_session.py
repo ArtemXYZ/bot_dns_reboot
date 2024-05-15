@@ -29,7 +29,7 @@ from filters.chats_filters import ChatTypeFilter
 # from menu import keyboard_menu  # Кнопки меню - клавиатура внизу
 from menu import inline_menu  # Кнопки встроенного меню - для сообщений
 
-from working_databases.async_engine import *
+from working_databases.query_builder import *
 
 from working_databases.configs import *
 
