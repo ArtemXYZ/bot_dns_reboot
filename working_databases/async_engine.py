@@ -46,11 +46,11 @@ def get_async_engine(ANY_CONFIG: dict | URL | str) -> object:
         url_string = None
 
     # 2. Создаем переменную асинхронного подключения к БД.
-    async_engine = create_async_engine(url_string,
-                                       echo=True)  # , echo=True - работает,  poolclass=AsyncAdaptedQueuePool, future=True - ?
+    async_engine = create_async_engine(url_string)  # , echo=True - работает,  poolclass=AsyncAdaptedQueuePool, future=True - ?
     # connection = async_engine.connect()
     return async_engine
 
+session_maker = async_sessionmaker(bind=async_engine, class_=AsyncSession, expire_on_commit=False)
 
 # Проверяем есть ли зарегистрированныйц телеграм id на удаленной базе:
 # async_get_telegram_id
@@ -86,6 +86,30 @@ async def async_select(ANY_CONFIG, tb_name: str, columns_search: str, where_colu
         fin = result
 
     return fin
+
+# Check Type User
+async def orm_async_select(ANY_CONFIG, session_maker, tb_name):
+
+    async_engine = get_async_engine(ANY_CONFIG)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # ---------------------- Тесты:
 # async def get():

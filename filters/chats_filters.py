@@ -26,25 +26,56 @@ from aiogram.filters import Filter
 from aiogram import types, Bot
 
 
+admins_list = []
+# импортировать ссесию.
+
+
+# ----------------------------------------------------------------------------------------------------------------------
 # chats_filters
 class ChatTypeFilter(Filter):
 
-    # Сюда пердаем список имен чартов
+    # Сюда передаем список имен чартов:
     def __init__(self, chat_types: list[str]) -> None:
         self.chat_types = chat_types
 
-    # Здесь вытает сответствие типу чата в котором было сообщение (тру если соответствет названию) или нет
+    # Здесь выдает соответствие типу чата в котором было сообщение (тру если соответствует названию) или нет
     async def __call__(self, message: types.Message) -> bool:
         return message.chat.type in self.chat_types
 
 
 
-# Кастомный фильтр для типов пользователей (ветки хендлеров: админ, супервайзер итд)
-class IsAdmin(Filter):
-    def __init__(self) -> None:
-        pass
 
-    # Добавляем объект Бот
-    async def __call__(self, message: types.Message, bot: Bot) -> bool:
-        return message.from_user.id in bot.my_admins_list
-        # my_admins_list - наполняем адишниками админов переменную.
+# --------------------------------
+# access rights права доступа admin_list
+# Кастомный фильтр для типов пользователей  #6
+# (ветки хендлеров: админ, супервайзер итд)  - устарело
+class IsTypeUser(Filter):
+
+    # Сюда передаем список имен сессий (админ, розница и тд.) (параметры класса):
+    def __init__(self, session_types: list[str]) -> None:  # , BotBase:Class
+        self.chat_types = session_types
+        # self.BotBase = BotBase
+
+    # Проверяем входной id с id в базе данных на соответствие типу:
+    async def type_user_id(self, message: types.Message, bot: Bot, session_types) -> bool: # , BotBase
+
+        # id пользователя написавшего:
+        user_id = message.from_user.id
+
+        # запрос в базу данных: вернет тип пользователя по id
+        # type_user_id = BotBase.Select.type_user.were(users_id=user_id)
+        # Использование ORM для запроса в базу данных:
+        session = Session()  # Создание сессии, убедитесь, что вы правильно настроили вашу сессию
+
+        # Запрос к базе данных на соответствие типа пользователя.
+        user = session.query(User).filter(User.user_id == user_id).first()
+        if user and user.user_type in session_types:
+            return True
+        else:
+            return False
+
+        # импортировать из асинк ссесии
+
+
+
+        return type_user_id in session_types

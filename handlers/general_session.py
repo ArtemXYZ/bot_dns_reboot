@@ -36,8 +36,8 @@ from working_databases.configs import *
 # Назначаем роутер для всех типов чартов:
 general_router = Router()
 
-
-# general_router.edited_message.filter(ChatTypeFilter(['privat']))  # фильтрует (пропускает) только личные сообщения
+# фильтрует (пропускает) только личные сообщения и только определенных пользователей:
+general_router.edited_message.filter(ChatTypeFilter(['privat']), )
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -47,8 +47,8 @@ async def chek_registration(message: types.Message):
 
         # ---------------------------------------- Подготовка данных:
         # Вытаскиваем id пользователя при старте:
-        where_value: int = message.from_user.id  # Тут все норм.
-        # where_value: int = 460378146 # (Димон для теста)
+        # where_value: int = message.from_user.id  # Тут все норм.
+        where_value: int = 460378146 # (Димон для теста)
 
         # Проверяем tg_id на серваке_DNS (если пользователь регился в авторизационном боте, то tg_id будет в базе.
         async_check_telegram_id = await async_select(
@@ -56,7 +56,7 @@ async def chek_registration(message: types.Message):
             'tg', where_columns_value=where_value)  # на выходе: либо Нул либо telegram_id
         # ----------------------------------------
 
-        await message.answer(f'✅ <b>Ваш tg_id: {where_value}</b>', parse_mode='HTML')  # - тест tg_id
+        # await message.answer(f'✅ <b>Ваш tg_id: {where_value}</b>', parse_mode='HTML')  # - тест tg_id
 
         # ---------------------------------------- Условия проверки пользователя на регистрацию.
         # Если tg_id - отсутствует - отправляем регаться
@@ -107,20 +107,10 @@ async def on_start(message: types.Message):
     await chek_registration(message)
         #  todo удалять кнопки и все сообщение раньше, выводить приветствие!
 
+    await message.delete()  # Удаляем сообщение и кнопки?. todo !!!
 
 
-# -------------------------------------- Ответ на вариации входящих сообщений:
-# Только жесткое совпадение по словам, нужно доделать разделитель слов в сообщении потозже!
-@general_router.message()
-async def echo(message: types.Message):
-    text = message.text
 
-    if text in ['Привет', 'привет', 'hi', 'hello']:
-        await message.answer('И тебе привет!')
-    elif text in ['Пока', 'пока', 'До свидания']:
-        await message.answer('И тебе пока!')
-    else:
-        await message.answer(message.text)
 
 
 
@@ -144,8 +134,22 @@ async def cleaner(message: types.Message):
         # Подобные сообщения, будут удалены!
         await message.delete()  # Удаляем непристойные сообщения.
         # await message.chat.ban(message.from_user.id)  # Если нужно, то в бан!
-# ------------------------------------------------------------------------------
 
+
+
+# ------------------------------------------------------------------------------
+# -------------------------------------- Ответ на вариации входящих сообщений:
+# Только жесткое совпадение по словам, нужно доделать разделитель слов в сообщении потозже!
+# @general_router.message()
+# async def echo(message: types.Message):
+#     text = message.text
+#
+#     if text in ['Привет', 'привет', 'hi', 'hello']:
+#         await message.answer('И тебе привет!')
+#     elif text in ['Пока', 'пока', 'До свидания']:
+#         await message.answer('И тебе пока!')
+#     else:
+#         await message.answer(message.text)
 
 
 

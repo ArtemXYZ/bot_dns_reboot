@@ -80,31 +80,12 @@ dp = Dispatcher()
 # # dp.include_router(retail_router)
 # dp.include_router(admin_router)
 dp.include_router(general_router)
-# todo перенести в главный команду старт? наверное или прям в ран
+
 
 
 
 # --------------------------------------------- Тело бота:
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# bot.my_admins_list = []
 # пусто
 
 
@@ -114,8 +95,9 @@ async def run_bot():
     await bot.delete_webhook(drop_pending_updates=True)  # Сброс отправленных сообщений, за время, что бот был офлайн.
     # await bot.delete_my_commands(scope=types.BotCommandScopeAllPrivateChats()) # если надо удалить  команды из меню.
 
+    # todo здесь переделать (не для всех!)
     await bot.set_my_commands(commands=default_menu, scope=types.BotCommandScopeDefault())  # Список команд в меню.
-    # BotCommandScopeAllPrivateChats - для приват чартов  # todo здесь разобраться!
+    # BotCommandScopeAllPrivateChats - для приват чартов  # todo здесь переделать разобраться!
     # BotCommandScopeDefault - для всех чартов
 
     await dp.start_polling(bot, interval=1, allowed_updates=['message', 'edited_message', 'callback_query'])
