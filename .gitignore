@@ -2,3 +2,4 @@ config_bot.py
 .env
 .idea/*.*
 .venv/*.*
+/.idea/inspectionProfiles/profiles_settings.xml
