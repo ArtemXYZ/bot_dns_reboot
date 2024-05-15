@@ -56,21 +56,20 @@ async def start_cmd(message: types.Message):
 
     # ---------------------------------------- Подготовка данных:
     # Вытаскиваем id пользователя при старте:
-    where_value: int = message.from_user.id  # Тут все норм.
-    # where_value: int = 460378146 (Димон для теста)
+    # where_value: int = message.from_user.id  # Тут все норм.
+    where_value: int = 460378146 # (Димон для теста)
 
-
-    # Проверяем tg_id на серваке (если пользователь регился в авторизационном боте, то tg_id будет в базе.
+    # Проверяем tg_id на серваке_DNS (если пользователь регился в авторизационном боте, то tg_id будет в базе.
     async_check_telegram_id = await async_select(
         CONFIG_JAR_ASYNCPG, 'inlet.staff_for_bot', 'tg',
-        'tg', where_columns_value=where_value)
+        'tg', where_columns_value=where_value)  # на выходе: либо Нул либо telegram_id
     # ----------------------------------------
 
     await message.answer(f'✅ <b>Ваш tg_id: {where_value}</b>', parse_mode='HTML')  # - тест tg_id
 
     # ---------------------------------------- Условия проверки пользователя на регистрацию.
     # Если tg_id - отсутствует - отправляем регаться
-    if async_check_telegram_id == where_value:
+    if int(where_value) == async_check_telegram_id:
 
         # 1 Проверяем тип айдишника (админ или зам. или розница)
         # * добавить в режиме админа регистрацию сотрудников по типу пользователя и режим входа под другими оболочками
@@ -82,22 +81,43 @@ async def start_cmd(message: types.Message):
 
         # создание базы при запуске бюота = тестовую программу, какую нибудь.
 
-
-
         # Выводим приветствие в зависимости от типа айдишника
         await message.answer(f'✅ <b>Доступ разрешен!</b>', parse_mode='HTML')
 
-
-
-
-    elif async_check_telegram_id is None:
-        await message.answer(f'❌ <b>Доступ закрыт!'
-                             f'\n Пройдите аутентификацию в <a>@authorize_sv_bot</a></b>'
-                             , parse_mode='HTML')
-
     # Если tg_id - отсутствует - отправляем регаться
     else:
-        await message.answer(f'✅ <b>Ошибка подключения!</b>', parse_mode='HTML')
+        if async_check_telegram_id is not None:
+            await message.answer(
+                f'❌ <b>Ошибка в данных на сервере, обратитесь в службу поддержку!</b>'
+                , parse_mode='HTML', reply_markup=inline_menu.get_callback_btns(
+                    btns={'Оставить заявку': 'support'})
+            )  # прикрутить кнопку поддержки +
+
+        else:
+            await message.answer(
+                f'❌ <b>Доступ закрыт!'
+                f'\n Пройдите аутентификацию в <a>@authorize_sv_bot</a></b>'
+                , parse_mode='HTML', reply_markup=inline_menu.get_callback_btns(
+                    btns={'Я прошел аутентификацию, продолжить!': 'next'}))
+
+
+
+
+
+
+
+
+
+
+
+
+        #  отловить кнопку продолжить
+        # если норм то ответить
+        # если нет то запустить код выше
+
+
+
+            # await message.answer(f'✅ <b>Ошибка подключения к серверу!</b>', parse_mode='HTML')
 
 
 # 0. -------------------------- Очистка сообщений от ругательств для всех типов чартов:
@@ -119,3 +139,25 @@ async def cleaner(message: types.Message):
         # await message.chat.ban(message.from_user.id)  # Если нужно, то в бан!
 
 # ------------------------------------------------------------------------------
+# async def chek_registration(message: types.Message, where_value, async_check_telegram_id):
+#     # ---------------------------------------- Условия проверки пользователя на регистрацию.
+#     # Если tg_id - отсутствует - отправляем регаться
+#     if int(where_value) == async_check_telegram_id:
+#         await message.answer(f'✅ <b>Доступ разрешен!</b>', parse_mode='HTML')
+#
+#
+#         # Если tg_id - отсутствует - отправляем регаться
+#     else:
+#         if async_check_telegram_id is not None:
+#             await message.answer(
+#                 f'❌ <b>Ошибка в данных на сервере, обратитесь в службу поддержку!</b>'
+#                 , parse_mode='HTML', reply_markup=inline_menu.get_callback_btns(
+#                     btns={'Оставить заявку': 'support'})
+#             )  # прикрутить кнопку поддержки +
+#
+#         else:
+#             await message.answer(
+#                 f'❌ <b>Доступ закрыт!'
+#                 f'\n Пройдите аутентификацию в <a>@authorize_sv_bot</a></b>'
+#                 , parse_mode='HTML', reply_markup=inline_menu.get_callback_btns(
+#                     btns={'Я прошел аутентификацию, продолжить!': 'next'}))

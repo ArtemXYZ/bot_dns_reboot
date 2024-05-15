@@ -76,8 +76,16 @@ async def async_select(ANY_CONFIG, tb_name: str, columns_search: str, where_colu
         # async_connection = async_engine.connect() - можно так (вроде то же самое, но без ролбека транзакций)
         # connect() в этом методе явно надо прописывать комит, а в аналогичной begin - есть автокомит.
 
-    # return async_engine
-    return result_temp.scalar()
+    # Выдает в текстовом формате (не точно)
+    result = result_temp.scalar()
+
+    # для исключения ошибки с преобразованием типов:
+    if result is not None:
+        fin = int(result)
+    else:
+        fin = result
+
+    return fin
 
 # ---------------------- Тесты:
 # async def get():
@@ -216,3 +224,5 @@ async def async_select(ANY_CONFIG, tb_name: str, columns_search: str, where_colu
 #     f = get_telegram_id(CONFIG_JAR, 'inlet.staff_for_bot',
 #                         'tg', 'tg', '49295383')
 #     print(f)
+
+ # if isinstance(ANY_CONFIG, dict) == True:
