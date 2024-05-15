@@ -68,7 +68,7 @@ class IsTypeUser(Filter):
         session = Session()  # Создание сессии, убедитесь, что вы правильно настроили вашу сессию
 
         # Запрос к базе данных на соответствие типа пользователя.
-        user = session.query(User).filter(User.user_id == user_id).first()
+        user = session.query(Users).filter(User.user_id == user_id).first()
         if user and user.user_type in session_types:
             return True
         else:
