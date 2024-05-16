@@ -7,20 +7,26 @@
 # ---------------------------------- Импорт стандартных библиотек Пайтона
 # ---------------------------------- Импорт сторонних библиотек
 import asyncio
-from sqlalchemy import select, String, Table, update, delete
+from sqlalchemy import select, String, Table, update, delete, text
+from sqlalchemy.ext.asyncio.engine import AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from sqlalchemy.sql import text
 
 # -------------------------------- Локальные модули
-from working_databases.async_engine import get_async_engine
+from working_databases.async_engine import *
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-# Проверяем есть ли зарегистрированный телеграм id на удаленной базе:
-# async_get_telegram_id
-async def async_select(ANY_CONFIG: dict | URL | str, tb_name: str, columns_search: str, where_columns_name: str,
-                       where_columns_value: any):  # , results_aal_or: str
+# Проверяем есть ли зарегистрированный телеграм id на удаленной базе: # async_get_telegram_id
+#
+# # Ключ подключения:
+async def async_select( tb_name: str, columns_search: str,
+                       where_columns_name: str, where_columns_value: any, engine_obj:AsyncEngine):  # , results_aal_or: str
+    """
+    engine_obj = get_async_engine(CONFIG_JAR_ASYNCPG)
+    SQL - можно вынести в параметр и будет более универсальная функция.
+    """
 
     # SQL Сырой запрос на выборку данных (+ условие фильтрации выборки):
     # Это работает.
@@ -29,8 +35,6 @@ async def async_select(ANY_CONFIG: dict | URL | str, tb_name: str, columns_searc
         f"WHERE {tb_name}.{where_columns_name} = '{where_columns_value}'")
     # {schema_and_table} WHERE {where_columns_name} = {where_columns_value} # - Работает
 
-    # Ключ подключения:
-    engine_obj = get_async_engine(ANY_CONFIG)
 
     async with engine_obj.connect() as async_connection: # todo здесь может быть проблема с connect()
         # connection
@@ -52,6 +56,20 @@ async def async_select(ANY_CONFIG: dict | URL | str, tb_name: str, columns_searc
         fin = result
 
     return fin
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

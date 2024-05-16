@@ -73,6 +73,48 @@ async def get_async_sessionmaker(ANY_CONFIG: dict | URL | str):
 #     return result.scalar()
 
 # ----------------------------------------------------- разобрать потом
+
+# # --------------------- Работает только в этом модуле в других недоступен объект сессии
+# Проверяем есть ли зарегистрированный телеграм id на удаленной базе:
+# async_get_telegram_id
+# async def async_select(ANY_CONFIG: dict | URL | str, tb_name: str, columns_search: str, where_columns_name: str,
+#                        where_columns_value: any):  # , results_aal_or: str
+#
+#     # SQL Сырой запрос на выборку данных (+ условие фильтрации выборки):
+#     # Это работает.
+#     SQL = text(
+#         f"SELECT {tb_name}.{columns_search} FROM {tb_name} "
+#         f"WHERE {tb_name}.{where_columns_name} = '{where_columns_value}'")
+#     # {schema_and_table} WHERE {where_columns_name} = {where_columns_value} # - Работает
+#
+#     # Ключ подключения:
+#     engine_obj = get_async_engine(ANY_CONFIG)
+#
+#     async with engine_obj.begin() as async_connection: # todo здесь может быть проблема с connect()
+#         # connection
+#         result_temp = await async_connection.execute(SQL)
+#
+#         # async_connection.close() - не нужно
+#         # await async_connection.dispose()
+#         # async_connection.commit()
+#         # async_connection = async_engine.connect() - можно так (вроде то же самое, но без ролбека транзакций)
+#         # connect() в этом методе явно надо прописывать комит, а в аналогичной begin - есть автокомит.
+#
+#     # Выдает в текстовом формате (не точно)
+#     result = result_temp.scalar()
+#
+#     # для исключения ошибки с преобразованием типов:
+#     if result is not None:
+#         fin = int(result)
+#     else:
+#         fin = result
+#
+#     return fin
+# ---------------------
+
+
+
+
 # Асинхронное подключение к базе данных (sessionmaker): !- работает
 # async def get_async_sessionmaker(ANY_CONFIG: dict | URL | str):
 #     """Функция создает АСИНХРОННОЕ подключение к базе данных. На вход принимает файл конфигурации.

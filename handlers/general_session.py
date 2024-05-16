@@ -36,8 +36,11 @@ from working_databases.configs import *
 # Назначаем роутер для всех типов чартов:
 general_router = Router()
 
+
 # фильтрует (пропускает) только личные сообщения и только определенных пользователей:
 # general_router.edited_message.filter(ChatTypeFilter(['privat']), )
+
+# engine_obj = get_async_engine(CONFIG_JAR_ASYNCPG)
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -47,13 +50,14 @@ async def chek_registration(message: types.Message):
 
         # ---------------------------------------- Подготовка данных:
         # Вытаскиваем id пользователя при старте:
-        # where_value: int = message.from_user.id  # Тут все норм.
-        where_value: int = 460378146 # (Димон для теста)
+        where_value: int = message.from_user.id  # Тут все норм.
+        # where_value: int = 460378146  # (Димон для теста)
 
         # Проверяем tg_id на серваке_DNS (если пользователь регился в авторизационном боте, то tg_id будет в базе.
-        async_check_telegram_id = await async_select(
-            CONFIG_JAR_ASYNCPG, 'inlet.staff_for_bot', 'tg',
-            'tg', where_columns_value=where_value)  # на выходе: либо Нул либо telegram_id
+        async_check_telegram_id = await async_select('inlet.staff_for_bot', 'tg',
+                                                     'tg', where_columns_value=where_value,
+                                                     engine_obj=await get_async_engine(CONFIG_JAR_ASYNCPG)
+                                                     )  # на выходе: либо Нул либо telegram_id
         # ----------------------------------------
 
         # await message.answer(f'✅ <b>Ваш tg_id: {where_value}</b>', parse_mode='HTML')  # - тест tg_id
@@ -105,16 +109,11 @@ async def chek_registration(message: types.Message):
 @general_router.message(CommandStart())
 async def on_start(message: types.Message):
     await chek_registration(message)
-        #  todo удалять кнопки и все сообщение раньше, выводить приветствие!
+    #  todo удалять кнопки и все сообщение раньше, выводить приветствие!
 
     await message.delete()  # Удаляем сообщение и кнопки?. todo !!!
 
-
-
-
-
-
-            # await message.answer(f'✅ <b>Ошибка подключения к серверу!</b>', parse_mode='HTML')
+    # await message.answer(f'✅ <b>Ошибка подключения к серверу!</b>', parse_mode='HTML')
 
 
 # 0. -------------------------- Очистка сообщений от ругательств для всех типов чартов:
@@ -135,8 +134,6 @@ async def cleaner(message: types.Message):
         await message.delete()  # Удаляем непристойные сообщения.
         # await message.chat.ban(message.from_user.id)  # Если нужно, то в бан!
 
-
-
 # ------------------------------------------------------------------------------
 # -------------------------------------- Ответ на вариации входящих сообщений:
 # Только жесткое совпадение по словам, нужно доделать разделитель слов в сообщении потозже!
@@ -150,12 +147,6 @@ async def cleaner(message: types.Message):
 #         await message.answer('И тебе пока!')
 #     else:
 #         await message.answer(message.text)
-
-
-
-
-
-
 
 
 # # 0. Первичное приветствие всех пользователей при старте.
