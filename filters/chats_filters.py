@@ -24,7 +24,9 @@
 
 from aiogram.filters import Filter
 from aiogram import types, Bot
+from sqlalchemy.orm import DeclarativeBase
 
+from working_databases.local_db_mockup import *
 
 admins_list = []
 # импортировать ссесию.
@@ -52,12 +54,12 @@ class ChatTypeFilter(Filter):
 class IsTypeUser(Filter):
 
     # Сюда передаем список имен сессий (админ, розница и тд.) (параметры класса):
-    def __init__(self, session_types: list[str]) -> None:  # , BotBase:Class
+    def __init__(self, session_types: list[str], mockup_class) -> None:  # , BotBase:Class
         self.chat_types = session_types
-        # self.BotBase = BotBase
+        self.mockup_class = mockup_class
 
     # Проверяем входной id с id в базе данных на соответствие типу:
-    async def __call__(self, message: types.Message, bot: Bot, session_types) -> bool: # , BotBase
+    async def __call__(self, message: types.Message, mockup_class, session_types) -> bool: # , BotBase
         """type_user_id"""
 
         # id пользователя написавшего:
@@ -78,5 +80,11 @@ class IsTypeUser(Filter):
         # импортировать из асинк ссесии
 
 
+        # Запрос в локал бд по типу сессии достаем id !!
+        # или из базы накидываем в лист все айди соответствующие флагу !!
+
+        # При запуске бота добавить проверку в бд актуальных данных по сотруднику.?????
+        # делать это потом по времени.
+        # или продумать.
 
         return type_user_id in session_types
