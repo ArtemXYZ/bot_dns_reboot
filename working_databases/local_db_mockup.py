@@ -10,7 +10,7 @@
 
 # -------------------------------- Стандартные модули
 # -------------------------------- Сторонние библиотеки
-from sqlalchemy import DateTime, Float, String, Integer, Text, Boolean, func, LargeBinary # - image
+from sqlalchemy import DateTime, Float, String, Integer, Text, Boolean, func  # - image LargeBinary
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 # -------------------------------- Локальные модули
@@ -69,8 +69,6 @@ class AnalyticsDepartment(Base):
 
     user_mail: Mapped[str] = mapped_column(String(100), nullable=True)
 
-
-
     # статус сотрудника (занят ли или свободен) продумать насчет тех кто в отпуске # free = True, job = False
     employee_status: Mapped[bool] = mapped_column(nullable=False,  server_default='True')  # activity
 
@@ -90,14 +88,14 @@ class Request(Base):
     #  Текст обращения (problem)
     request_message: Mapped[str] = mapped_column(Text())
     # Прикрепленные документы любого типа:
-    documents: Mapped[LargeBinary] = mapped_column()
+    documents: Mapped[bytes] = mapped_column() # LargeBinary
     # В работе ли заявка at work _complete статус запроса (insert, in_work, done complete (, onupdate='insert') )
     request_status: Mapped[str] = mapped_column(String(150), server_default='insert')
 
     id_tg: Mapped[int] = mapped_column(nullable=False, index=True, unique=True)  # телеграмм id
 
     # Ограничение полей:
-    __table_args__ = (ForeignKeyConstraint(['tg_id'],['RetailUsers.id_tg']))
+    # __table_args__ = (ForeignKeyConstraint(['tg_id'],['RetailUsers.id_tg']))
 
 # Список должностей:
 # class ListPositions(Base):
@@ -115,7 +113,7 @@ class Discussion(Base):
     #  Текст обращения (problem)
     request_message: Mapped[str] = mapped_column(Text())
     # Прикрепленные документы любого типа.
-    documents: Mapped[LargeBinary] = mapped_column()
+    documents: Mapped[bytes] = mapped_column()
 
 
 

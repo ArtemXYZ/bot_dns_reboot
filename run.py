@@ -44,10 +44,12 @@ import asyncio
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import CommandStart, Command  # Фильтр только для старта
 from aiogram.client.default import DefaultBotProperties  # Обработка текста HTML разметкой
-
 # -------------------------------- Локальные модули
+from working_databases.configs import *
+
 from dotenv import find_dotenv, load_dotenv  # Для переменных окружения
 load_dotenv(find_dotenv())  # Загружаем переменную окружения
+
 
 from working_databases.async_engine import *
 from working_databases.init_db import *
@@ -90,14 +92,14 @@ dp.include_router(general_router)
 
 # --------------------------------------------- Тело бота:
 # bot.my_admins_list = []
-async def on_startup(bot):
-    await init_db()
+
+# При старте и при выключении:
+async def on_startup(bot, any_config=CONFIG_LOCAL_DB):
+    await create_db(engine_obj=await get_async_engine(CONFIG_LOCAL_DB))
     print('Бот запущен!')
 
 async def on_shutdown(bot):
     print('Бот лег!')
-
-
 
 
 # ---------------------------------------------------- Зацикливание работы бота

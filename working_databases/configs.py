@@ -48,3 +48,6 @@ CONFIG_MART_SV_ASYNCPG = {
     'port': os.environ.get("CONFIG_MART_SV_PORT"),
     'database': os.environ.get("CONFIG_MART_SV_DATABASE")
 }
+
+
+CONFIG_LOCAL_DB = os.environ.get("CONFIG_LOCAL_DB")
