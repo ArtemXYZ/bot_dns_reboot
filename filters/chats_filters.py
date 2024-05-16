@@ -57,7 +57,8 @@ class IsTypeUser(Filter):
         # self.BotBase = BotBase
 
     # Проверяем входной id с id в базе данных на соответствие типу:
-    async def type_user_id(self, message: types.Message, bot: Bot, session_types) -> bool: # , BotBase
+    async def __call__(self, message: types.Message, bot: Bot, session_types) -> bool: # , BotBase
+        """type_user_id"""
 
         # id пользователя написавшего:
         user_id = message.from_user.id

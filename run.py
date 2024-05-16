@@ -49,6 +49,10 @@ from aiogram.client.default import DefaultBotProperties  # Обработка т
 from dotenv import find_dotenv, load_dotenv  # Для переменных окружения
 load_dotenv(find_dotenv())  # Загружаем переменную окружения
 
+from working_databases.async_engine import *
+from working_databases.init_db import *
+
+
 from handlers.admin_session import admin_router
 from handlers.general_session import general_router
 from handlers.supervisor_session import supervisor_router
@@ -86,12 +90,23 @@ dp.include_router(general_router)
 
 # --------------------------------------------- Тело бота:
 # bot.my_admins_list = []
-# пусто
+async def on_startup(bot):
+    await init_db()
+    print('Бот запущен!')
+
+async def on_shutdown(bot):
+    print('Бот лег!')
+
+
 
 
 # ---------------------------------------------------- Зацикливание работы бота
 # Отслеживание событий на сервере тг бота:
 async def run_bot():
+
+    dp.startup.register(on_startup) # действия при старте бота
+    dp.shutdown.register(on_shutdown)  # действия при остановке бота
+
     await bot.delete_webhook(drop_pending_updates=True)  # Сброс отправленных сообщений, за время, что бот был офлайн.
     # await bot.delete_my_commands(scope=types.BotCommandScopeAllPrivateChats()) # если надо удалить  команды из меню.
 
