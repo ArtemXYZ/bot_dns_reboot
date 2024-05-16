@@ -37,7 +37,7 @@ from working_databases.configs import *
 general_router = Router()
 
 # фильтрует (пропускает) только личные сообщения и только определенных пользователей:
-general_router.edited_message.filter(ChatTypeFilter(['privat']), )
+# general_router.edited_message.filter(ChatTypeFilter(['privat']), )
 
 
 # ----------------------------------------------------------------------------------------------------------------------

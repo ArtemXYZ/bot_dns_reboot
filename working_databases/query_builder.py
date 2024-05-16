@@ -12,12 +12,12 @@ from sqlalchemy import select, String, Table, update, delete
 from sqlalchemy.sql import text
 
 # -------------------------------- Локальные модули
-from working_databases.async_engine import *
+from working_databases.async_engine import get_async_engine
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-# Проверяем есть ли зарегистрированныйц телеграм id на удаленной базе:
+# Проверяем есть ли зарегистрированный телеграм id на удаленной базе:
 # async_get_telegram_id
 async def async_select(ANY_CONFIG: dict | URL | str, tb_name: str, columns_search: str, where_columns_name: str,
                        where_columns_value: any):  # , results_aal_or: str
@@ -30,9 +30,10 @@ async def async_select(ANY_CONFIG: dict | URL | str, tb_name: str, columns_searc
     # {schema_and_table} WHERE {where_columns_name} = {where_columns_value} # - Работает
 
     # Ключ подключения:
-    async_engine = get_async_engine(ANY_CONFIG)
+    engine_obj = get_async_engine(ANY_CONFIG)
 
-    async with async_engine.connect() as async_connection:
+    async with engine_obj.connect() as async_connection: # todo здесь может быть проблема с connect()
+        # connection
         result_temp = await async_connection.execute(SQL)
 
         # async_connection.close() - не нужно

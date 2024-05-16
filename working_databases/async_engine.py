@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlalchemy.engine.url import URL
 
 # -------------------------------- Локальные модули
-from working_databases.configs import *
+# from working_databases.configs import *
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -41,10 +41,11 @@ async def get_async_engine(ANY_CONFIG: dict | URL | str) -> object:
         url_string = None
 
     # 2. Создаем переменную асинхронного подключения к БД.
-    async_engine = create_async_engine(
-        url_string)  # , echo=True - работает,  poolclass=AsyncAdaptedQueuePool, future=True - ?
+    async_engine = create_async_engine(url_string)
+    # , echo=True - работает,  poolclass=AsyncAdaptedQueuePool, future=True - ?
     # connection = async_engine.connect()
     return async_engine
+    # return create_async_engine(url_string)
 
 # Асинхронная сессия:
 async def get_async_sessionmaker(ANY_CONFIG: dict | URL | str):

@@ -12,7 +12,7 @@
 # -------------------------------- Сторонние библиотеки
 from sqlalchemy import DateTime, Float, String, Integer, Text, Boolean, func, LargeBinary # - image
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import
+
 # -------------------------------- Локальные модули
 
 
