@@ -12,8 +12,8 @@ from aiogram.filters import CommandStart, Command, StateFilter, or_f
 from aiogram.client.default import DefaultBotProperties  # Обработка текста HTML разметкой
 
 # -------------------------------- Локальные модули
-from handlers.text_message import * # Список ругательств:
-from filters.chats_filters import ChatTypeFilter
+from handlers.text_message import *  # Список ругательств:
+from filters.chats_filters import *
 
 # from aiogram.utils.formatting import as_list, as_marked_section, Bold, Italic
 
@@ -26,8 +26,8 @@ retail_router = Router()
 # Фильтруем события на этом роутере:
 # Тип чата может быть “приватным”, ”групповым“, ”супер групповым“ или "каналом” - >
 # ( “private”, “group”, “supergroup”, “channel”)
-retail_router.message.filter(ChatTypeFilter(['private']))
-retail_router.edited_message.filter(ChatTypeFilter(['private']))
+retail_router.message.filter(ChatTypeFilter(['private']), UsersRetailSession())
+retail_router.edited_message.filter(ChatTypeFilter(['private']), UsersRetailSession())
 
 # ----------------------------------------------------------------------------------------------------------------------
 

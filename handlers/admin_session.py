@@ -10,7 +10,7 @@ from aiogram.filters import CommandStart, Command, StateFilter, or_f
 from aiogram.client.default import DefaultBotProperties  # Обработка текста HTML разметкой
 
 # -------------------------------- Локальные модули
-from filters.chats_filters import ChatTypeFilter #, IsAdmin
+from filters.chats_filters import * #, IsAdmin
 
 
 from menu.button_generator import get_keyboard
@@ -19,8 +19,10 @@ from menu.button_generator import get_keyboard
 admin_router = Router()
 
 # Устанавливаем фильтр на входящие события для роутера админа:
-# admin_router.message.filter(ChatTypeFilter(['private']), IsAdmin())  # IsAdmin - фильтрует только для админа
-# admin_router.edited_message.filter(ChatTypeFilter(['privat'])) # 'group', 'supergroup'
+admin_router.message.filter(ChatTypeFilter(['private']), UsersAdminSession())
+# UsersAdminSession - фильтрует только для админа
+admin_router.edited_message.filter(ChatTypeFilter(['privat']), UsersAdminSession())
+#  ChatTypeFilter - 'group', 'supergroup'
 
 # ------------------------------------------------- Тело модуля
 ADMIN_KB = get_keyboard(

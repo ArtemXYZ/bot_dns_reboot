@@ -10,7 +10,7 @@ from aiogram.filters import CommandStart, Command, StateFilter, or_f
 from aiogram.client.default import DefaultBotProperties  # Обработка текста HTML разметкой
 
 # -------------------------------- Локальные модули
-from filters.chats_filters import ChatTypeFilter
+from filters.chats_filters import *
 
 # from aiogram.utils.formatting import as_list, as_marked_section, Bold, Italic
 
@@ -22,8 +22,8 @@ from filters.chats_filters import ChatTypeFilter
 oait_manager_router = Router()
 
 # фильтрует (пропускает) только личные сообщения и только определенных пользователей:
-oait_manager_router.edited_message.filter(ChatTypeFilter(['private']))
-oait_manager_router.edited_message.filter(ChatTypeFilter(['private']))
+oait_manager_router.edited_message.filter(ChatTypeFilter(['private']), UsersOAiTManagerSession())
+oait_manager_router.edited_message.filter(ChatTypeFilter(['private']), UsersOAiTManagerSession())
 
 # Фильтруем события на этом роутере:
 # supervisor_router.message.filter(ChatTypeFilter(['supervisor']))
