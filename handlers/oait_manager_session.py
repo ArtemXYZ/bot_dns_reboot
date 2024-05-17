@@ -25,6 +25,3 @@ oait_manager_router = Router()
 oait_manager_router.edited_message.filter(ChatTypeFilter(['private']), UsersOAiTManagerSession())
 oait_manager_router.edited_message.filter(ChatTypeFilter(['private']), UsersOAiTManagerSession())
 
-# Фильтруем события на этом роутере:
-# supervisor_router.message.filter(ChatTypeFilter(['supervisor']))
-# supervisor_router.edited_message.filter(ChatTypeFilter(['supervisor']))

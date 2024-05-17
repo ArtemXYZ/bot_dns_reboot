@@ -50,6 +50,10 @@ load_dotenv(find_dotenv())  # Загружаем переменную окруж
 from working_databases.init_db import *
 
 from handlers.general_session import general_router
+from handlers.oait_session import oait_router
+from handlers.oait_manager_session import oait_manager_router
+from handlers.retail_session import retail_router
+from handlers.admin_session import admin_router
 
 from menu.cmds_list_menu import default_menu  # Кнопки меню для всех типов чартов
 
@@ -85,7 +89,6 @@ dp.include_router(oait_manager_router)
 
 
 # --------------------------------------------- Тело бота:
-# bot.my_admins_list = []
 
 # При старте и при выключении:
 async def on_startup(bot, any_config=CONFIG_LOCAL_DB):
