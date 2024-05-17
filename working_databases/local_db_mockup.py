@@ -51,11 +51,11 @@ class RetailUsers(Base):
 
 
 # Сотрудники отдела аналитики:
-class AnalyticsDepartment(Base):
+class OAiTDepartment(Base):
     """
     Сделать мезанизм обновления сотрудников отдела с удаленной базы данных:
     """
-    __tablename__ = 'analytics_staff'
+    __tablename__ = 'oait_staff'
 
     # Порядковый номер добавления сотрудника.
     index_add: Mapped[int] = mapped_column(autoincrement=True)

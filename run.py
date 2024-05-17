@@ -57,7 +57,7 @@ from working_databases.init_db import *
 
 from handlers.admin_session import admin_router
 from handlers.general_session import general_router
-from handlers.supervisor_session import supervisor_router
+from handlers.oait_manager_session import supervisor_router
 from handlers.retail_session import retail_router
 from handlers.private_session import private_router
 
@@ -71,8 +71,13 @@ from menu.cmds_list_menu import default_menu  # Кнопки меню для в�
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-bot = Bot(token=os.getenv('API_TOKEN'), default=DefaultBotProperties(parse_mode='HTML'))  # Для переменных окружения
+bot: Bot = Bot(token=os.getenv('API_TOKEN'), default=DefaultBotProperties(parse_mode='HTML'))  # Для переменных окружения
 
+#  К экземпляру бота добавляем свойства (списки с users_id под каждый тип сессии :
+bot.retail_session_users_list = []
+bot.oait_session_users_list = []
+bot.oait_manager_session_users_list = []
+bot.admin_session_users_list = []
 # --------------------------------------------- Инициализация диспетчера событий
 # Принимает все события и отвечает за порядок их обработки в асинхронном режиме.
 dp = Dispatcher()

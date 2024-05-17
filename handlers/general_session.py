@@ -38,10 +38,7 @@ general_router = Router()
 
 
 # фильтрует (пропускает) только личные сообщения и только определенных пользователей:
-# general_router.edited_message.filter(ChatTypeFilter(['privat']), )
-
-# engine_obj = get_async_engine(CONFIG_JAR_ASYNCPG)
-
+general_router.edited_message.filter(ChatTypeFilter(['privat']))
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Вспомогательная функция проверки регистрации:
