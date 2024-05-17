@@ -68,7 +68,7 @@ bot: Bot = Bot(token=os.getenv('API_TOKEN'), default=DefaultBotProperties(parse_
 bot.retail_session_users_list = []
 bot.oait_session_users_list = []
 bot.oait_manager_session_users_list = []
-bot.admin_session_users_list = []
+bot.admin_session_users_list = ['1034809823']
 
 # --------------------------------------------- Инициализация диспетчера событий
 # Принимает все события и отвечает за порядок их обработки в асинхронном режиме.
@@ -78,23 +78,35 @@ dp = Dispatcher()
 # dp.include_routers(general_router, admin_router, oait_manager_router, oait_router, retail_router) #
 
 #  Распределение роутеров - порядок записи имеет значение. не трогать! (3й урок)
+dp.include_router(admin_router)
 dp.include_router(general_router)
-# dp.include_router(admin_router)
-dp.include_router(retail_router)
 
-dp.include_router(oait_manager_router)
-
+# dp.include_router(retail_router)
+# dp.include_router(oait_manager_router)
 
 
 
 
-# --------------------------------------------- Тело бота:
 
-# При старте и при выключении:
+# -------------------------------------------------- Тело бота:
+
+# -------------------- При старте и при выключении бота:
 async def on_startup(bot, any_config=CONFIG_LOCAL_DB):
     await create_db(engine_obj=await get_async_engine(CONFIG_LOCAL_DB))
+
+    # наполнение листов с id пользователей по типам:
+
+
+
     print('Бот запущен!')
 
+
+
+
+
+
+
+# -------------------- При выключении
 async def on_shutdown(bot):
     print('Бот лег!')
 

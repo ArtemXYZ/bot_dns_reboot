@@ -10,9 +10,10 @@
 
 # -------------------------------- Стандартные модули
 # -------------------------------- Сторонние библиотеки
-from sqlalchemy import DateTime, Float, String, Integer, Text, Boolean, func  # - image LargeBinary
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-
+from sqlalchemy import DateTime, Float, String, Integer, Text, Boolean, func, ForeignKey  # - image LargeBinary
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from typing import List
+# from __future__ import annotations
 # -------------------------------- Локальные модули
 
 
@@ -26,63 +27,53 @@ class Base(DeclarativeBase):
     updated: Mapped[DateTime] = mapped_column(DateTime, default=func.now(), onupdate=func.now())
 
 
-# Сотрудники розницы (кто обращается с проблемой).
-class RetailUsers(Base):
+# Сотрудники все
+class Users(Base):
     """
     Тянем из удаленного сервака данные о пользователях.
     """
-    __tablename__ = 'retail_user_data'
-
+    __tablename__ = 'user_data'
 
     index_add: Mapped[int] = mapped_column(autoincrement=True) # орядковый номер добавления обратившегося сотрудника.
+    # телеграмм id
+    id_tg: Mapped[int] = mapped_column(primary_key=True, nullable=False, index=True, unique=True)  # Pk
+    # # id сотрудника в 1С и первичный ключ в этой таблице.
+    # code: Mapped[str] = mapped_column(String(50), unique=True)
+    session_type: Mapped[str] = mapped_column(String(100)) # , nullable=True ????? подзапрос в скл или в пайтоне??
 
-    tg_id: Mapped[int] = mapped_column(primary_key=True, nullable=False, index=True, unique=True)  # телеграмм id
-    # id сотрудника в 1С и первичный ключ в этой таблице.
-    code: Mapped[str] = mapped_column(String(50), unique=True)
+    full_name: Mapped[str] = mapped_column(String(100), nullable=False)  # ФИО сотрудника
 
-    full_name: Mapped[str] = mapped_column(String(100))  # ФИО сотрудника
     post_id: Mapped[int] = mapped_column(nullable=False, unique=True)  # id Должности
+    post_name: Mapped[str] = mapped_column(Text())
 
+    branch_id: Mapped[int] = mapped_column(primary_key=True, nullable=False) # + для вильтрации отделов.
     branch_name:Mapped[str] = mapped_column(String(200), nullable=False)
     rrs_name: Mapped[str] = mapped_column(String(100), nullable=False)
     division_name: Mapped[str] = mapped_column(String(100), nullable=False)
 
     user_mail: Mapped[str] = mapped_column(String(100), nullable=True)
 
-
-# Сотрудники отдела аналитики:
-class OAiTDepartment(Base):
-    """
-    Сделать мезанизм обновления сотрудников отдела с удаленной базы данных:
-    """
-    __tablename__ = 'oait_staff'
-
-    # Порядковый номер добавления сотрудника.
-    index_add: Mapped[int] = mapped_column(autoincrement=True)
-
-    tg_id: Mapped[int] = mapped_column(primary_key=True, nullable=False, index=True, unique=True)  # телеграмм id
-    # id сотрудника в 1С и первичный ключ в этой таблице.
-    code: Mapped[str] = mapped_column(String(50), unique=True)
-
-    full_name: Mapped[str] = mapped_column(String(100))  # ФИО сотрудника
-    post_id: Mapped[int] = mapped_column(nullable=False, unique=True)  # id Должности
-
-    user_mail: Mapped[str] = mapped_column(String(100), nullable=True)
-
     # статус сотрудника (занят ли или свободен) продумать насчет тех кто в отпуске # free = True, job = False
     employee_status: Mapped[bool] = mapped_column(nullable=False,  server_default='True')  # activity
 
+    # Отношение "один ко многим" с Request
+    many_requests_to: Mapped[list['Requests']] = relationship(back_populates='one_user_to')
+
+    # Ограничение полей:
+    # __table_args__ = (ForeignKeyConstraint(['tg_id'],['Users.post_id']))
 
 
 # Для деловой переписки сотрудников в боте (хранение истории обращений).
-class Request(Base):
+class Requests(Base):
     __tablename__ = 'requests_history' # request history Problems QuestsProblems tasks
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True) # id request history
+    # id request history
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    # code_id: Mapped[str] = mapped_column(String(50))  # id сотрудника в 1С и нешний ключ в этой таблице.
 
-    code_id: Mapped[str] = mapped_column(String(50))  # id сотрудника в 1С и нешний ключ в этой таблице.
     # телеграмм id обращающегося пользователя
-    request_tg_id: Mapped[int] = mapped_column(nullable=False, index=True, unique=True)
+    tg_id: Mapped[int] = mapped_column(ForeignKey('user_data.id_tg'), nullable=False, index=True, unique=True) # Fk
+
     # ответственное лицо - user_id(tg_id) может быть пусто = 0,значит не назначен ответственный (переназначен).
     responsible_person_id: Mapped[int] = mapped_column(nullable=True, server_default='0')
     #  Текст обращения (problem)
@@ -92,13 +83,17 @@ class Request(Base):
     # В работе ли заявка at work _complete статус запроса (insert, in_work, done complete (, onupdate='insert') )
     request_status: Mapped[str] = mapped_column(String(150), server_default='insert')
 
-    id_tg: Mapped[int] = mapped_column(nullable=False, index=True, unique=True)  # телеграмм id
+    # Отношение "многие ко одному" с Users
+    one_user_to: Mapped['Users'] = relationship("Users", back_populates="many_requests_to")
+
+    # Отношение "один ко многим" с Request
+    many_discussion_to: Mapped[list['Discussion']] = relationship(back_populates='one_requests_to')
+
 
     # Ограничение полей:
     # __table_args__ = (ForeignKeyConstraint(['tg_id'],['RetailUsers.id_tg']))
 
-# Список должностей:
-# class ListPositions(Base):
+
 
 # История обсуждения задач заказчика и исполнителя:
 class Discussion(Base):
@@ -107,21 +102,40 @@ class Discussion(Base):
     # id сообщения в истории обсуждения задач.
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     # id обращения (request history) внешний ключ  [id -> requests_id].
-    requests_id: Mapped[int] = mapped_column()
+    requests_id: Mapped[int] = mapped_column(ForeignKey('requests_history.id'), nullable=False) # Fk
+
     # телеграмм id написавшего сообщение.
-    id_tg: Mapped[int] = mapped_column(nullable=False, index=True, unique=True)
+    tg_id: Mapped[int] = mapped_column(nullable=False, index=True, unique=True)
     #  Текст обращения (problem)
     request_message: Mapped[str] = mapped_column(Text())
     # Прикрепленные документы любого типа.
     documents: Mapped[bytes] = mapped_column()
 
-
+    # Отношение "многие ко одному" с Users
+    one_requests_to: Mapped['Requests'] = relationship("Users", back_populates="many_discussion_to")
 
     # дата создания и обновления будут наследоваться автоматически.
 
 
 
 # ------------------------------ архив
+
+# Должности:
+# class Post(Base):
+#     """
+#         Тянем из удаленного сервака данные о должностях.
+#     """
+#     __tablename__ = 'post'
+#
+#     index_add: Mapped[int] = mapped_column(autoincrement=True) # порядковый номер добавления обратившегося сотрудника.
+#     id: Mapped[int] = mapped_column(primary_key=True, index=True, nullable=False, unique=True)  # id Должности
+#     post_name: Mapped[str] = mapped_column(Text())
+#
+#     # Ограничение полей:
+#     __table_args__ = (ForeignKeyConstraint(['id'],['Users.post_id']))
+
+
+
 # session_types: Mapped[float] = mapped_column(Float(asdecimal=True), nullable=False)
 # code: Mapped[str] = mapped_column(Integer(), nullable=False, index=True, unique=True) # + # личный код сотрудника
 # name:
@@ -136,3 +150,51 @@ class Discussion(Base):
 #     # rrs_id: Mapped[int] = mapped_column(nullable=False) # ? не нужно
 #     # branch_id: Mapped[int] = mapped_column(nullable=False) # ? не нужно
 ## Для идентификации зарегистрированных пользователей (сотрудников) в системе.
+
+
+# --------------
+# # Сотрудники розницы (кто обращается с проблемой).
+# class RetailUsers(Base):
+#     """
+#     Тянем из удаленного сервака данные о пользователях.
+#     """
+#     __tablename__ = 'retail_user_data'
+#
+#
+#     index_add: Mapped[int] = mapped_column(autoincrement=True) # орядковый номер добавления обратившегося сотрудника.
+#
+#     tg_id: Mapped[int] = mapped_column(primary_key=True, nullable=False, index=True, unique=True)  # телеграмм id
+#     # id сотрудника в 1С и первичный ключ в этой таблице.
+#     code: Mapped[str] = mapped_column(String(50), unique=True)
+#
+#     full_name: Mapped[str] = mapped_column(String(100))  # ФИО сотрудника
+#     post_id: Mapped[int] = mapped_column(nullable=False, unique=True)  # id Должности
+#
+#     branch_name:Mapped[str] = mapped_column(String(200), nullable=False)
+#     rrs_name: Mapped[str] = mapped_column(String(100), nullable=False)
+#     division_name: Mapped[str] = mapped_column(String(100), nullable=False)
+#
+#     user_mail: Mapped[str] = mapped_column(String(100), nullable=True)
+#
+#
+# # Сотрудники отдела аналитики:
+# class OAiTDepartment(Base):
+#     """
+#     Сделать мезанизм обновления сотрудников отдела с удаленной базы данных:
+#     """
+#     __tablename__ = 'oait_staff'
+#
+#     # Порядковый номер добавления сотрудника.
+#     index_add: Mapped[int] = mapped_column(autoincrement=True)
+#
+#     tg_id: Mapped[int] = mapped_column(primary_key=True, nullable=False, index=True, unique=True)  # телеграмм id
+#     # id сотрудника в 1С и первичный ключ в этой таблице.
+#     code: Mapped[str] = mapped_column(String(50), unique=True)
+#
+#     full_name: Mapped[str] = mapped_column(String(100))  # ФИО сотрудника
+#     post_id: Mapped[int] = mapped_column(nullable=False, unique=True)  # id Должности
+#
+#     user_mail: Mapped[str] = mapped_column(String(100), nullable=True)
+#
+#     # статус сотрудника (занят ли или свободен) продумать насчет тех кто в отпуске # free = True, job = False
+#     employee_status: Mapped[bool] = mapped_column(nullable=False,  server_default='True')  # activity

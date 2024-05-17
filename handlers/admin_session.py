@@ -35,35 +35,29 @@ ADMIN_KB = get_keyboard(
 )
 
 
-@admin_router.message(Command("admin"))
+@admin_router.message(Command("new"))
 async def add_product(message: types.Message):
-    await message.answer("Что хотите сделать?", reply_markup=ADMIN_KB)
+    await message.answer("Привет админ! Что хочешь сделать?", reply_markup=ADMIN_KB)
 
 
 # Функция вытаскивает из сообщений id админа и наполняет ими список:
-@admin_router.message(Command("admin"))
-async def get_admins(message: types.Message, bot: Bot):
-    chat_id = message.chat.id
-
-    # У бота метод get_chat_administrators принимает id группы (chat_id) и выдает список из участников.
-    # В нем будут перечисленны участники с правами как creator и administrator.
-    admins_list = await bot.get_chat_administrators(chat_id)
 
 
-    #  Далее, пробегаемся по списку и в зависимости от условия наполняем список
-    admins_list = [
-        member.user.id
-        for member in admins_list
-        if member.status == "administrator"
-    ]
 
-    # 'Апдейтим' список админов:
-    bot.my_admins_list = admins_list
 
-    # Если написавший пользователь есть в админ листе, то мы удаляем эту команду.
-    if message.from_user.id in admins_list:
-        await message.delete()
 
+# -------------------------------------- Ответ на вариации входящих сообщений:
+# Только жесткое совпадение по словам, нужно доделать разделитель слов в сообщении потозже!
+@admin_router.message()
+async def echo(message: types.Message):
+    text = message.text
+
+    if text in ['Привет', 'привет', 'hi', 'hello']:
+        await message.answer('И тебе привет!')
+    elif text in ['Пока', 'пока', 'До свидания']:
+        await message.answer('И тебе пока!')
+    else:
+        await message.answer(message.text)
 
 
 
