@@ -39,7 +39,7 @@ class Users(Base):
     id_tg: Mapped[int] = mapped_column(primary_key=True, nullable=False, index=True, unique=True)  # Pk
     # # id сотрудника в 1С и первичный ключ в этой таблице.
     # code: Mapped[str] = mapped_column(String(50), unique=True)
-    session_type: Mapped[str] = mapped_column(String(100)) # , nullable=True ????? подзапрос в скл или в пайтоне??
+    session_type_id: Mapped[int] = mapped_column(nullable=True, server_default='None') #  ????? подзапрос в скл или в пайтоне??
 
     full_name: Mapped[str] = mapped_column(String(100), nullable=False)  # ФИО сотрудника
 
@@ -54,7 +54,7 @@ class Users(Base):
     user_mail: Mapped[str] = mapped_column(String(100), nullable=True)
 
     # статус сотрудника (занят ли или свободен) продумать насчет тех кто в отпуске # free = True, job = False
-    employee_status: Mapped[bool] = mapped_column(nullable=False,  server_default='True')  # activity
+    employee_status: Mapped[bool] = mapped_column(nullable=False, server_default='True')  # activity
 
     # Отношение "один ко многим" с Request
     many_requests_to: Mapped[list['Requests']] = relationship(back_populates='one_user_to')

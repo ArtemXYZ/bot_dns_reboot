@@ -68,7 +68,7 @@ bot: Bot = Bot(token=os.getenv('API_TOKEN'), default=DefaultBotProperties(parse_
 bot.retail_session_users_list = []
 bot.oait_session_users_list = []
 bot.oait_manager_session_users_list = []
-bot.admin_session_users_list = ['1034809823']
+bot.admin_session_users_list = [1034809823, 1372644288]  #! надо в int
 
 # --------------------------------------------- Инициализация диспетчера событий
 # Принимает все события и отвечает за порядок их обработки в асинхронном режиме.

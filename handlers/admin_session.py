@@ -35,7 +35,7 @@ ADMIN_KB = get_keyboard(
 )
 
 
-@admin_router.message(Command("new"))
+@admin_router.message() # Command("new")
 async def add_product(message: types.Message):
     await message.answer("Привет админ! Что хочешь сделать?", reply_markup=ADMIN_KB)
 
@@ -48,16 +48,16 @@ async def add_product(message: types.Message):
 
 # -------------------------------------- Ответ на вариации входящих сообщений:
 # Только жесткое совпадение по словам, нужно доделать разделитель слов в сообщении потозже!
-@admin_router.message()
-async def echo(message: types.Message):
-    text = message.text
-
-    if text in ['Привет', 'привет', 'hi', 'hello']:
-        await message.answer('И тебе привет!')
-    elif text in ['Пока', 'пока', 'До свидания']:
-        await message.answer('И тебе пока!')
-    else:
-        await message.answer(message.text)
+# @admin_router.message()
+# async def echo(message: types.Message):
+#     text = message.text
+#
+#     if text in ['Привет', 'привет', 'hi', 'hello']:
+#         await message.answer('И тебе привет!')
+#     elif text in ['Пока', 'пока', 'До свидания']:
+#         await message.answer('И тебе пока!')
+#     else:
+#         await message.answer(message.text)
 
 
 
