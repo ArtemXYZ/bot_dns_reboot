@@ -19,7 +19,11 @@ from filters.chats_filters import ChatTypeFilter
 
 
 # Назначаем роутер для чата под розницу:
-supervisor_router = Router()
+oait_manager_router = Router()
+
+# фильтрует (пропускает) только личные сообщения и только определенных пользователей:
+oait_manager_router.edited_message.filter(ChatTypeFilter(['private']))
+oait_manager_router.edited_message.filter(ChatTypeFilter(['private']))
 
 # Фильтруем события на этом роутере:
 # supervisor_router.message.filter(ChatTypeFilter(['supervisor']))

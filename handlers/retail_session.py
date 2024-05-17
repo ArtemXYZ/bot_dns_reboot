@@ -20,13 +20,11 @@ from filters.chats_filters import ChatTypeFilter
 from menu import keyboard_menu  # Кнопки меню - клавиатура внизу
 from menu import inline_menu  # Кнопки встроенного меню - для сообщений
 
-
-
 # Назначаем роутер для чата под розницу:
 retail_router = Router()
 
 # Фильтруем события на этом роутере:
-# Тип чата может быть “приватным”, ”групповым“, ”супергрупповым“ или "каналом” - >
+# Тип чата может быть “приватным”, ”групповым“, ”супер групповым“ или "каналом” - >
 # ( “private”, “group”, “supergroup”, “channel”)
 retail_router.message.filter(ChatTypeFilter(['private']))
 retail_router.edited_message.filter(ChatTypeFilter(['private']))

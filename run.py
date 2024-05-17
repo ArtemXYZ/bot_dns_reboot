@@ -36,13 +36,10 @@ requests Helper Bot manager
 """
 
 # -------------------------------- Стандартные модули
-import os
 
 # -------------------------------- Сторонние библиотеки
-import asyncio
 
-from aiogram import Bot, Dispatcher, types, F
-from aiogram.filters import CommandStart, Command  # Фильтр только для старта
+from aiogram import Bot, Dispatcher, types
 from aiogram.client.default import DefaultBotProperties  # Обработка текста HTML разметкой
 # -------------------------------- Локальные модули
 from working_databases.configs import *
@@ -50,18 +47,9 @@ from working_databases.configs import *
 from dotenv import find_dotenv, load_dotenv  # Для переменных окружения
 load_dotenv(find_dotenv())  # Загружаем переменную окружения
 
-
-from working_databases.async_engine import *
 from working_databases.init_db import *
 
-
-from handlers.admin_session import admin_router
 from handlers.general_session import general_router
-from handlers.oait_manager_session import supervisor_router
-from handlers.retail_session import retail_router
-from handlers.private_session import private_router
-
-
 
 from menu.cmds_list_menu import default_menu  # Кнопки меню для всех типов чартов
 
@@ -70,7 +58,6 @@ from menu.cmds_list_menu import default_menu  # Кнопки меню для в�
 # phone_number_id = message.сontact.phone_number # достать номер телефона
 
 # ----------------------------------------------------------------------------------------------------------------------
-
 bot: Bot = Bot(token=os.getenv('API_TOKEN'), default=DefaultBotProperties(parse_mode='HTML'))  # Для переменных окружения
 
 #  К экземпляру бота добавляем свойства (списки с users_id под каждый тип сессии :
@@ -78,19 +65,21 @@ bot.retail_session_users_list = []
 bot.oait_session_users_list = []
 bot.oait_manager_session_users_list = []
 bot.admin_session_users_list = []
+
 # --------------------------------------------- Инициализация диспетчера событий
 # Принимает все события и отвечает за порядок их обработки в асинхронном режиме.
 dp = Dispatcher()
 
 # Назначаем роутеры:
-# dp.include_routers(general_router, admin_router, general_router, supervisor_router, retail_router, private_router) #
-#
-
+# dp.include_routers(general_router, admin_router, oait_manager_router, oait_router, retail_router) #
 
 #  Распределение роутеров - порядок записи имеет значение. не трогать! (3й урок)
-# # dp.include_router(retail_router)
-# dp.include_router(admin_router)
 dp.include_router(general_router)
+# dp.include_router(admin_router)
+dp.include_router(retail_router)
+
+dp.include_router(oait_manager_router)
+
 
 
 

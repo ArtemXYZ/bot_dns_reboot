@@ -36,10 +36,9 @@ from working_databases.configs import *
 # Назначаем роутер для всех типов чартов:
 general_router = Router()
 
-
 # фильтрует (пропускает) только личные сообщения и только определенных пользователей:
-general_router.edited_message.filter(ChatTypeFilter(['privat']))
-
+general_router.edited_message.filter(ChatTypeFilter(['private']))
+general_router.edited_message.filter(ChatTypeFilter(['private']))
 # ----------------------------------------------------------------------------------------------------------------------
 # Вспомогательная функция проверки регистрации:
 async def chek_registration(message: types.Message):
