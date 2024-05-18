@@ -4,3 +4,4 @@ config_bot.py
 .venv/*.*
 /.idea/inspectionProfiles/profiles_settings.xml
 /local_base.db
+.idea/inspectionProfiles/profiles_settings.xml
