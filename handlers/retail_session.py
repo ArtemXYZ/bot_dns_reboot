@@ -57,90 +57,157 @@ REQUEST_PROBLEM = get_keyboard(
 )
 
 
-# Код ниже для машины состояний (FSM)
+# ---------------------------------- Код ниже для машины состояний (FSM)
 class AddRequests(StatesGroup):
-    # Шаги состояний
+    """Шаги состояний для обращений"""
     request_message = State()
     # documents = State()
 
 
-texts = {
-    'AddRequests:request_message': 'Введите текст обращения заново:'
-    # + ЕЩЕ
-}
+#
+# texts = {
+#     'AddRequests:request_message': 'Введите текст обращения заново:'
+#     # + ЕЩЕ
+# }
+
+class Instructor(StatesGroup):
+    """Шаги состояний для кнопки инструктаж:"""
+    # Шаги состояний
+    instruction = State()
+
+
+class CetCategory(StatesGroup):
+    """
+    Шаги выбора категории.
+    Выбираем сначала родительскую категорию - содержит в себе подкатегории, после подкатегорию.
+    """
+    category = State()
+    sab_category = State()
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 # 0. Первичное приветствие всех пользователей при старте.
 # @retail_router.callback_query(callback.data == 'next')   # Просле аутентификации нажимает кнопку продолжить...
 # async def hello_after_on_next(callback: types.CallbackQuery): # todo потом переделать на келбек квери
-@retail_router.message(F.text == 'next')  # todo потом переделать на келбек квери
-async def hello_after_on_next(message: types.Message):
+@retail_router.message(StateFilter(None), F.text == 'next')  # todo потом переделать на келбек квери
+async def hello_after_on_next(message: types.Message, state: FSMContext):
     user = message.from_user.first_name  # Имя пользователя
+    await message.answer((hello_users_retail.format(user)),
+                         parse_mode='HTML',
+                         reply_markup=RETAIL_KEYB_MAIN)
 
-    # await callback.answer() # для сервера ответ
-    await message.answer((hello_users_retail.format(user)), parse_mode='HTML')  # .as_html()
+    await asyncio.sleep(1)
+    await message.answer(f'\u00A0\u00A0\u00A0\u00A0Если хочешь, я кратко расскажу, как со мной работать, '
+                         f'а после уже помогу в решении твоих вопросов, ну или '
+                         f'можешь приступать самостоятельно!',
+                         parse_mode='HTML',
+                         reply_markup=inline_menu.get_callback_btns(
+                             btns={'▶️ КРАТКИЙ ИНСТРУКТАЖ': 'instruction',
+                                   }
+                             # sizes=(1)
+                         ))
+    # Встает в ожидании нажатия кнопки
+    await state.set_state(Instructor.instruction)
 
-    await asyncio.sleep(10)
-    await message.answer(f'Давай, я кратко расскажу, как со мной работать, '
-                         f'а после уже помогу в решении твоих вопросов!')
+
+# Разблокировать для другого меню
+@retail_router.message(StateFilter(Instructor.instruction),
+                       F.text.in_({'Создать заявку', 'Изменить заявку', 'Удалить заявку', 'Запросить статус заявки',
+                                   'Перейти в чат с исполнителем'}))
+
+async def unblocking(message: types.Message, state: FSMContext):
+    # Очистка состояния пользователя:
+    await state.clear()
+
+
+# Если что то напишет левое в чат, то удалим
+@retail_router.message(StateFilter(Instructor.instruction))
+async def filter_tunresolved_ext(message: types.Message, state: FSMContext):
+    # удалит сообщение (блокирует все сообщения, кроме нажатия кнопки инструктаж, остальные кнопки тоже)
+    await message.delete()
+
+
+# 0.1. Инструктаж - ответ на кнопку:
+@retail_router.callback_query(StateFilter(Instructor.instruction), F.data.startswith('instruction'))
+# Если у пользователя нет активного состояния (StateFilter(None) + он ввел команду "instruction")
+async def get_instruction(callback: types.CallbackQuery, state: FSMContext):
+    await callback.answer()  # Для сервера ответ о нажатии кнопки (кнопка не будет перливаться в ожидании).
+
+    await callback.message.answer(f'Думаю, ты заметил специальное меню внизу экрана.\n'
+                                  f'С помощью него ты сможешь взаимодействовать с моим функционалом.')
+
+    await asyncio.sleep(2)
+    await callback.message.answer(f'Для того, чтобы обратиться в ОАиТ за помощью в решении проблем '
+                                  f'и прочих рабочих моментов, необходимо нажать кнопку в меню:\n'
+                                  f'<b> * Создать заявку *</b>.')
 
     await asyncio.sleep(4)
-    await message.answer(f'Я сейчас включил специальное меню внизу экрана.\n'
-                         f'С помощью него ты сможешь взаимодействовать с моим функционалом.'
-                         , reply_markup=RETAIL_KEYB_MAIN)
-
-    await asyncio.sleep(6)
-    await message.answer(f'Для того, чтобы обратиться в ОАиТ за помощью в решении проблем '
-                         f'и прочих рабочих моментов, необходимо нажать кнопку в меню:\n'
-                         f'<b> * Создать заявку *</b>.')
-
-    await asyncio.sleep(4)
-    await message.answer(f'Далеее, необходимо будет выбрать: <b> * Категория заявки *</b> \n'
-                         f', чтобы я точно понял, кому из сотрудников направить твою <b>боль</b>,\n')
-
-    await asyncio.sleep(4)
-    await message.answer(f'В дальнейшем, я всегда буду подсказывать по ходу твоих действий, так что не запутаешься!')
+    await callback.message.answer(f'Далеее, необходимо будет выбрать: <b> * Категория заявки *</b> \n'
+                                  f', чтобы я точно понял, кому из сотрудников направить твою <b>боль</b>,\n')
 
     await asyncio.sleep(3)
-    await message.answer(f'Но если вдруг у тебя возникнут какие то проблемы или вопросы по работе со мной, '
-                         f'всегда можно обратиться за помощью, нажав кнопку "Меню", '
-                         f'далее команду <i>help</i>')
+    await callback.message.answer(
+        f'В дальнейшем, я всегда буду подсказывать по ходу твоих действий, так что не запутаешься!')
+
+    await asyncio.sleep(2)
+    await callback.message.answer(f'Но если вдруг у тебя возникнут какие то проблемы или вопросы по работе со мной, '
+                                  f'всегда можно обратиться за помощью, нажав кнопку "Меню", '
+                                  f'далее команду <i>help</i>')
 
     await asyncio.sleep(4)
-    await message.answer(f'Надеюсь, теперь ты разобрался и можем приступать к работе!')
+    await callback.message.answer(f'Надеюсь, теперь ты разобрался и можем приступать к работе!')
 
-    await asyncio.sleep(5)
-    await message.answer(f'Если что, - я готов! Жалуйся ✍️ !')
+    await asyncio.sleep(3)
+    await callback.message.answer(f'Если что, - я готов! Жалуйся ✍️ !')
+
+    # Очистка состояния пользователя:
+    await state.clear()
+
+    # # todo замутить удаление всех сообщений с меню
 
 
-# ----------------------------------------------------
+# ------------------------ Вывод инлайнового меню (категории обращений), реакция при создании заявки
 # 1. первая кнопка в меню: сценарий 1)
-@retail_router.message(F.text == 'Создать заявку')
-async def get_request_problem(message: types.Message):
+
+@retail_router.message(StateFilter(None), F.text == 'Создать заявку')
+async def get_request_problem(message: types.Message, state: FSMContext):
     # удалит сообщение 'Создать заявку' - отправляется в чат после нажатия клавиатуры (не изменяемое поведение)
     await message.delete()
 
     # Заменяет старое меню на новое
-    await message.answer(f'Задачу понял!', reply_markup=REQUEST_PROBLEM)
+    # await message.answer(f'Задачу понял!', reply_markup=REQUEST_PROBLEM)
+
+    # await message.answer(f'Задачу понял!', reply_markup=types.ReplyKeyboardRemove())  # удаляет клаву
+    # todo удаляем полностью клаву! Оставить только инлайн меню.
 
     await asyncio.sleep(1)
     await message.answer(f'Выберите категорию обращения',
                          reply_markup=inline_menu.get_callback_btns(
                              btns={'АНАЛИТИКА': 'analytics',
                                    'ФОРМАТЫ': 'formats',
-                                   'ТОВАРООБОРОТ': 'trade _turnover'},
+                                   'ТОВАРООБОРОТ': 'trade _turnover',
+                                   'ОТМЕНА': 'cancel'},
                              sizes=(1, 1, 1)
                          )
                          )
 
+    # Встает в ожидании нажатия инлайновой кнопки-меню категорий:
+    await state.set_state(CetCategory.category)
 
-# ---------------------------- Келбек квери:
 
+@retail_router.callback_query(StateFilter(None), F.data.startswith('cancel'))
+# Если у пользователя нет активного состояния (StateFilter(None) + он ввел команду "cancel")
+async def get_cancel(callback: types.CallbackQuery, state: FSMContext):
+    await callback.answer()  #
+    await callback.message.answer('Ушли назад. доделай нормальное инлайновое меню!!!')
+    # await state.set_state(AddRequests.request_message)
+
+
+# ---------------------------------------- Инлайновое меню на категории обращений:
 @retail_router.callback_query(StateFilter(None), F.data.startswith('analytics'))
 # Если у пользователя нет активного состояния (StateFilter(None) + он ввел команду "analytics")
 async def add_request_message(callback: types.CallbackQuery, state: FSMContext):
-    await callback.answer() #?
+    await callback.answer()  # ?
     await callback.message.answer('Введите текст обращения', reply_markup=types.ReplyKeyboardRemove())
     await state.set_state(AddRequests.request_message)
     # todo замутить удаление всех сообщений с меню
@@ -154,9 +221,10 @@ async def get_request_message(message: types.Message, state: FSMContext):
     # Передам словарь с данными ( ключ = request_message, к нему присваиваем данные message.text), после апдейтим
     await state.update_data(request_message=message.text)
 
-    await message.answer('Обращение отправлено. Ожидайте ответа. \n'
-                         'Я направлю уведомление, как только обращение будет взято в работу.'
-                         , reply_markup=RETAIL_KEYB_MAIN)
+    await message.answer(f'Обращение отправлено, ожидайте ответа!', reply_markup=RETAIL_KEYB_MAIN)
+
+    await asyncio.sleep(1)
+    await message.answer(f'Я направлю уведомление, как только обращение будет взято в работу.')
 
     # Формируем полученные данные:
     data = await state.get_data()
@@ -166,10 +234,6 @@ async def get_request_message(message: types.Message, state: FSMContext):
 
     # Очистка состояния пользователя:
     await state.clear()
-
-
-
-
 
 
 # ---------------------------- Нижняя сопутствующая клавиатура кнопке "Создать заявку":
