@@ -140,7 +140,7 @@ async def get_request_problem(message: types.Message):
 @retail_router.callback_query(StateFilter(None), F.data.startswith('analytics'))
 # Если у пользователя нет активного состояния (StateFilter(None) + он ввел команду "analytics")
 async def add_request_message(callback: types.CallbackQuery, state: FSMContext):
-    await callback.answer()
+    await callback.answer() #?
     await callback.message.answer('Введите текст обращения', reply_markup=types.ReplyKeyboardRemove())
     await state.set_state(AddRequests.request_message)
     # todo замутить удаление всех сообщений с меню
@@ -148,7 +148,7 @@ async def add_request_message(callback: types.CallbackQuery, state: FSMContext):
 
 # Становимся в состояние ожидания ввода
 # Пользователь ввел текст
-@retail_router.callback_query(AddRequests.request_message, F.text)
+@retail_router.message(StateFilter(AddRequests.request_message), F.text)
 # Если ввел текст обращения (AddRequests.request_message, F.text):
 async def get_request_message(message: types.Message, state: FSMContext):
     # Передам словарь с данными ( ключ = request_message, к нему присваиваем данные message.text), после апдейтим
@@ -161,8 +161,8 @@ async def get_request_message(message: types.Message, state: FSMContext):
     # Формируем полученные данные:
     data = await state.get_data()
 
-    # Отправка для наглядности записанного сообщения:
-    await message.answer(text=f'Ваша жалоба: {str(data)}')
+    # Отправка для наглядности записанного сообщения: text=f'Ваша жалоба: {str(data)}'
+    await message.answer(f'Ваша жалоба: {data.get("request_message")}')
 
     # Очистка состояния пользователя:
     await state.clear()
