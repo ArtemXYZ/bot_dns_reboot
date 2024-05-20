@@ -202,12 +202,13 @@ async def get_request_problem(message: types.Message, state: FSMContext):
                          )
                          )
     # Очистка состояния пользователя: ??
-    await state.clear()
+    # await state.clear()
 
-    # Встает в ожидании нажатия инлайновой кнопки-меню категорий:
-    await state.set_state(CetCategory.category)
+#
+#
+#
 
-
+# # # # 1.1.0 Родитель (Ветка при создании заявки) -> Реакции на нажатие кнопок инлайнового меню на категории обращений:
 @retail_router.callback_query(StateFilter(None), F.data.startswith('cancel'))
 # Если у пользователя нет активного состояния (StateFilter(None) + он ввел команду "cancel")
 async def get_cancel(callback: types.CallbackQuery, state: FSMContext):
@@ -216,7 +217,8 @@ async def get_cancel(callback: types.CallbackQuery, state: FSMContext):
     # await state.set_state(AddRequests.request_message)
 
 
-# ---------------------------------------- Инлайновое меню на категории обращений:
+
+
 @retail_router.callback_query(StateFilter(None), F.data.startswith('analytics'))
 # Если у пользователя нет активного состояния (StateFilter(None) + он ввел команду "analytics")
 async def add_request_message(callback: types.CallbackQuery, state: FSMContext):
@@ -230,9 +232,14 @@ async def add_request_message(callback: types.CallbackQuery, state: FSMContext):
 # Пользователь ввел текст
 @retail_router.message(StateFilter(AddRequests.request_message), F.text)
 # Если ввел текст обращения (AddRequests.request_message, F.text):
-async def get_request_message(message: types.Message, state: FSMContext):
+async def get_request_message(message: types.Message, state: FSMContext, session: AsyncSession):
     # Передам словарь с данными ( ключ = request_message, к нему присваиваем данные message.text), после апдейтим
     await state.update_data(request_message=message.text)
+
+    data = await state.get_data()
+
+    session.add(Requests(request_message=data['request_message'], tg_id=message.from_user.id))
+    await session.commit()
 
     await message.answer(f'Обращение отправлено, ожидайте ответа!', reply_markup=RETAIL_KEYB_MAIN)
 

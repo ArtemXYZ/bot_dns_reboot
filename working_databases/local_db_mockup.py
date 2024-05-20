@@ -40,7 +40,7 @@ class Users(Base):
     # # id сотрудника в 1С и первичный ключ в этой таблице.
     # code: Mapped[str] = mapped_column(String(50), unique=True)
     session_type_id: Mapped[int] = mapped_column(nullable=True, server_default='None') #  ????? подзапрос в скл или в пайтоне??
-    #  session_type_id: 0 - ретейл, 1 - Оаит, 2 - 
+    #  session_type_id: 0 - ретейл, 1 - Оаит, 2 -
 
     full_name: Mapped[str] = mapped_column(String(100), nullable=False)  # ФИО сотрудника
 
@@ -78,9 +78,9 @@ class Requests(Base):
     # ответственное лицо - user_id(tg_id) может быть пусто = 0,значит не назначен ответственный (переназначен).
     responsible_person_id: Mapped[int] = mapped_column(nullable=True, server_default='0')
     #  Текст обращения (problem)
-    request_message: Mapped[str] = mapped_column(Text())
+    request_message: Mapped[str] = mapped_column(Text(), nullable=True)
     # Прикрепленные документы любого типа:
-    documents: Mapped[bytes] = mapped_column() # LargeBinary
+    documents: Mapped[bytes] = mapped_column(nullable=True) # LargeBinary
     # В работе ли заявка at work _complete статус запроса (insert, in_work, done complete (, onupdate='insert') )
     request_status: Mapped[str] = mapped_column(String(150), server_default='insert')
 
@@ -110,10 +110,10 @@ class Discussion(Base):
     #  Текст обращения (problem)
     request_message: Mapped[str] = mapped_column(Text())
     # Прикрепленные документы любого типа.
-    documents: Mapped[bytes] = mapped_column()
+    documents: Mapped[bytes] = mapped_column(nullable=True)
 
     # Отношение "многие ко одному" с Users
-    one_requests_to: Mapped['Requests'] = relationship("Users", back_populates="many_discussion_to")
+    one_requests_to: Mapped['Requests'] = relationship("Requests", back_populates="many_discussion_to")
 
     # дата создания и обновления будут наследоваться автоматически.
 

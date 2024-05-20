@@ -47,10 +47,11 @@ async def get_async_engine(ANY_CONFIG: dict | URL | str) -> object:
     return async_engine
     # return create_async_engine(url_string)
 
+
 # Асинхронная сессия:
 async def get_async_sessionmaker(ANY_CONFIG: dict | URL | str):
-    session_maker = async_sessionmaker(bind=get_async_engine(ANY_CONFIG),
-                                             class_=AsyncSession, expire_on_commit=False) # await ?
+    engine = await get_async_engine(ANY_CONFIG)
+    session_maker = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False) # await ?
     return session_maker
 
 
