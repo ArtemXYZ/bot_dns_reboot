@@ -26,6 +26,9 @@ from aiogram.filters import Filter
 from aiogram import types, Bot
 from sqlalchemy.orm import DeclarativeBase
 
+from sqlalchemy.ext.asyncio.engine import AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from working_databases.local_db_mockup import *
 
 admins_list = []
@@ -87,7 +90,35 @@ class UsersAdminSession(Filter):
         return message.from_user.id in bot.admin_session_users_list
 
 
+# class UsersAdminSession_(Filter):
+#     """Для фильтрации админов"""
+#     def __init__(self, mockup_class, session, engine_obj: AsyncEngine) -> None:
+#         self.mockup_class = mockup_class
+#         self.session = session
+#         self.engine_obj = engine_obj
+#     def ff(self, mockup_class, session):
+#         # SQL = text(
+#         #     f"SELECT {tb_name}.{columns_search} FROM {tb_name} "
+#         #     f"WHERE {tb_name}.{where_columns_name} = '{where_columns_value}'")
+#         # {schema_and_table} WHERE {where_columns_name} = {where_columns_value} # - Работает
+#
+#         async with engine_obj.connect() as async_connection:  # todo здесь может быть проблема с connect()
+#             # connection
+#             result_temp = await async_connection.execute(SQL)
+#
+#             # async_connection.close() - не нужно
+#             # await async_connection.dispose()
+#             # async_connection.commit()
+#             # async_connection = async_engine.connect() - можно так (вроде то же самое, но без ролбека транзакций)
+            # connect() в этом методе явно надо прописывать комит, а в аналогичной begin - есть автокомит.
 
+        # Выдает в текстовом формате (не точно)
+        result = result_temp.scalar()
+
+    # Проверяем входной id с id в retail_session_users_list = []
+    # лист наполняется из базы данных по типу разрешенной сессии для пользователя.:
+    async def __call__(self, message: types.Message, bot: Bot) -> bool:
+        return message.from_user.id in bot.admin_session_users_list
 
 
 

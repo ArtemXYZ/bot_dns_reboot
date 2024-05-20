@@ -40,6 +40,7 @@ class Users(Base):
     # # id сотрудника в 1С и первичный ключ в этой таблице.
     # code: Mapped[str] = mapped_column(String(50), unique=True)
     session_type_id: Mapped[int] = mapped_column(nullable=True, server_default='None') #  ????? подзапрос в скл или в пайтоне??
+    #  session_type_id: 0 - ретейл, 1 - Оаит, 2 - 
 
     full_name: Mapped[str] = mapped_column(String(100), nullable=False)  # ФИО сотрудника
 

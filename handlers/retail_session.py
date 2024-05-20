@@ -71,10 +71,10 @@ class AddRequests(StatesGroup):
 # }
 
 class Instructor(StatesGroup):
-    """Шаги состояний для кнопки инструктаж:"""
-    # Шаги состояний
-    instruction = State()
-    go_work = State()
+    """Шаги состояний для кнопок инструктаж и приступить к работе:"""
+    # Шаги состояний:
+    instruct_or_gowork = State()
+
 
 
 class CetCategory(StatesGroup):
@@ -87,8 +87,8 @@ class CetCategory(StatesGroup):
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-# 0. Первичное приветствие всех пользователей при старте.
-# @retail_router.callback_query(callback.data == 'next')   # Просле аутентификации нажимает кнопку продолжить...
+# ----------------------------- 0. Первичное приветствие всех пользователей при старте.
+# @retail_router.callback_query(callback.data == 'next')   # После аутентификации нажимает кнопку продолжить...
 # async def hello_after_on_next(callback: types.CallbackQuery): # todo потом переделать на келбек квери
 @retail_router.message(StateFilter(None), F.text == 'next')  # todo потом переделать на келбек квери
 async def hello_after_on_next(message: types.Message, state: FSMContext):
@@ -108,25 +108,22 @@ async def hello_after_on_next(message: types.Message, state: FSMContext):
                              sizes=(1, 1)
                          ))
     # Встает в ожидании нажатия кнопки
-    # await state.set_state(Instructor.instruction)
-    # await state.set_state(Instructor.go_work)
+    await state.set_state(Instructor.instruct_or_gowork)
 
-    await state.set_state(Instructor)
-
-# Если что то напишет левое в чат, то удалим
-@retail_router.message(StateFilter(Instructor.instruction))
-async def filter_tunresolved_ext(message: types.Message, state: FSMContext):
-    # удалит сообщение (блокирует все сообщения, кроме нажатия кнопки инструктаж, остальные кнопки тоже)
+# Фильтруем все, кроме события нажатия 2-х кнопок (Если что-то напишет левое в чат, то удалим)
+@retail_router.message(StateFilter(Instructor.instruct_or_gowork))
+async def filter_unresolved_ext(message: types.Message, state: FSMContext):
+    # удалит сообщение (блокирует все сообщения)
     # if not message.text in {'Создать заявку', 'Изменить заявку',
     #                          'Удалить заявку', 'Запросить статус заявки', 'Перейти в чат с исполнителем'}:
     await message.delete()
+# ----------------------------- Конец 0.
 
-
-# 0.1. Если нажали кнопку "Инструктаж" - ответ на кнопку:
-@retail_router.callback_query(StateFilter(Instructor.instruction), F.data.startswith('instruction'))
+# ----------------------------- 0.1. Если нажали кнопку "Инструктаж" - ответ на кнопку:
+@retail_router.callback_query(StateFilter(Instructor.instruct_or_gowork), F.data.startswith('instruction'))
 # Если у пользователя нет активного состояния (StateFilter(None) + он ввел команду "instruction")
 async def get_instruction(callback: types.CallbackQuery, state: FSMContext):
-    await callback.answer()  # Для сервера ответ о нажатии кнопки (кнопка не будет перливаться в ожидании).
+    await callback.answer()  # Для сервера ответ о нажатии кнопки (кнопка не будет переливаться в ожидании).
 
     await callback.message.answer(f'Сейчас я включу специальное меню внизу экрана.\n'
                                   f'С помощью него ты сможешь взаимодействовать с моим функционалом.')
@@ -138,7 +135,7 @@ async def get_instruction(callback: types.CallbackQuery, state: FSMContext):
                                   reply_markup=RETAIL_KEYB_MAIN)
 
     await asyncio.sleep(2)
-    await callback.message.answer(f'Далеее, необходимо будет выбрать: <b> * Категория заявки *</b> \n'
+    await callback.message.answer(f'Далее, необходимо будет выбрать: <b> * Категория заявки *</b> \n'
                                   f', чтобы я точно понял, кому из сотрудников направить твою <b>боль</b>,\n')
 
     await asyncio.sleep(2)
@@ -163,28 +160,26 @@ async def get_instruction(callback: types.CallbackQuery, state: FSMContext):
 
 
 # 0.2. Если нажали кнопку "ПРИСТУПИТЬ К РАБОТЕ" - ответ на кнопку:
-@retail_router.callback_query(StateFilter(Instructor.go_work), F.data.startswith('go_work'))
+@retail_router.callback_query(StateFilter(Instructor.instruct_or_gowork), F.data.startswith('go_work'))
 async def get_instruction(callback: types.CallbackQuery, state: FSMContext):
-    await callback.answer()  # Для сервера ответ о нажатии кнопки (кнопка не будет перливаться в ожидании).
+    await callback.answer()  # Для сервера ответ о нажатии кнопки (кнопка не будет переливаться в ожидании).
 
-    # Очистка состояния пользователя:
-    await state.clear()
 
-    await callback.message.answer(f'Вот тебе рабочий иструмент (меню внизу 👇 экрана), думаю разберешься 😉.',
+
+    await callback.message.answer(f'Вот тебе рабочий инструмент (меню внизу 👇 экрана), думаю разберешься 😉.',
                                   reply_markup=RETAIL_KEYB_MAIN)
 
-
-
-
-
-
-# ------------------------ Вывод инлайнового меню (категории обращений), реакция при создании заявки
-# 1. первая кнопка в меню: сценарий 1)
-
-@retail_router.message(StateFilter(Instructor.instruction), F.text == 'Создать заявку')
-async def get_request_problem(message: types.Message, state: FSMContext):
     # Очистка состояния пользователя:
     await state.clear()
+# ----------------------------- Конец 0.1/2
+
+#
+#
+
+# ----------------------------- 1.0. Работа с нижней клавиатурой меню.
+# -------------- 1.1. Ветка при создании заявки:
+@retail_router.message(StateFilter(None), F.text == 'Создать заявку')
+async def get_request_problem(message: types.Message, state: FSMContext):
 
     # удалит сообщение 'Создать заявку' - отправляется в чат после нажатия клавиатуры (не изменяемое поведение)
     await message.delete()
@@ -195,6 +190,7 @@ async def get_request_problem(message: types.Message, state: FSMContext):
     # await message.answer(f'Задачу понял!', reply_markup=types.ReplyKeyboardRemove())  # удаляет клаву
     # todo удаляем полностью клаву! Оставить только инлайн меню.
 
+    # Вывод инлайнового меню (категории обращений), реакция при создании заявки
     await asyncio.sleep(1)
     await message.answer(f'Выберите категорию обращения',
                          reply_markup=inline_menu.get_callback_btns(
@@ -205,6 +201,8 @@ async def get_request_problem(message: types.Message, state: FSMContext):
                              sizes=(1, 1, 1)
                          )
                          )
+    # Очистка состояния пользователя: ??
+    await state.clear()
 
     # Встает в ожидании нажатия инлайновой кнопки-меню категорий:
     await state.set_state(CetCategory.category)
@@ -250,22 +248,64 @@ async def get_request_message(message: types.Message, state: FSMContext):
     # Очистка состояния пользователя:
     await state.clear()
 
-
-# ---------------------------- Нижняя сопутствующая клавиатура кнопке "Создать заявку":
+# -------------- 1.2. Ветка при отмене заявки:
 # back_step
-@retail_router.message(F.text == 'Отменить заявку')
+@retail_router.message(StateFilter(None), F.text == 'Отменить заявку')
 async def get_back_request(message: types.Message):
     await message.delete()
 
     # Заменяет старое меню на новое
     await message.answer(f'Ок!', reply_markup=RETAIL_KEYB_MAIN)
 
-
-@retail_router.message(F.text == 'Показать справку по категориям')
-async def get_info_category(message: types.Message):
+# -------------- 1.3. Ветка при изменеии заявки:
+@retail_router.message(StateFilter(None), F.text == 'Изменить заявку')
+async def get_change_request(message: types.Message):
     await message.delete()
+    #
+    await message.answer(f'Эта функция еще в разработке! \n'
+                         f'Что будет? Запрос в локал бд - найти заяки по айди пользователя'
+                         f'Выдать список заявок и тд. -> (продумать логику) ')
 
-    await message.answer(category_problem, parse_mode='HTML')
+
+# -------------- 1.4. Ветка при удалении заявки:
+@retail_router.message(StateFilter(None), F.text == 'Удалить заявку')
+async def get_change_request(message: types.Message):
+    await message.delete()
+    #
+    await message.answer(f'Эта функция еще в разработке! \n'
+                         f'Что будет? Запрос в локал бд - найти заяки по айди пользователя'
+                         f'Выдать список заявок и тд. -> (продумать логику) ')
+
+# -------------- 1.5. Ветка при удалении заявки:
+@retail_router.message(StateFilter(None), F.text == 'Запросить статус заявки')
+async def get_status_request(message: types.Message):
+    await message.delete()
+    #
+    await message.answer(f'Эта функция еще в разработке! \n'
+                         f'Что будет? Запрос в локал бд - найти заяки по айди пользователя'
+                         f'Выдать список заявок и тд. -> (продумать логику) ')
+
+# -------------- 1.6. Ветка при удалении заявки:
+@retail_router.message(StateFilter(None), F.text == 'Перейти в чат с исполнителем')
+async def get_chat_with_worker(message: types.Message):
+    await message.delete()
+    #
+    await message.answer(f'Эта функция еще в разработке! \n'
+                         f'Что будет? Запрос в локал бд - найти активные заяки по айди пользователя'
+                         f'Выдать список заявок и тд. -> (продумать логику) ')
+# ----------------------------- Конец 1.0. Работа с нижней клавиатурой меню.
+
+
+
+
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# @retail_router.message(F.text == 'Показать справку по категориям')
+# async def get_info_category(message: types.Message):
+#     await message.delete()
+#
+#     await message.answer(category_problem, parse_mode='HTML')
 
 # ---------------------------- Нижняя сопутствующая клавиатура кнопке "Создать заявку" конец:
 
