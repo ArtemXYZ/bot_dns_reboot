@@ -235,19 +235,22 @@ async def add_request_message(callback: types.CallbackQuery, state: FSMContext):
 async def get_request_message(message: types.Message, state: FSMContext, session: AsyncSession):
     # Передам словарь с данными ( ключ = request_message, к нему присваиваем данные message.text), после апдейтим
     await state.update_data(request_message=message.text)
+    # await state.update_data(tg_id=message.from_user.id)
 
+    # Формируем полученные данные:
     data = await state.get_data()
-
-    session.add(Requests(request_message=data['request_message'], tg_id=message.from_user.id))
-    await session.commit()
+    print(data)
+    tg_id = message.from_user.id
+    print(tg_id)
+    # Запрос в БД на добавление обращения:
+    # session.add(Requests(request_message=data['request_message'], tg_id=message.from_user.id))
+    # await session.commit()
+    await add_request_message(session, data)
 
     await message.answer(f'Обращение отправлено, ожидайте ответа!', reply_markup=RETAIL_KEYB_MAIN)
 
     await asyncio.sleep(1)
     await message.answer(f'Я направлю уведомление, как только обращение будет взято в работу.')
-
-    # Формируем полученные данные:
-    data = await state.get_data()
 
     # Отправка для наглядности записанного сообщения: text=f'Ваша жалоба: {str(data)}'
     await message.answer(f'Ваша жалоба: {data.get("request_message")}')

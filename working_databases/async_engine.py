@@ -41,7 +41,7 @@ async def get_async_engine(ANY_CONFIG: dict | URL | str) -> object:
         url_string = None
 
     # 2. Создаем переменную асинхронного подключения к БД.
-    async_engine = create_async_engine(url_string)
+    async_engine = create_async_engine(url_string, echo=True)
     # , echo=True - работает,  poolclass=AsyncAdaptedQueuePool, future=True - ?
     # connection = async_engine.connect()
     return async_engine
@@ -51,7 +51,7 @@ async def get_async_engine(ANY_CONFIG: dict | URL | str) -> object:
 # Асинхронная сессия:
 async def get_async_sessionmaker(ANY_CONFIG: dict | URL | str):
     engine = await get_async_engine(ANY_CONFIG)
-    session_maker = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False) # await ?
+    session_maker = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False) #
     return session_maker
 
 
