@@ -194,7 +194,7 @@ async def get_request_problem(message: types.Message, state: FSMContext):
     await asyncio.sleep(1)
     await message.answer(f'Выберите категорию обращения',
                          reply_markup=inline_menu.get_callback_btns(
-                             btns={'АНАЛИТИКА': 'analytics',
+                             btns={'ПРОБЛЕМЫ С АВТОМАТОМ РАСПРЕДЕЛЕНИЯ, НЕ ЕДЕТ ТОВАР': 'analytics',
                                    'ФОРМАТЫ': 'formats',
                                    'ТОВАРООБОРОТ': 'trade _turnover',
                                    'ОТМЕНА': 'cancel'},
@@ -301,6 +301,8 @@ async def get_chat_with_worker(message: types.Message):
     await message.answer(f'Эта функция еще в разработке! \n'
                          f'Что будет? Запрос в локал бд - найти активные заяки по айди пользователя'
                          f'Выдать список заявок и тд. -> (продумать логику) ')
+    await message.answer(category_problem, parse_mode='HTML') # !!
+
 # ----------------------------- Конец 1.0. Работа с нижней клавиатурой меню.
 
 

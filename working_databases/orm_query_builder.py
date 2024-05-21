@@ -35,18 +35,20 @@ async def add_request_message(message: types.Message, session: AsyncSession, dat
     #  Формируем набор данных для вставки:
     id_tg: int = message.from_user.id
     request_data_set = Requests(request_message=data['request_message'], tg_id=id_tg)
-    check_id = check_id_tg_in_users(session, id_tg)
+    session.add(request_data_set)
+    await session.commit()
+    # check_id = check_id_tg_in_users(session, id_tg)
 
-    # 1. select in db id_tg (проверка есть ли такой или нет):
-    if check_id is not None:
-
-        # 2. ---- если есть, то добавляем в базу
-        #  Формируем запрос:
-        session.add(request_data_set)
-        # Сохраняем и закрываем соединение:
-        await session.commit()
-    else:
-        pass
-        # отправить обновить базу данных
+    # # 1. select in db id_tg (проверка есть ли такой или нет):
+    # if check_id is not None:
+    #
+    #     # 2. ---- если есть, то добавляем в базу
+    #     #  Формируем запрос:
+    #     session.add(request_data_set)
+    #     # Сохраняем и закрываем соединение:
+    #     await session.commit()
+    # else:
+    #     pass
+    #     # отправить обновить базу данных
 
 

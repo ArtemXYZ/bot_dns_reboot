@@ -38,9 +38,10 @@ class Users(Base):
     # телеграмм id
     id_tg: Mapped[int] = mapped_column(primary_key=True, nullable=False, index=True, unique=True)  # Pk
     # # id сотрудника в 1С и первичный ключ в этой таблице.
-    # code: Mapped[str] = mapped_column(String(50), unique=True)
-    session_type_id: Mapped[int] = mapped_column(nullable=True, server_default='None') #  ????? подзапрос в скл или в пайтоне??
+    code: Mapped[str] = mapped_column(String(50), unique=True)
+    # session_type_id: Mapped[int] = mapped_column(nullable=True, server_default='None')
     #  session_type_id: 0 - ретейл, 1 - Оаит, 2 -
+    session_type: Mapped[str] = mapped_column(String(100), nullable=False) # подзапрос в SQL CASE !
 
     full_name: Mapped[str] = mapped_column(String(100), nullable=False)  # ФИО сотрудника
 
@@ -54,8 +55,10 @@ class Users(Base):
 
     user_mail: Mapped[str] = mapped_column(String(100), nullable=True)
 
+    is_deleted: Mapped[bool] = mapped_column(nullable=True) # в базе есть пустые значения, по этому True
+
     # статус сотрудника (занят ли или свободен) продумать насчет тех кто в отпуске # free = True, job = False
-    employee_status: Mapped[bool] = mapped_column(nullable=False, server_default='True')  # activity
+    employee_status: Mapped[bool] = mapped_column(nullable=True)  # activity , server_default='Null'
 
     # Отношение "один ко многим" с Request
     many_requests_to: Mapped[list['Requests']] = relationship(back_populates='one_user_to')
@@ -84,12 +87,12 @@ class Requests(Base):
 
     #  ---------------------------- Идентификаторы
     # Категория обращения "Главная" (в какой отдел распределять)
-    category_id: Mapped[int] = mapped_column(nullable=False, index=True)
-    name_category: Mapped[str] = mapped_column(String(50),nullable=False)
-
-    # Подкатегория обращения (по какому виду деятельности распределять)
-    sabcategory_id: Mapped[int] = mapped_column(nullable=False, index=True)
-    name_sabcategory: Mapped[str] = mapped_column(String(50),nullable=False)
+    # category_id: Mapped[int] = mapped_column(nullable=False, index=True)
+    # name_category: Mapped[str] = mapped_column(String(50),nullable=False)
+    #
+    # # Подкатегория обращения (по какому виду деятельности распределять)
+    # sabcategory_id: Mapped[int] = mapped_column(nullable=False, index=True)
+    # name_sabcategory: Mapped[str] = mapped_column(String(50),nullable=False)
     #  ---------------------------- Идентификаторы
 
     # В работе ли заявка: "at_work" , "complete" - статус запроса (insert, in_work, done или complete (, onupdate='insert') )

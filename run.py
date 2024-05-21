@@ -83,8 +83,8 @@ from menu.cmds_list_menu import default_menu  # Кнопки меню для в�
 bot: Bot = Bot(token=os.getenv('API_TOKEN'), default=DefaultBotProperties(parse_mode='HTML'))  # Для переменных окружения
 
 #  К экземпляру бота добавляем свойства (списки с users_id под каждый тип сессии :
-bot.retail_session_users_list = [1034809823]
-bot.oait_session_users_list = [1034809823]
+bot.retail_session_users_list = [1034809823, 141407179]
+bot.oait_session_users_list = [1034809823, 141407179]
 bot.oait_manager_session_users_list = [1034809823]
 bot.admin_session_users_list = [1034809823]  #! надо в int , 1372644288
 
