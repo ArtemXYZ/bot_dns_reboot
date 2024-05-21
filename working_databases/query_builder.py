@@ -11,11 +11,13 @@ from sqlalchemy import select, String, Table, update, delete, text
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from sqlalchemy.ext.asyncio import AsyncSession
 from aiogram import types
-
+import pandas as pd
 # -------------------------------- Локальные модули
+from sql.get_user_data_sql import *
+from working_databases.configs import *
 # from working_databases.async_engine import *
 # from working_databases.local_db_mockup import *
-
+from working_databases.async_engine import *
 # ----------------------------------------------------------------------------------------------------------------------
 
 # Проверяем есть ли зарегистрированный телеграм id на удаленной базе: # async_get_telegram_id
@@ -56,6 +58,85 @@ async def async_select(tb_name: str, columns_search: str,
         fin = result
 
     return fin
+# ---------------------------------------
+
+async def get_user_data_df(*args_format: tuple[int, str, float]) -> pd.DataFrame:
+    """
+    Функция для извлечения данных из любого запроса sql в DataFrame. Важно! *args_format - только int!!!
+
+    :param any_sql_path: любой путь по типу: r'\\src\\sql\\in.sql' , defaults to None
+    :type any_sql_path: str or bytes
+    # только байтовые, либо только строковые объекты
+
+    :param root_dir: путь корневого каталога (импортируется)
+    :type root_dir: :str or bytes
+
+    :param any_config: путь сохранения файла (указать)
+    :type any_config: dict
+
+    :param args_format: путь сохранения файла (указать)
+    :type args_format: tuple[int, str, float]
+
+    :rtype: pd.DataFrame
+    :return: DataFrame
+
+    :notes:
+
+    #  todo: строка  с путем может конфликтовать (выдавать ошибки) из за "сырой строки" = r'\\*'. Именно по этому
+    #  todo: переменную с путем необходимо сразу писать в параметры функции без использования промежуточных переменных
+    #  todo: (из-за этого были ошибки ранее).
+    # Аргумент any_sql_path должен быть абсолютный путь до файла, в том числе имя файла и расширение.
+    """
+    try:
+
+        # todo: Позже переписать, добавить исключения, проверку на наличия файла, правильности пути.
+        if args_format is None:
+            args_format = None
+        else:
+            # args_format
+
+            connection: AsyncSession = await get_async_sessionmaker(CONFIG_JAR_ASYNCPG)
+
+            if args_format:  # is not None
+                # Форматируем SQL запрос, если есть аргументы для форматирования
+                formatted_query = user_data_sql_text.format(*args_format)
+            else:
+                formatted_query = user_data_sql_text
+
+            # Извлекаем данные:
+            extract_data = pd.read_sql(formatted_query, con=connection)  # Сохраняем данные в дата-фрейм без
+
+            # Вставляем данные:
+            with connection:
+                extract_data.to_sql(name_table, con=connection, if_exists=if_non_nul, index=False, schema=None)
+                insert_data = await session_remote.insert(select_data)
+
+
+
+            connection.close()  # Закрытие соединения вручную. Важно! Если не закрыть соединение, будут ошибки!
+
+
+
+
+
+            # return extract
+
+    #  Если наступит ошибка в значениях:
+    except (ValueError, TypeError):
+        print(f'Не удалось выполнить sql запрос. Проверьте входные данные для {any_sql_path}: {args_format}')
+
+    #  Другие любые ошибки (скорее всего будут относиться к синтаксису):
+    except Exception as error:
+        print(f'Ошибка: {type(error).__name__}, сообщение: {str(error)}!')
+        # Ошибка извлечения данных
+
+
+
+
+
+# df_branch_coefficients_data = get_from_sql(r'\src\sql\get_branch_coefficients_data.sql',
+#                                                root_dir, config_local_host)
+
 
 
 # Check Type User

@@ -14,7 +14,9 @@ from aiogram import types
 # -------------------------------- Локальные модули
 from working_databases.async_engine import *
 from working_databases.local_db_mockup import *
+from working_databases.configs import *
 
+from sql.get_user_data_sql import *
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -50,5 +52,33 @@ async def add_request_message(message: types.Message, session: AsyncSession, dat
     # else:
     #     pass
     #     # отправить обновить базу данных
+# -----------------------------------------------
 
+# ----------------------------------------------- тестово
+# async def get_user_data(session_remote: AsyncSession, any_sql_path: str | bytes, **values: tuple[int, str, float]):
+async def get_user_data(**values: tuple[int, str, float]):
+    """Из базы данных удаленной, тянем данные о пользователях."""
+
+    if values is None:
+        values = None
+    else:
+
+        if values:
+            # Забрали SQL в виде текст - переменной
+            formatted_query = user_data_sql_text.format(**values)
+        else:
+            formatted_query = user_data_sql_text
+
+        # Создаем объект сессии:
+        session_remote: AsyncSession = await get_async_sessionmaker(CONFIG_JAR_ASYNCPG)
+
+        # Забираем данные:
+        select_data = await session_remote.execute(formatted_query)
+
+        # Вставляем данные:
+        insert_data = await session_remote.insert(select_data)
+
+        await session.commit()
+
+    # return result.scalar()
 
