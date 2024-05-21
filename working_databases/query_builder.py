@@ -13,8 +13,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from aiogram import types
 
 # -------------------------------- Локальные модули
-from working_databases.async_engine import *
-from working_databases.local_db_mockup import *
+# from working_databases.async_engine import *
+# from working_databases.local_db_mockup import *
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -56,32 +56,6 @@ async def async_select(tb_name: str, columns_search: str,
         fin = result
 
     return fin
-
-
-
-
-async def add_request_message(session: AsyncSession, data: dict): # , tg_id: int
-    """
-    Запрос в БД на добавление обращения:
-    session=await get_async_sessionmaker(CONFIG_LOCAL_DB)
-    """
-    #  Формируем набор данных для вставки:
-    # get_tg_id = message.from_user.id
-    data_set = Requests(request_message=data['request_message'], tg_id=12323423)  # get_tg_idtg_id=tg_id, tg_id=data['tg_id']
-    print(data_set)
-    #  Формируем запрос:
-    session.add(data_set)
-    # Сохраняем и закрываем соединение:
-    await session.commit()
-
-
-
-
-
-
-
-
-
 
 
 # Check Type User
