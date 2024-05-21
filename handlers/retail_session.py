@@ -239,9 +239,8 @@ async def get_request_message(message: types.Message, state: FSMContext, session
 
     # Формируем полученные данные:
     data = await state.get_data()
-    print(data)
     tg_id = message.from_user.id
-    print(tg_id)
+
     # Запрос в БД на добавление обращения:
     # session.add(Requests(request_message=data['request_message'], tg_id=message.from_user.id))
     # await session.commit()

@@ -7,10 +7,12 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # ---------------------------------- Импорт стандартных библиотек Пайтона
 # ---------------------------------- Импорт сторонних библиотек
+from typing import Any, Awaitable, Callable, Dict
+
 from aiogram import BaseMiddleware
 from aiogram.types import Message, TelegramObject
+
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from typing import Any, Awaitable, Callable, Dict
 
 
 class DataBaseSession(BaseMiddleware):
@@ -21,10 +23,8 @@ class DataBaseSession(BaseMiddleware):
         self,
         handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
         event: TelegramObject,
-        # message: Message,
         data: Dict[str, Any],
     ) -> Any:
         async with self.session_pool() as session:
             data['session'] = session
-            # data['tg_id'] = message.from_user.id
             return await handler(event, data)
