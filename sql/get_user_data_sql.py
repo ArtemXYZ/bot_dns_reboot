@@ -42,4 +42,4 @@ where
 			staff.is_deleted = false
 """)
 
-# --       bot_table.tg is not null
+#and         bot_table.tg is not null
