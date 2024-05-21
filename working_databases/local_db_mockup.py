@@ -82,11 +82,17 @@ class Requests(Base):
     # Прикрепленные документы любого типа:
     documents: Mapped[bytes] = mapped_column(nullable=True) # LargeBinary
 
-    # Категория обращения (в какой отдел распределять)
-    # category_id: Mapped[int] = mapped_column(nullable=False, index=True)
-    # name_category: Mapped[str] = mapped_column(String(50),nullable=False)
+    #  ---------------------------- Идентификаторы
+    # Категория обращения "Главная" (в какой отдел распределять)
+    category_id: Mapped[int] = mapped_column(nullable=False, index=True)
+    name_category: Mapped[str] = mapped_column(String(50),nullable=False)
 
-    # В работе ли заявка at work _complete статус запроса (insert, in_work, done complete (, onupdate='insert') )
+    # Подкатегория обращения (по какому виду деятельности распределять)
+    sabcategory_id: Mapped[int] = mapped_column(nullable=False, index=True)
+    name_sabcategory: Mapped[str] = mapped_column(String(50),nullable=False)
+    #  ---------------------------- Идентификаторы
+
+    # В работе ли заявка: "at_work" , "complete" - статус запроса (insert, in_work, done или complete (, onupdate='insert') )
     request_status: Mapped[str] = mapped_column(String(150), server_default='insert')
 
 

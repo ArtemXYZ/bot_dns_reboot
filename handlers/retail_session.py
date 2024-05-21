@@ -238,12 +238,12 @@ async def get_request_message(message: types.Message, state: FSMContext, session
 
     # Формируем полученные данные:
     data = await state.get_data()
+    tg_id = message.from_user.id
 
-    # ----------------------------------------- SQL
     # Запрос в БД на добавление обращения:
     await add_request_message(message, session, data)
 
-     ------------------------------------- SQL
+     # ------------------------------------- SQL
 
     await message.answer(f'Обращение зарегистрировано, ожидайте ответа!', reply_markup=RETAIL_KEYB_MAIN)
 
