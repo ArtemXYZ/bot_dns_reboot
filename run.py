@@ -6,7 +6,16 @@ Tasks bot OAiT SV -
 OAiTSVManagerBot !
 problem helper -
 helper_bot
-DNS_helper_bot
+
+DNS_helper_bot  !
+DNSHelperBot
+
+DNSrequestsHandlerBot
+
+DNSrequestSHandlerBot
+
+DNSrequestShandlerBot
+
 DNS_help_manager_bot
 help_manager_DNS_bot
 helpManagerDNSBot
@@ -15,6 +24,12 @@ retail_helper_bot
 retail_help_bot
 
 DNSHelpManager +++
+
+DNS
+
+ problem DNShandlerBot
+
+DNShandlerBot
 
 helpDNSManager
 helpManagerDNS !
@@ -131,7 +146,7 @@ async def run_bot():
     # BotCommandScopeAllPrivateChats - для приват чартов  # todo здесь переделать разобраться!
     # BotCommandScopeDefault - для всех чартов
 
-    await dp.start_polling(bot, interval=1, allowed_updates=['message', 'edited_message', 'callback_query'])
+    await dp.start_polling(bot, interval=2, allowed_updates=['message', 'edited_message', 'callback_query'])
     # todo allowed_updates=ALLOWED_UPDATES, - передаем туда список разрешенных
     #  событий для бота с сервера
     # , interval=2 интервал запросов на обновление.

@@ -23,7 +23,7 @@ from menu import keyboard_menu  # Кнопки меню - клавиатура �
 from menu import inline_menu  # Кнопки встроенного меню - для сообщений
 
 from menu.button_generator import get_keyboard
-
+from working_databases.orm_query_builder import *
 # ----------------------------------------------------------------------------------------------------------------------
 # Назначаем роутер для чата под розницу:
 retail_router = Router()
@@ -221,8 +221,8 @@ async def get_cancel(callback: types.CallbackQuery, state: FSMContext):
 
 @retail_router.callback_query(StateFilter(None), F.data.startswith('analytics'))
 # Если у пользователя нет активного состояния (StateFilter(None) + он ввел команду "analytics")
-async def add_request_message(callback: types.CallbackQuery, state: FSMContext):
-    await callback.answer()  # ?
+async def press_button_request_message(callback: types.CallbackQuery, state: FSMContext):
+    await callback.answer()
     await callback.message.answer('Введите текст обращения', reply_markup=types.ReplyKeyboardRemove())
     await state.set_state(AddRequests.request_message)
     # todo замутить удаление всех сообщений с меню
@@ -235,25 +235,23 @@ async def add_request_message(callback: types.CallbackQuery, state: FSMContext):
 async def get_request_message(message: types.Message, state: FSMContext, session: AsyncSession):
     # Передам словарь с данными ( ключ = request_message, к нему присваиваем данные message.text), после апдейтим
     await state.update_data(request_message=message.text)
-    # await state.update_data(tg_id=message.from_user.id)
 
     # Формируем полученные данные:
     data = await state.get_data()
-    print(data)
-    tg_id = message.from_user.id
-    print(tg_id)
-    # Запрос в БД на добавление обращения:
-    # session.add(Requests(request_message=data['request_message'], tg_id=message.from_user.id))
-    # await session.commit()
-    await add_request_message(session, data)
 
-    await message.answer(f'Обращение отправлено, ожидайте ответа!', reply_markup=RETAIL_KEYB_MAIN)
+    # ----------------------------------------- SQL
+    # Запрос в БД на добавление обращения:
+    await add_request_message(message, session, data)
+
+    # ----------------------------------------- SQL
+
+    await message.answer(f'Обращение зарегистрировано, ожидайте ответа!', reply_markup=RETAIL_KEYB_MAIN)
 
     await asyncio.sleep(1)
     await message.answer(f'Я направлю уведомление, как только обращение будет взято в работу.')
 
-    # Отправка для наглядности записанного сообщения: text=f'Ваша жалоба: {str(data)}'
-    await message.answer(f'Ваша жалоба: {data.get("request_message")}')
+    # Отправка для наглядности записанного сообщения:
+    await message.answer(f'Ваше обращение: {data.get("request_message")}')
 
     # Очистка состояния пользователя:
     await state.clear()
