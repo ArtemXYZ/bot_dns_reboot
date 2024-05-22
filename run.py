@@ -51,11 +51,10 @@ requests Helper Bot manager
 """
 
 # -------------------------------- Стандартные модули
-
 # -------------------------------- Сторонние библиотеки
-
 from aiogram import Bot, Dispatcher, types
 from aiogram.client.default import DefaultBotProperties  # Обработка текста HTML разметкой
+
 # -------------------------------- Локальные модули
 from working_databases.configs import *
 
@@ -67,6 +66,7 @@ from working_databases.middlewares_for_db import *
 
 from working_databases.async_engine import *
 from working_databases.orm_query_builder import *
+from working_databases.query_builder import *
 
 from handlers.general_session import general_router
 from handlers.oait_session import oait_router
@@ -113,8 +113,14 @@ dp.include_router(retail_router)
 async def on_startup(bot, any_config=CONFIG_LOCAL_DB):
     await create_db(engine_obj=await get_async_engine(CONFIG_LOCAL_DB))
 
-    # наполнение bd данными пользователей:
-    await get_user_data(engine_remote=await get_async_engine(CONFIG_JAR_ASYNCPG))
+    # Извлекаем все данные с удаленного сервера о пользователях через сырой запрос:
+    data, columns = await get_user_data(engine_obj=await get_async_engine(CONFIG_JAR_ASYNCPG))
+
+    # Наполнение внутренней БД проекта данными пользователей через ОРМ:
+    # insert_data =
+
+
+
 
     print('Бот запущен!')
 

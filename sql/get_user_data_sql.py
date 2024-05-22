@@ -1,7 +1,7 @@
-from sqlalchemy import text
+# from sqlalchemy import text
 
-user_data_sql_text = text(
-    """select 
+user_data_sql_text ="""
+select 
          	bot_table.code
       	,	bot_table.tg as id_tg
       	,   CASE
@@ -40,6 +40,6 @@ ON
 	        bot_table.code  = staff_name.code_1c
 where
 			staff.is_deleted = false
-""")
+"""
 
 #and         bot_table.tg is not null

@@ -56,30 +56,6 @@ async def add_request_message(message: types.Message, session: AsyncSession, dat
 
 # ----------------------------------------------- тестово
 # async def get_user_data(session_remote: AsyncSession, any_sql_path: str | bytes, **values: tuple[int, str, float]):
-async def get_user_data(engine_remote: AsyncEngine, **values: tuple[int, str, float]):
-    """Из базы данных удаленной, тянем данные о пользователях."""
-
-    if values is None:
-        values = None
-    else:
-
-        if values:
-            # Забрали SQL в виде текст - переменной
-            formatted_query = user_data_sql_text.format(**values)
-        else:
-            formatted_query = user_data_sql_text
-
-        # Создаем объект сессии:
-        # session_remote: AsyncSession = await get_async_sessionmaker(CONFIG_JAR_ASYNCPG)
-
-        # Забираем данные:
-        async with engine_remote.begin() as conn:
-            # select_data = await engine_remote.execute(formatted_query)
-
-        # Вставляем данные:
-        # insert_data = await engine_remote.insert(select_data)
-
-        await session.commit()
-
-    # return result.scalar()
+# Сохраняем данные в таблицу Пользователи (локал бд):
+async def get_insert_data(session: AsyncSession
 
