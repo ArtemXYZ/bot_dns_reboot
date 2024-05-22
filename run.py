@@ -76,13 +76,14 @@ from handlers.admin_session import admin_router
 
 from menu.cmds_list_menu import default_menu  # Кнопки меню для всех типов чартов
 
-
+from start_sleep_bot.def_start_sleep import *
 
 # --------------------------------
 # phone_number_id = message.сontact.phone_number # достать номер телефона
 
 # ----------------------------------------------------------------------------------------------------------------------
 bot: Bot = Bot(token=os.getenv('API_TOKEN'), default=DefaultBotProperties(parse_mode='HTML'))  # Для переменных окружения
+
 
 #  К экземпляру бота добавляем свойства (списки с users_id под каждый тип сессии :
 bot.retail_session_users_list = [1034809823, 141407179]
@@ -109,41 +110,61 @@ dp.include_router(retail_router)
 
 # -------------------------------------------------- Тело бота:
 
-# -------------------- При старте и при выключении бота:
-async def on_startup(bot, any_config=CONFIG_LOCAL_DB):
-    await create_db(engine_obj=await get_async_engine(CONFIG_LOCAL_DB))
 
-    # Извлекаем все данные с удаленного сервера о пользователях через сырой запрос:
-    data, columns = await get_user_data(engine_obj=await get_async_engine(CONFIG_JAR_ASYNCPG))
-
-    # Наполнение внутренней БД проекта данными пользователей через ОРМ:
-    # insert_data =
-
-
-
-
-    print('Бот запущен!')
-
-
-
-
-
-
-
-# -------------------- При выключении
-async def on_shutdown(bot):
-    print('Бот лег!')
+# # -------------------- При старте и при выключении бота:
+# async def on_startup(bot, any_config=CONFIG_LOCAL_DB, session: AsyncSession=session_pool):
+#     await create_db(engine_obj=await get_async_engine(CONFIG_LOCAL_DB))
+#
+#     # ------------------ Раздел наполнеия и обновления локал БД:
+#     # Извлекаем все данные с удаленного сервера о пользователях через сырой запрос:
+#     data, columns = await get_user_data(engine_obj=await get_async_engine(CONFIG_JAR_ASYNCPG))
+#
+#     # Наполнение внутренней БД проекта данными пользователей через ОРМ:
+#     # !! Открывается 2 сесии еще одна в мидел вери
+#     await get_insert_data(data, columns, session)
+#     # insert_data =
+#
+#     # включить проверку (при включении и переодически) если база есть
+#     # то проверить отличия,
+#     # если нет то ничего
+#
+#     # ------------------
+#
+#     print('Бот запущен!')
+#
+#
+#
+#
+#
+#
+#
+# # -------------------- При выключении
+# async def on_shutdown(bot):
+#     print('Бот лег!')
 
 
 # ---------------------------------------------------- Зацикливание работы бота
 # Отслеживание событий на сервере тг бота:
 async def run_bot():
 
-    dp.startup.register(on_startup) # действия при старте бота
+    # Создаем сесиию одну на всех для ЛОКАЛ БД:
+    session_pool = await get_async_sessionmaker(CONFIG_LOCAL_DB)
+
+    dp.startup.register(on_startup(bot=bot, session=session_pool)) # действия при старте бота
+
+
+
+
+
     dp.shutdown.register(on_shutdown)  # действия при остановке бота
 
+
+
+
+
+    # -------------------------------------------------------------------------------
     # Установка промежуточного слоя (сразу для диспетчера, не для роутеров):
-    dp.update.middleware(DataBaseSession(session_pool=await get_async_sessionmaker(CONFIG_LOCAL_DB)))
+    dp.update.middleware(DataBaseSession(session_pool=await session_pool))
 
     await bot.delete_webhook(drop_pending_updates=True)  # Сброс отправленных сообщений, за время, что бот был офлайн.
     # await bot.delete_my_commands(scope=types.BotCommandScopeAllPrivateChats()) # если надо удалить  команды из меню.
@@ -222,3 +243,9 @@ if __name__ == "__main__":
 
 
 # my_admins_list =[] # наполняем адишниками админов переменную.
+
+# Для того, что бы передавать сессию в другие функции
+# * вызов асиинхронки без функции невозможен, по этому приходится лепить еще одну функцию в модуле для вызова
+# можно передать изначальную функцию сессии прямо в целевую функцию так:
+# session_pool=await get_async_sessionmaker(CONFIG_LOCAL_DB)), но повторный вызов уже существующей сессии
+# будет невозможен. По этому, здесь эта вспомог. функция.
