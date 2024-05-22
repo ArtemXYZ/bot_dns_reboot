@@ -62,18 +62,18 @@ async def insert_data(data, columns, session_pool:AsyncSession):
     """ Вставка данных о пользователях в локальную бд.
     """
 
-    async with session_pool:
+    async with session_pool() as pool:
 
         # Перебираем по строчно данные  выгрузки из базы удаленной:
         for row in data:
             # Создаем экземпляр ORM модели и добавляем его в сессию
             new_insert = Users(**dict(zip(columns, row)))
-            session.add(new_insert)
+            pool.add(new_insert)
 
             #  добавлять и фиксировать каждую запись
             # await session.commit()
 
-        await session.commit()
+        await pool.commit()
         # В цикле это уместно, если вы хотите добавлять и фиксировать каждую запись отдельно.
         # Однако это может быть неэффективным, так как каждое добавление и фиксация выполняются отдельно.
         # Лучше добавлять объекты в сессию в цикле, а затем выполнять commit один раз вне цикла.

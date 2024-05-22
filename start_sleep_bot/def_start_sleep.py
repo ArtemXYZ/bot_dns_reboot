@@ -30,19 +30,19 @@ from working_databases.query_builder import *
 
 
 # -------------------- При старте и при выключении бота:
-async def startup_on(session: AsyncSession=session_pool_LOCAL_DB):
+async def startup_on(session: AsyncSession):
     """Общая функция при запуске бота выполняет ряд программ для обеспечения  нормальной работы бота"""
 
     # 0. Создание Локал БД.
-    await create_db() # session_pool=session
+    await create_db() #  +
 
     # ------------------ Раздел наполнеия и обновления локал БД:
     # Извлекаем все данные с удаленного сервера о пользователях через сырой запрос:
-    data, columns = await get_user_data(engine_obj=await get_async_engine(CONFIG_JAR_ASYNCPG))
+    data, columns = await get_user_data(engine_obj=await get_async_engine(CONFIG_JAR_ASYNCPG)) #  +
 
     # Наполнение внутренней БД проекта данными пользователей через ОРМ:
     # !! Открывается 2 сесии еще одна в мидел вери
-    # await insert_data(data, columns, session_pool=session)
+    await insert_data(data, columns, session_pool=session)
     # insert_data =
 
     # включить проверку (при включении и переодически) если база есть

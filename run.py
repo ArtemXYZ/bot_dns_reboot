@@ -104,48 +104,15 @@ dp = Dispatcher()
 dp.include_router(retail_router)
 # dp.include_router(oait_manager_router)
 
-
-
-
-
 # -------------------------------------------------- Тело бота:
 
 
-# -------------------- При старте и при выключении бота:
-# async def on_startup(bot, session: AsyncSession=session_pool_LOCAL_DB):
-#     await create_db(engine_obj=session_pool_LOCAL_DB)
-#
-#     # ------------------ Раздел наполнеия и обновления локал БД:
-#     # Извлекаем все данные с удаленного сервера о пользователях через сырой запрос:
-#     data, columns = await get_user_data(engine_obj=await get_async_engine(CONFIG_JAR_ASYNCPG))
-#
-#     # Наполнение внутренней БД проекта данными пользователей через ОРМ:
-#     # !! Открывается 2 сесии еще одна в мидел вери
-#     await get_insert_data(data, columns, session)
-#     # insert_data =
-#
-#     # включить проверку (при включении и переодически) если база есть
-#     # то проверить отличия,
-#     # если нет то ничего
-#
-#     # ------------------
-#
-#     print('Бот запущен!')
-# #
-#
-#
-#
-#
-#
-#
-# # -------------------- При выключении
-# async def on_shutdown(bot):
-#     print('Бот лег!')
 
 
 # ---------------------------------------------------- Зацикливание работы бота
 # Отслеживание событий на сервере тг бота:
 async def run_bot():
+
     # ---------------------
     async def on_startup(bot):
         await startup_on(session=session_pool_LOCAL_DB)
@@ -153,9 +120,8 @@ async def run_bot():
     async def on_shutdown(bot):
         await shutdown_on()
     # ---------------------
-    dp.startup.register(on_startup) # действия при старте бота
-
-    dp.shutdown.register(on_shutdown)  # действия при остановке бота
+    dp.startup.register(on_startup) # действия при старте бота +
+    dp.shutdown.register(on_shutdown)  # действия при остановке бота +
 
     # -------------------------------------------------------------------------------
     # Установка промежуточного слоя (сразу для диспетчера, не для роутеров):
