@@ -34,24 +34,24 @@ class Users(Base):
     """
     __tablename__ = 'user_data'
 
-    index_add: Mapped[int] = mapped_column(autoincrement=True) # орядковый номер добавления обратившегося сотрудника.
+    # index_add: Mapped[int] = mapped_column(autoincrement=True) # орядковый номер добавления обратившегося сотрудника.
     # телеграмм id
-    id_tg: Mapped[int] = mapped_column(primary_key=True, nullable=False, index=True, unique=True)  # Pk
+    id_tg: Mapped[int] = mapped_column(primary_key=True, autoincrement=False, nullable=False, unique=True)  # Pk  index=True,
     # # id сотрудника в 1С и первичный ключ в этой таблице.
     code: Mapped[str] = mapped_column(String(50), unique=True)
     # session_type_id: Mapped[int] = mapped_column(nullable=True, server_default='None')
     #  session_type_id: 0 - ретейл, 1 - Оаит, 2 -
-    session_type: Mapped[str] = mapped_column(String(100), nullable=False) # подзапрос в SQL CASE !
+    session_type: Mapped[str] = mapped_column(String(100), nullable=True) # подзапрос в SQL CASE !
 
-    full_name: Mapped[str] = mapped_column(String(100), nullable=False)  # ФИО сотрудника
+    full_name: Mapped[str] = mapped_column(String(100), nullable=True)  # ФИО сотрудника
 
-    post_id: Mapped[int] = mapped_column(nullable=False, unique=True)  # id Должности
-    post_name: Mapped[str] = mapped_column(Text())
+    post_id: Mapped[int] = mapped_column(nullable=True)  # id Должности
+    post_name: Mapped[str] = mapped_column(Text(), nullable=True)
 
-    branch_id: Mapped[int] = mapped_column(primary_key=True, nullable=False) # + для вильтрации отделов.
-    branch_name:Mapped[str] = mapped_column(String(200), nullable=False)
-    rrs_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    division_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    branch_id: Mapped[int] = mapped_column(nullable=True) # + для вильтрации отделов.
+    branch_name:Mapped[str] = mapped_column(String(200), nullable=True)
+    rrs_name: Mapped[str] = mapped_column(String(100), nullable=True)
+    division_name: Mapped[str] = mapped_column(String(100), nullable=True)
 
     user_mail: Mapped[str] = mapped_column(String(100), nullable=True)
 
@@ -87,12 +87,12 @@ class Requests(Base):
 
     #  ---------------------------- Идентификаторы
     # Категория обращения "Главная" (в какой отдел распределять)
-    # category_id: Mapped[int] = mapped_column(nullable=False, index=True)
-    # name_category: Mapped[str] = mapped_column(String(50),nullable=False)
+    category_id: Mapped[int] = mapped_column(nullable=False, index=True)
+    name_category: Mapped[str] = mapped_column(String(50),nullable=False)
     #
     # # Подкатегория обращения (по какому виду деятельности распределять)
-    # sabcategory_id: Mapped[int] = mapped_column(nullable=False, index=True)
-    # name_sabcategory: Mapped[str] = mapped_column(String(50),nullable=False)
+    sabcategory_id: Mapped[int] = mapped_column(nullable=False, index=True)
+    name_sabcategory: Mapped[str] = mapped_column(String(50),nullable=False)
     #  ---------------------------- Идентификаторы
 
     # В работе ли заявка: "at_work" , "complete" - статус запроса (insert, in_work, done или complete (, onupdate='insert') )

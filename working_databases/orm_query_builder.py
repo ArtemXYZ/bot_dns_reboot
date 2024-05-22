@@ -18,15 +18,15 @@ from working_databases.configs import *
 
 from sql.get_user_data_sql import *
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 
-async def check_id_tg_in_users(session: AsyncSession, id:int):
+async def check_id_tg_in_users(session: AsyncSession, id: int):
     # + добавить логику (обработчик ошибок), если такого нет в базе
     """Сравниваем айдишник из сообщения в локальной базе данных"""
     query = select(Users).where(Users.id_tg == id)
     result = await session.execute(query)
     return result.scalar()
-
 
 
 async def add_request_message(message: types.Message, session: AsyncSession, data: dict):  # , get_tg_id: int
@@ -52,31 +52,115 @@ async def add_request_message(message: types.Message, session: AsyncSession, dat
     # else:
     #     pass
     #     # отправить обновить базу данных
+
+
 # -----------------------------------------------
 
 # ----------------------------------------------- тестово
 # async def get_user_data(session_remote: AsyncSession, any_sql_path: str | bytes, **values: tuple[int, str, float]):
 # Сохраняем данные в таблицу Пользователи (локал бд):
-async def insert_data(data, columns, session_pool:AsyncSession):
-
+async def insert_data(data, columns, session_pool: AsyncSession):
     """ Вставка данных о пользователях в локальную бд.
     """
 
     async with session_pool() as pool:
-
         # Перебираем по строчно данные  выгрузки из базы удаленной:
         for row in data:
-            # Создаем экземпляр ORM модели и добавляем его в сессию
-            new_insert = Users(**dict(zip(columns, row)))
+            # Преобразование полей в соответствующие типы данных  - не поддерживает прямое присваивание элементу.
+
+            # columns[2] = int(row[1])
+            # columns[6] = int(row[5])
+
+            new_insert = Users(
+                id_tg=row[0],
+                code=row[1],
+                session_type=row[2],
+                full_name=row[3],
+                post_id=row[4],
+                post_name=row[5],
+                branch_id=row[6],
+                branch_name=row[7],
+                rrs_name=row[8],
+                division_name=row[9],
+                user_mail=row[10],
+                is_deleted=row[11],
+                employee_status=row[12]
+            )
+
+
+        # Создаем экземпляр ORM модели и добавляем его в сессию
+        # new_insert = Users(**dict(zip(columns, row)))
+
             pool.add(new_insert)
 
             #  добавлять и фиксировать каждую запись
             # await session.commit()
 
-        await pool.commit()
-        # В цикле это уместно, если вы хотите добавлять и фиксировать каждую запись отдельно.
-        # Однако это может быть неэффективным, так как каждое добавление и фиксация выполняются отдельно.
-        # Лучше добавлять объекты в сессию в цикле, а затем выполнять commit один раз вне цикла.
+            await pool.commit()
+            # В цикле это уместно, если вы хотите добавлять и фиксировать каждую запись отдельно.
+            # Однако это может быть неэффективным, так как каждое добавление и фиксация выполняются отдельно.
+            # Лучше добавлять объекты в сессию в цикле, а затем выполнять commit один раз вне цикла.
 
-    print('Данные удачно мигрировали в локальную базу данных!')
+        print('Данные удачно мигрировали в локальную базу данных!')
 
+            # new_insert = Users(**dict(zip(
+            #                 id_tg=int(data['id_tg']),
+            #                 code=data['code'],
+            #                 session_type=data['session_type'],
+            #                 full_name=data['full_name'],
+            #                 post_id=int(data['post_id']),
+            #                 post_name=data['post_name'],
+            #                 branch_id=int(data['branch_id']),
+            #                 branch_name=data['branch_name'],
+            #                 rrs_name=data['rrs_name'],
+            #                 division_name=data['division_name'],
+            #                 user_mail=data['user_mail'],
+            #                 is_deleted=data['is_deleted'],
+            #                 employee_status=data['employee_status'],
+            #                 ), row))
+
+            #     new_insert = Users(**dict(zip(
+            #                 id_tg=astyp(data[0]),
+            #                 code=data[1],
+            #                 session_type=data[2],
+            #                 full_name=data[3],
+            #                 post_id=int(data[4]),
+            #                 post_name=data[5],
+            #                 branch_id=int(data[6]),
+            #                 branch_name=data[7],
+            #                 rrs_name=data[8],
+            #                 division_name=data[9],
+            #                 user_mail=data[10],
+            #                 is_deleted=data[11],
+            #                 employee_status=data[12],
+            #                ), row))
+
+# new_insert = Users(
+#                 id_tg=int(data['id_tg']),
+#                 code=data['code'],
+#                 session_type=data['session_type'],
+#                 full_name=data['full_name'],
+#                 post_id=int(data['post_id']),
+#                 post_name=data['post_name'],
+#                 branch_id=int(data['branch_id']),
+#                 branch_name=data['branch_name'],
+#                 rrs_name=data['rrs_name'],
+#                 division_name=data['division_name'],
+#                 user_mail=data['user_mail'],
+#                 is_deleted=data['is_deleted'],
+#                 employee_status=data['employee_status']
+#                 )
+# new_insert = Users(
+#                 id_tg={columns['id_tg']:row[0]},
+#                 code={columns['code']:row[1]},
+#                 session_type={columns['session_type']:row[2]},
+#                 full_name={columns['full_name']:row[3]},
+#                 post_id={columns['post_id']:row[4]},
+#                 post_name={columns['post_name']:row[5]},
+#                 branch_id={columns['branch_id']:row[6]},
+#                 branch_name={columns['branch_name']:row[7]},
+#                 rrs_name={columns['rrs_name']:row[8]},
+#                 division_name={columns['division_name']:row[9]},
+#                 user_mail={columns['user_mail']:row[10]},
+#                 is_deleted={columns['is_deleted']:row[11]},
+#                 employee_status={columns['employee_status']:row[12]})
