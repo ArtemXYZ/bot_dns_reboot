@@ -111,9 +111,9 @@ dp.include_router(retail_router)
 # -------------------------------------------------- Тело бота:
 
 
-# # -------------------- При старте и при выключении бота:
-# async def on_startup(bot, any_config=CONFIG_LOCAL_DB, session: AsyncSession=session_pool):
-#     await create_db(engine_obj=await get_async_engine(CONFIG_LOCAL_DB))
+# -------------------- При старте и при выключении бота:
+# async def on_startup(bot, session: AsyncSession=session_pool_LOCAL_DB):
+#     await create_db(engine_obj=session_pool_LOCAL_DB)
 #
 #     # ------------------ Раздел наполнеия и обновления локал БД:
 #     # Извлекаем все данные с удаленного сервера о пользователях через сырой запрос:
@@ -131,7 +131,7 @@ dp.include_router(retail_router)
 #     # ------------------
 #
 #     print('Бот запущен!')
-#
+# #
 #
 #
 #
@@ -146,25 +146,20 @@ dp.include_router(retail_router)
 # ---------------------------------------------------- Зацикливание работы бота
 # Отслеживание событий на сервере тг бота:
 async def run_bot():
+    # ---------------------
+    async def on_startup(bot):
+        await startup_on(session=session_pool_LOCAL_DB)
 
-    # Создаем сесиию одну на всех для ЛОКАЛ БД:
-    session_pool = await get_async_sessionmaker(CONFIG_LOCAL_DB)
-
-    dp.startup.register(on_startup(bot=bot, session=session_pool)) # действия при старте бота
-
-
-
-
+    async def on_shutdown(bot):
+        await shutdown_on()
+    # ---------------------
+    dp.startup.register(on_startup) # действия при старте бота
 
     dp.shutdown.register(on_shutdown)  # действия при остановке бота
 
-
-
-
-
     # -------------------------------------------------------------------------------
     # Установка промежуточного слоя (сразу для диспетчера, не для роутеров):
-    dp.update.middleware(DataBaseSession(session_pool=await session_pool))
+    dp.update.middleware(DataBaseSession(session_pool=session_pool_LOCAL_DB))
 
     await bot.delete_webhook(drop_pending_updates=True)  # Сброс отправленных сообщений, за время, что бот был офлайн.
     # await bot.delete_my_commands(scope=types.BotCommandScopeAllPrivateChats()) # если надо удалить  команды из меню.

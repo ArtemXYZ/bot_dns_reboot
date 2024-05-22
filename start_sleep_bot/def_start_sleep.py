@@ -30,11 +30,11 @@ from working_databases.query_builder import *
 
 
 # -------------------- При старте и при выключении бота:
-async def on_startup(bot, session: AsyncSession):
+async def startup_on(session: AsyncSession=session_pool_LOCAL_DB):
     """Общая функция при запуске бота выполняет ряд программ для обеспечения  нормальной работы бота"""
 
     # 0. Создание Локал БД.
-    await create_db(session_pool=session)
+    await create_db() # session_pool=session
 
     # ------------------ Раздел наполнеия и обновления локал БД:
     # Извлекаем все данные с удаленного сервера о пользователях через сырой запрос:
@@ -42,7 +42,7 @@ async def on_startup(bot, session: AsyncSession):
 
     # Наполнение внутренней БД проекта данными пользователей через ОРМ:
     # !! Открывается 2 сесии еще одна в мидел вери
-    await insert_data(data, columns, session_pool=session)
+    # await insert_data(data, columns, session_pool=session)
     # insert_data =
 
     # включить проверку (при включении и переодически) если база есть
@@ -55,10 +55,6 @@ async def on_startup(bot, session: AsyncSession):
 
 
 
-
-
-
-
 # -------------------- При выключении
-async def on_shutdown(bot):
+async def shutdown_on():
     print('Бот лег!')

@@ -16,8 +16,9 @@ import asyncio
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.engine.url import URL
 
+
 # -------------------------------- Локальные модули
-# from working_databases.configs import *
+from working_databases.configs import *
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -47,15 +48,42 @@ async def get_async_engine(ANY_CONFIG: dict | URL | str) -> object:
     return async_engine
     # return create_async_engine(url_string)
 
+# Создаем URL строку:
+def get_url_string(ANY_CONFIG: dict | URL | str) -> object:
+
+
+    # Проверка типа входной конфигурации подключения:
+    # Если на вход конфигурация в словаре:
+    if isinstance(ANY_CONFIG, dict) == True:
+        url_string = URL.create(**ANY_CONFIG)  # 1. Формируем URL-строку соединения с БД.
+        #  Эквивалент: url_string = (f'{drivername}://{username}:{password}@{host}:{port}/{database}')
+
+    # Если на вход url_string:
+    elif isinstance(ANY_CONFIG, str) == True:
+        url_string = ANY_CONFIG
+    else:
+        url_string = None
+
+
+    return url_string
+    # return create_async_engine(url_string)
 
 # Асинхронная сессия:
-async def get_async_sessionmaker(ANY_CONFIG: dict | URL | str):
+async def get_async_sessionmaker_(ANY_CONFIG: dict | URL | str):
     engine = await get_async_engine(ANY_CONFIG)
     session_maker = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False) #
     return session_maker
 
 
-#
+# ------------------------------------------- Создаем общую сессию для всех модулей: !!!
+url_string = get_url_string(CONFIG_LOCAL_DB)
+# Создаем сесиию одну на всех для ЛОКАЛ БД:
+engine = create_async_engine(url_string, echo=True)
+session_pool_LOCAL_DB = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False) #
+
+
+
+
 
 # ---------------------- Тесты:
 # async def get():

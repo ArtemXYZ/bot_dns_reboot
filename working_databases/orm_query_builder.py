@@ -78,11 +78,5 @@ async def insert_data(data, columns, session_pool:AsyncSession):
         # Однако это может быть неэффективным, так как каждое добавление и фиксация выполняются отдельно.
         # Лучше добавлять объекты в сессию в цикле, а затем выполнять commit один раз вне цикла.
 
-    #
     print('Данные удачно мигрировали в локальную базу данных!')
 
-    # engine_obj session: AsyncSession
-    # async with engine_obj.connect() as conn:
-    # #     async
-    # # with engine_obj.begin() as conn:
-    # #     await conn.run_sync(Base.metadata.create_all)
