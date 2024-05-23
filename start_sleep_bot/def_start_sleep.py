@@ -46,7 +46,7 @@ async def startup_on(session: AsyncSession):
     # Наполнение внутренней БД проекта данными пользователей через ОРМ:
     # !! Открывается 2 сесии еще одна в мидел вери
 
-    await insert_data(data, 14, session_pool=session)  #, columns - упразднено.!!
+    bugs = await insert_data(data, session_pool=session)  #, columns - упразднено.!!
 
 
     # включить проверку (при включении и переодически) если база есть
