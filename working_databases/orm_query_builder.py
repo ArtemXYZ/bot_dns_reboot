@@ -59,7 +59,7 @@ async def add_request_message(message: types.Message, session: AsyncSession, dat
 # ----------------------------------------------- тестово
 # async def get_user_data(session_remote: AsyncSession, any_sql_path: str | bytes, **values: tuple[int, str, float]):
 # Сохраняем данные в таблицу Пользователи (локал бд):
-async def insert_data(data, columns, session_pool: AsyncSession):
+async def insert_data(data, session_pool: AsyncSession):  # , columns, - упразднено.
     """ Вставка данных о пользователях в локальную бд.
     """
 
@@ -68,23 +68,22 @@ async def insert_data(data, columns, session_pool: AsyncSession):
         for row in data:
             # Преобразование полей в соответствующие типы данных  - не поддерживает прямое присваивание элементу.
 
-            # columns[2] = int(row[1])
-            # columns[6] = int(row[5])
+            # print(f"Row data: {row}")
 
             new_insert = Users(
-                id_tg=row[0],
-                code=row[1],
-                session_type=row[2],
-                full_name=row[3],
-                post_id=row[4],
-                post_name=row[5],
-                branch_id=row[6],
-                branch_name=row[7],
-                rrs_name=row[8],
-                division_name=row[9],
-                user_mail=row[10],
-                is_deleted=row[11],
-                employee_status=row[12]
+                id_tg=int(row[0]),
+                code=str(row[1]),
+                session_type=str(row[2]),
+                full_name=str(row[3]),
+                post_id=int(row[4]),
+                post_name=str(row[5]),
+                branch_id=int(row[6]),
+                branch_name=str(row[7]),
+                rrs_name=str(row[8]),
+                division_name=str(row[9]),
+                user_mail=str(row[10]),
+                is_deleted=bool(row[11]),
+                employee_status=bool(row[12])
             )
 
 

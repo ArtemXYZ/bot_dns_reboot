@@ -76,7 +76,8 @@ async def get_user_data(engine_obj:AsyncEngine, *args_format: tuple[int, str, fl
 
             if args_format:  # is not None
                 # Форматируем SQL запрос, если есть аргументы для форматирования
-                formatted_query = user_data_sql_text.format(*args_format)
+                formatted_query = user_data_sql_text_old.format(*args_format) # todo sql - заменить после дагов!!!
+                # user_data_sql_text_old, user_data_sql_text
             else:
                 formatted_query = user_data_sql_text
 
@@ -88,11 +89,14 @@ async def get_user_data(engine_obj:AsyncEngine, *args_format: tuple[int, str, fl
                 # Список всех данных:
                 data = select_data.fetchall()
                 # Имена колонок:
-                columns = select_data.keys()
+                # columns = select_data.keys() - не нукжны!
 
             await engine_obj.dispose()  # Закрытие соединения вручную. Важно! Если не закрыть соединение, будут ошибки!
 
-        return data, columns
+        for r in data:
+            print(f'{r}')
+
+        return data  #, columns
 
     #  Если наступит ошибка в значениях:
     except (ValueError, TypeError):

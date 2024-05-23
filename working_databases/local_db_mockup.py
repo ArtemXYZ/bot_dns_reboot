@@ -57,13 +57,16 @@ class Users(Base):
 
     is_deleted: Mapped[bool] = mapped_column(nullable=True) # в базе есть пустые значения, по этому True
 
-    # статус сотрудника (занят ли или свободен) продумать насчет тех кто в отпуске # free = True, job = False
+    # статус сотрудника (занят ли или свободен)  # free = True, job = False
     employee_status: Mapped[bool] = mapped_column(nullable=True)  # activity , server_default='Null'
+    holiday_status: Mapped[bool] = mapped_column(nullable=False) # Если в отпуске то тру.
+    admin_status: Mapped[bool] = mapped_column(nullable=False, server_default=False) # Если админ то тру.
 
-    # Отношение "один ко многим" с Request
+    #
+    # ------------------------------------- Отношение "один ко многим" с Request
     many_requests_to: Mapped[list['Requests']] = relationship(back_populates='one_user_to')
 
-    # Ограничение полей:
+    #-------------------------------------- Ограничение полей:
     # __table_args__ = (ForeignKeyConstraint(['tg_id'],['Users.post_id']))
 
 

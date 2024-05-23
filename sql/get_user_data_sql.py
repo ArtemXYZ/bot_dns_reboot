@@ -1,6 +1,21 @@
-# from sqlalchemy import text
-
+"""Модуль содержи """
 user_data_sql_text ="""
+select            
+         	user_data_bot.*
+      	,	NULL as employee_status
+      	,	false as admin_status
+FROM
+            inlet.staff_for_bot as bot_table
+LEFT JOIN            
+            inlet.user_data_bot as user_data_bot
+ON
+            bot_table.code = user_data_bot.code 
+where
+			user_data_bot.is_deleted = false 
+			and bot_table.tg is not null		
+"""
+
+user_data_sql_text_old ="""
 select 
          	bot_table.tg as id_tg 
       	,	bot_table.code
@@ -41,5 +56,3 @@ ON
 where
 			staff.is_deleted = false and bot_table.tg is not null		
 """
-
-#and         bot_table.tg is not null
