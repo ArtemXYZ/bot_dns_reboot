@@ -41,13 +41,13 @@ async def startup_on(session: AsyncSession):
     data = await get_user_data(engine_obj=await get_async_engine(CONFIG_JAR_ASYNCPG)) #  , columns - упразднено.
 
     # test
-    insert_data_dict_list = await check_insert_data_for_null(data)
+    # insert_data_dict_list = await check_insert_data_for_null(data, 14) - упразднено.
 
     # Наполнение внутренней БД проекта данными пользователей через ОРМ:
     # !! Открывается 2 сесии еще одна в мидел вери
-    # insert_data_dict_list
-    # await insert_data(insert_data_dict_list, session_pool=session)  #, columns - упразднено.!!
-    # insert_data =
+
+    await insert_data(data, 14, session_pool=session)  #, columns - упразднено.!!
+
 
     # включить проверку (при включении и переодически) если база есть
     # то проверить отличия,
