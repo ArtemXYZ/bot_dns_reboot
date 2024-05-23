@@ -43,24 +43,24 @@ class Users(Base):
     #  session_type_id: 0 - ретейл, 1 - Оаит, 2 -
     session_type: Mapped[str] = mapped_column(String(100), nullable=True) # подзапрос в SQL CASE !
 
-    full_name: Mapped[str] = mapped_column(String(100), nullable=True)  # ФИО сотрудника
+    full_name: Mapped[str] = mapped_column(String(100), nullable=False)  # ФИО сотрудника
 
-    post_id: Mapped[int] = mapped_column(nullable=True)  # id Должности
-    post_name: Mapped[str] = mapped_column(Text(), nullable=True)
+    post_id: Mapped[int] = mapped_column(nullable=False)  # id Должности
+    post_name: Mapped[str] = mapped_column(Text(), nullable=False)
 
-    branch_id: Mapped[int] = mapped_column(nullable=True) # + для вильтрации отделов.
-    branch_name:Mapped[str] = mapped_column(String(200), nullable=True)
-    rrs_name: Mapped[str] = mapped_column(String(100), nullable=True)
-    division_name: Mapped[str] = mapped_column(String(100), nullable=True)
+    branch_id: Mapped[int] = mapped_column(nullable=False) # + для вильтрации отделов.
+    branch_name:Mapped[str] = mapped_column(String(200), nullable=False)
+    rrs_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    division_name: Mapped[str] = mapped_column(String(100), nullable=False)
 
-    user_mail: Mapped[str] = mapped_column(String(100), nullable=True)
+    user_mail: Mapped[str] = mapped_column(String(100), nullable=False)
 
     is_deleted: Mapped[bool] = mapped_column(nullable=True) # в базе есть пустые значения, по этому True
 
-    # статус сотрудника (занят ли или свободен)  # free = True, job = False
-    employee_status: Mapped[bool] = mapped_column(nullable=True)  # activity , server_default='Null'
+    # статус сотрудника (занят ли или свободен)  # free = True, job = False (ри добавлении из бд - пусто, после апдейт
+    employee_status: Mapped[bool] = mapped_column(nullable=False, server_default='False')  # activity , server_default='Null'
     holiday_status: Mapped[bool] = mapped_column(nullable=False) # Если в отпуске то тру.
-    admin_status: Mapped[bool] = mapped_column(nullable=False, server_default=False) # Если админ то тру.
+    admin_status: Mapped[bool] = mapped_column(nullable=False, server_default='False') # Если админ то тру.
 
     #
     # ------------------------------------- Отношение "один ко многим" с Request

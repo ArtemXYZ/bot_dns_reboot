@@ -79,7 +79,7 @@ async def get_user_data(engine_obj:AsyncEngine, *args_format: tuple[int, str, fl
                 formatted_query = user_data_sql_text_old.format(*args_format) # todo sql - заменить после дагов!!!
                 # user_data_sql_text_old, user_data_sql_text
             else:
-                formatted_query = user_data_sql_text
+                formatted_query = user_data_sql_text_old # todo sql
 
             # Забираем данные:
             async with engine_obj.connect() as conn:
@@ -93,8 +93,8 @@ async def get_user_data(engine_obj:AsyncEngine, *args_format: tuple[int, str, fl
 
             await engine_obj.dispose()  # Закрытие соединения вручную. Важно! Если не закрыть соединение, будут ошибки!
 
-        for r in data:
-            print(f'{r}')
+        # for r in data:
+        #     print(f'{r}')
 
         return data  #, columns
 

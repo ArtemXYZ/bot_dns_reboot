@@ -40,6 +40,9 @@ async def startup_on(session: AsyncSession):
     # Извлекаем все данные с удаленного сервера о пользователях через сырой запрос:
     data = await get_user_data(engine_obj=await get_async_engine(CONFIG_JAR_ASYNCPG)) #  , columns - упразднено.
 
+    # test
+    a = await check_insert_data_for_null(data)
+    print(a)
     # Наполнение внутренней БД проекта данными пользователей через ОРМ:
     # !! Открывается 2 сесии еще одна в мидел вери
     # await insert_data(data, session_pool=session)  #, columns - упразднено.!!
