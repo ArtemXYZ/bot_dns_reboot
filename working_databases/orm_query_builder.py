@@ -173,129 +173,112 @@ async def check_insert_data_for_null_old(data):
     return result_insert_list, bugs_dict
 
 
-# async def check_insert_data_for_null(data): # todo - не доделано - пересмотреть Все.
-#     """
-#     Вложенная функция для insert_data. Осуществляет проверку данных перед вставкой
-#     на пустоту.
-#
-#     Логика:
-#     формируем словарь, проверяем его на пустоты. если есть хотя бы в 1 - отбрасываем и запоминаем.
-#     такой словарь можно потом без труда записать в базу в отличии от сырой строки row - в ней нет имен колонок.
-#     """
-#     bugs_list = []  # Словарь строк с кривыми исходными данными.
-#     result_insert_list = []
-#
-#     # Перебираем по строчно данные  выгрузки из удаленной базы :
-#     for row in data:
-#
-#         # Словарь: !! важно понимать: в data - нет имен колонок, по этому по индексу.
-#
-#         # работает, но нужен тупл.
-#         insert_row_tuple = tuple(
-#             row[0],  # 'id_tg'
-#             row[1],  # 'code':
-#             row[2],  # 'session_type':
-#             row[3],  # 'full_name':
-#             row[4],  # 'post_id':
-#             row[5],  # 'post_name':
-#             row[6],  # 'branch_id':
-#             row[7],  # 'branch_name':
-#             row[8],  # 'rrs_name':
-#             row[9],  # 'division_name':
-#             row[10],  # 'user_mail':
-#             row[11],  # 'is_deleted':
-#             row[12],  # 'employee_status':
-#             row[13],  # 'holiday_status':
-#             row[14],  # 'admin_status':
-#         )
-#         # print(insert_row_tuple)
-#
-#
-#         # -------------------------------------------- Поиск косяков в данных
-#         # Проверка на пустоту, для исключения ошибок (конфликт nullable=False)
-#         # условие: если хотя бы в 1 поле есть пустота (неразрешенная) - отлавливаем и переходим к след. строке
-#         # отлавливание: запись в список словарей и пердача их в бд в дальнейшем
-#         if insert_row_tuple[0] is None:
-#             bugs_list.append(insert_row_tuple)
-#             continue  # завершение итерации, переход к следующей.
-#         elif insert_row_tuple[0] is None:
-#             bugs_list.append(insert_row_tuple)
-#             continue
-#         elif insert_row_tuple[0] is None:
-#             bugs_list.append(insert_row_tuple)
-#             continue
-#         elif insert_row_tuple[0] is None:
-#             bugs_list.append(insert_row_tuple)
-#             continue
-#         elif insert_row_tuple[0] is None:
-#             bugs_list.append(insert_row_tuple)
-#             continue
-#         elif insert_row_tuple[0] is None:
-#             bugs_list.append(insert_row_tuple)
-#             continue
-#         elif insert_row_tuple[0] is None:
-#             bugs_list.append(insert_row_tuple)
-#             continue
-#         elif insert_row_tuple[0] is None:
-#             bugs_list.append(insert_row_tuple)
-#             continue
-#         elif insert_row_tuple[0] is None:
-#             bugs_list.append(insert_row_tuple)
-#             continue
-#         elif insert_row_tuple[0] is None:
-#             bugs_list.append(insert_row_tuple)
-#             continue
-#         elif insert_row_tuple[0] is None:
-#             bugs_list.append(insert_row_tuple)
-#             continue
-#         elif insert_row_tuple[0] is None:
-#             bugs_list.append(insert_row_tuple)
-#             continue
-#         elif insert_row_tuple[0] is None:
-#             bugs_list.append(insert_row_tuple)
-#             continue
-#         elif insert_row_tuple[0] is None:
-#             bugs_list.append(insert_row_tuple)
-#             continue
-#         elif insert_row_tuple[0] is None:
-#             bugs_list.append(insert_row_tuple)
-#             continue
-#         else:
-#             pass
-#         # -------------------------------------------------
-#
-#
-#         # Жесткая типизация данных:
-#         insert_row_dict_fin = {
-#             'id_tg': int(insert_row_dict['id_tg']),
-#             'code': str(insert_row_dict['code']),
-#             'session_type': str(insert_row_dict['session_type']),
-#             'full_name': str(insert_row_dict['full_name']),
-#             'post_id': int(insert_row_dict['post_id']),
-#             'post_name': str(insert_row_dict['post_name']),
-#             'branch_id': int(insert_row_dict['branch_id']),
-#             'branch_name': str(insert_row_dict['branch_name']),
-#             'rrs_name': str(insert_row_dict['rrs_name']),
-#             'division_name': str(insert_row_dict['division_name']),
-#             'user_mail': str(insert_row_dict['user_mail']),
-#             'is_deleted': bool(insert_row_dict['is_deleted']),
-#             'employee_status': bool(insert_row_dict['employee_status']),
-#             'holiday_status': bool(insert_row_dict['holiday_status']),
-#             'admin_status': bool(insert_row_dict['admin_status']),
-#         }
-#
-#
-#
-#
-#
-#
-#
-#
-#         # print(insert_row_dict_fin)
-#         result_insert_list.append(insert_row_dict_fin)
-#     print(f'Косяки в данных для этих строк: {bugs_dict}')
-#     print(result_insert_list)
-#     return result_insert_list, bugs_dict
+async def check_insert_data_for_null(data): # todo - не доделано - пересмотреть Все.
+    """
+    Вложенная функция для insert_data. Осуществляет проверку данных перед вставкой
+    на пустоту.
+
+    Логика:
+    формируем словарь, проверяем его на пустоты. если есть хотя бы в 1 - отбрасываем и запоминаем.
+    такой словарь можно потом без труда записать в базу в отличии от сырой строки row - в ней нет имен колонок.
+    """
+    bugs_list = []  # Словарь строк с кривыми исходными данными.
+    result_insert_list = []
+
+
+
+
+    async def null_filter(data):
+        # -------------------------------------------- Поиск косяков в данных
+        # Проверка на пустоту, для исключения ошибок (конфликт nullable=False)
+        # условие: если хотя бы в 1 поле есть пустота (неразрешенная) - отлавливаем и переходим к след. строке
+        # отлавливание: запись в список словарей и пердача их в бд в дальнейшем
+        # Перебираем по строчно данные  выгрузки из удаленной базы :
+        for row in data:
+            print(row)
+            # Словарь: !! важно понимать: в data - нет имен колонок, по этому по индексу.
+
+            if row[0] is None:
+                bugs_list.append(row)
+                continue  # завершение итерации, переход к следующей.
+            elif row[0] is None:
+                bugs_list.append(row)
+                continue
+            elif row[0] is None:
+                bugs_list.append(row)
+                continue
+            elif row[0] is None:
+                bugs_list.append(row)
+                continue
+            elif row[0] is None:
+                bugs_list.append(row)
+                continue
+            elif row[0] is None:
+                bugs_list.append(row)
+                continue
+            elif row[0] is None:
+                bugs_list.append(row)
+                continue
+            elif row[0] is None:
+                bugs_list.append(row)
+                continue
+            elif row[0] is None:
+                bugs_list.append(row)
+                continue
+            elif row[0] is None:
+                bugs_list.append(row)
+                continue
+            elif row[0] is None:
+                bugs_list.append(row)
+                continue
+            elif row[0] is None:
+                bugs_list.append(row)
+                continue
+            elif row[0] is None:
+                bugs_list.append(row)
+                continue
+            elif row[0] is None:
+                bugs_list.append(row)
+                continue
+            elif row[0] is None:
+                bugs_list.append(row)
+                continue
+            else:
+                pass
+            # -------------------------------------------------
+
+
+        # Жесткая типизация данных:
+        insert_row_dict_fin = {
+            'id_tg': int(insert_row_dict['id_tg']),
+            'code': str(insert_row_dict['code']),
+            'session_type': str(insert_row_dict['session_type']),
+            'full_name': str(insert_row_dict['full_name']),
+            'post_id': int(insert_row_dict['post_id']),
+            'post_name': str(insert_row_dict['post_name']),
+            'branch_id': int(insert_row_dict['branch_id']),
+            'branch_name': str(insert_row_dict['branch_name']),
+            'rrs_name': str(insert_row_dict['rrs_name']),
+            'division_name': str(insert_row_dict['division_name']),
+            'user_mail': str(insert_row_dict['user_mail']),
+            'is_deleted': bool(insert_row_dict['is_deleted']),
+            'employee_status': bool(insert_row_dict['employee_status']),
+            'holiday_status': bool(insert_row_dict['holiday_status']),
+            'admin_status': bool(insert_row_dict['admin_status']),
+        }
+
+
+
+
+
+
+
+
+        # print(insert_row_dict_fin)
+        result_insert_list.append(insert_row_dict_fin)
+    print(f'Косяки в данных для этих строк: {bugs_dict}')
+    print(result_insert_list)
+    return result_insert_list, bugs_dict
 
 
 # async def get_user_data(session_remote: AsyncSession, any_sql_path: str | bytes, **values: tuple[int, str, float]):
@@ -488,3 +471,25 @@ async def insert_data(insert_data, session_pool: AsyncSession):  # , columns, - 
 #                 continue
 #             else:
 #                 pass
+
+
+
+#   # работает, но нужен тупл.
+#         insert_row_tuple = tuple(
+#             row[0],  # 'id_tg'
+#             row[1],  # 'code':
+#             row[2],  # 'session_type':
+#             row[3],  # 'full_name':
+#             row[4],  # 'post_id':
+#             row[5],  # 'post_name':
+#             row[6],  # 'branch_id':
+#             row[7],  # 'branch_name':
+#             row[8],  # 'rrs_name':
+#             row[9],  # 'division_name':
+#             row[10],  # 'user_mail':
+#             row[11],  # 'is_deleted':
+#             row[12],  # 'employee_status':
+#             row[13],  # 'holiday_status':
+#             row[14],  # 'admin_status':
+#         )
+#         # print(insert_row_tuple)
