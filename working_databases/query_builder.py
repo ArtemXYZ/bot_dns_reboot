@@ -76,10 +76,10 @@ async def get_user_data(engine_obj:AsyncEngine, *args_format: tuple[int, str, fl
 
             if args_format:  # is not None
                 # Форматируем SQL запрос, если есть аргументы для форматирования
-                formatted_query = user_data_sql_text_old.format(*args_format) # todo sql - заменить после дагов!!!
+                formatted_query = user_data_sql_text.format(*args_format) # todo sql - заменить после дагов!!!
                 # user_data_sql_text_old, user_data_sql_text
             else:
-                formatted_query = user_data_sql_text_old # todo sql
+                formatted_query = user_data_sql_text # todo sql
 
             # Забираем данные:
             async with engine_obj.connect() as conn:

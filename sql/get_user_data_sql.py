@@ -3,8 +3,19 @@
 иначе сломается построение данных!
  """
 user_data_sql_text ="""
-select            
-         	user_data_bot.*
+select         
+         	bot_table.tg as id_tg         	
+        ,	user_data_bot.code
+        , 	user_data_bot.session_type	
+        , 	user_data_bot.full_name 
+        , 	user_data_bot.post_id
+        , 	user_data_bot.post_name
+        , 	user_data_bot.branch_id
+        , 	user_data_bot.branch_name
+        , 	user_data_bot.rrs_name
+        , 	user_data_bot.division_name
+        , 	user_data_bot.user_mail
+        , 	user_data_bot.is_deleted        
       	,	False as employee_status
       	,	False as admin_status
 FROM
