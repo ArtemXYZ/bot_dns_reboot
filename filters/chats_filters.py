@@ -28,6 +28,7 @@ from sqlalchemy.orm import DeclarativeBase
 
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from sqlalchemy.ext.asyncio import AsyncSession
+from aiogram.types import Message, TelegramObject
 
 from working_databases.local_db_mockup import *
 
@@ -95,10 +96,11 @@ class ChatTypeFilter(Filter):
 class TypeSessionFilter(Filter):
     def __init__(self, allowed_types: list[str]):
         self.allowed_types = allowed_types   # <- session_type_str разрешенные типы
+        # self.data = data
+    async def __call__(self, event: TelegramObject, data: dict) -> bool:
 
-    async def __call__(self, message: types.Message, data: dict) -> bool:
         get_session_type_in_data = data.get("session_type")
-        return get_session_type_in_data in self.session_type_str
+        return get_session_type_in_data in self.allowed_types
 
 
 
