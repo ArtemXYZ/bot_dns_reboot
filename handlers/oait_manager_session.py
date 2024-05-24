@@ -22,6 +22,6 @@ from filters.chats_filters import *
 oait_manager_router = Router()
 
 # фильтрует (пропускает) только личные сообщения и только определенных пользователей:
-oait_manager_router.edited_message.filter(ChatTypeFilter(['private']), UsersOAiTManagerSession())
-oait_manager_router.edited_message.filter(ChatTypeFilter(['private']), UsersOAiTManagerSession())
+oait_manager_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
+oait_manager_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
 

@@ -19,9 +19,9 @@ from menu.button_generator import get_keyboard
 admin_router = Router()
 
 # Устанавливаем фильтр на входящие события для роутера админа:
-admin_router.message.filter(ChatTypeFilter(['private']), UsersAdminSession())
+admin_router.message.filter(ChatTypeFilter(['private'])) # , TypeSessionFilter(allowed_types=['retail'])) , UsersAdminSession()
 # UsersAdminSession - фильтрует только для админа
-admin_router.edited_message.filter(ChatTypeFilter(['privat']), UsersAdminSession())
+admin_router.edited_message.filter(ChatTypeFilter(['privat']))
 #  ChatTypeFilter - 'group', 'supergroup'
 
 # ------------------------------------------------- Тело модуля

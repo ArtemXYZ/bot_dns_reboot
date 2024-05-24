@@ -56,31 +56,40 @@ class DataBaseSession(BaseMiddleware):
 class TypeSessionMiddleware(BaseMiddleware):
 
     """
-
     Универсальный слой-определитель пользователей.
     На основе from_user.id выдает текстовый тип сессии (session_types = ['admin', 'retail', 'oait', '', '', '', ''])
     Далее эти значения пердаются на роутер и там сравниваются в кастомных фильтрах.
     Таким образом, достигается фильтрация пользователей по сессииям (разграничение прав).
+
+    # todo - добавить проверку (досмтуп к этой функци после проверки на регистрацию.
     """
-    def __init__(self, session_types: list[str], session_pool: sessionmaker) -> None:
-        self.session_types = session_types
+    def __init__(self, session_pool: async_sessionmaker) -> None:
+
         self.session_pool = session_pool
 
-    async def __call__(self, message: types.Message) -> bool:
+    async def __call__(
+            self,
+            handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
+            event: TelegramObject,
+            data: Dict[str, Any],
+    ) -> Any:
 
-        for next_type in self.session_types:
+        # Проверка принадлежности сообщения:
+        if isinstance(event, Message):  # message: types.Message
 
             get_id_tg = message.from_user.id
             query = select(Users.session_type).where(Users.id_tg == get_id_tg)
 
             async with self.session_pool() as session:
-
                 get_session_types = await session.execute(query)
-                get_session_types.scalar()   #. .one() one_or_none()
+                session_type_str = get_session_types.scalar_one_or_none()   #. .one() one_or_none()
                 await session.commit()
 
+                # Передаем в словарик данных наш тип сесии:
+                data["session_type"] = session_type_str
+
             # Если тип сессии из базы (разрешенный) совпадает со значением в фильтре:
-            return get_session_types == next_type
+            return await handler(event, data)
 
 # --------------------------------------------------
 # class TypeSessionMiddleware(BaseMiddleware):

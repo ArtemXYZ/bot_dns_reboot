@@ -25,6 +25,6 @@ from working_databases.configs import *
 oait_router = Router()
 
 # фильтрует (пропускает) только личные сообщения и только определенных пользователей:
-oait_router.edited_message.filter(ChatTypeFilter(['private']), UsersOAiTSession())
-oait_router.edited_message.filter(ChatTypeFilter(['private']), UsersOAiTSession())
+oait_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
+oait_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
 # ----------------------------------------------------------------------------------------------------------------------

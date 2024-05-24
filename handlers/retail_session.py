@@ -32,8 +32,8 @@ retail_router = Router()
 # 1-й фильтр: чат может быть “приватным”, ”групповым“, ”супер групповым“ или "каналом” - > \
 #  ( “private”, “group”, “supergroup”, “channel”)
 # 2-й фильтр: по типу юзеров (тип сессии).
-retail_router.message.filter(ChatTypeFilter(['private']), UsersRetailSession())
-retail_router.edited_message.filter(ChatTypeFilter(['private']), UsersRetailSession())
+retail_router.message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['retail']))
+retail_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['retail']))
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Кнопки меню внизу (первый старт)

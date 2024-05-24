@@ -49,54 +49,71 @@ class ChatTypeFilter(Filter):
         return message.chat.type in self.chat_types
 
 # -------------------------- Кастомные фильтры для разграничения доступа различным типам пользователей #6
-class UsersRetailSession_(Filter):
-    """Для фильтрации розницы"""
-    def __init__(self) -> None:
-        pass
+# class UsersRetailSession_(Filter):
+#     """Для фильтрации розницы"""
+#     def __init__(self) -> None:
+#         pass
+#
+#     # Проверяем входной id с id в retail_session_users_list = []
+#     # лист наполняется из базы данных по типу разрешенной сессии для пользователя.:
+#     async def __call__(self, message: types.Message, bot: Bot) -> bool:
+#         return message.from_user.id in bot.retail_session_users_list
+#
+# class UsersOAiTSession_(Filter):
+#     """Для фильтрации сотрудников OAiT"""
+#     def __init__(self) -> None:
+#         pass
+#
+#     # Проверяем входной id с id в retail_session_users_list = []
+#     # лист наполняется из базы данных по типу разрешенной сессии для пользователя.:
+#     async def __call__(self, message: types.Message, bot: Bot) -> bool:
+#         return message.from_user.id in bot.oait_session_users_list
+#
+# class UsersOAiTManagerSession_(Filter):
+#     """Для фильтрации сообщений заместителей начальника и начальников OAiT"""
+#     def __init__(self) -> None:
+#         pass
+#
+#     # Проверяем входной id с id в retail_session_users_list = []
+#     # лист наполняется из базы данных по типу разрешенной сессии для пользователя.:
+#     async def __call__(self, message: types.Message, bot: Bot) -> bool:
+#         return message.from_user.id in bot.oait_manager_session_users_list
+#
+# class UsersAdminSession_(Filter):
+#     """Для фильтрации админов"""
+#     def __init__(self) -> None:
+#         pass
+#
+#     # Проверяем входной id с id в retail_session_users_list = []
+#     # лист наполняется из базы данных по типу разрешенной сессии для пользователя.:
+#     async def __call__(self, message: types.Message, bot: Bot) -> bool:
+#         return message.from_user.id in bot.admin_session_users_list
 
-    # Проверяем входной id с id в retail_session_users_list = []
-    # лист наполняется из базы данных по типу разрешенной сессии для пользователя.:
-    async def __call__(self, message: types.Message, bot: Bot) -> bool:
-        return message.from_user.id in bot.retail_session_users_list
-
-class UsersOAiTSession_(Filter):
-    """Для фильтрации сотрудников OAiT"""
-    def __init__(self) -> None:
-        pass
-
-    # Проверяем входной id с id в retail_session_users_list = []
-    # лист наполняется из базы данных по типу разрешенной сессии для пользователя.:
-    async def __call__(self, message: types.Message, bot: Bot) -> bool:
-        return message.from_user.id in bot.oait_session_users_list
-
-class UsersOAiTManagerSession_(Filter):
-    """Для фильтрации сообщений заместителей начальника и начальников OAiT"""
-    def __init__(self) -> None:
-        pass
-
-    # Проверяем входной id с id в retail_session_users_list = []
-    # лист наполняется из базы данных по типу разрешенной сессии для пользователя.:
-    async def __call__(self, message: types.Message, bot: Bot) -> bool:
-        return message.from_user.id in bot.oait_manager_session_users_list
-
-class UsersAdminSession_(Filter):
-    """Для фильтрации админов"""
-    def __init__(self) -> None:
-        pass
-
-    # Проверяем входной id с id в retail_session_users_list = []
-    # лист наполняется из базы данных по типу разрешенной сессии для пользователя.:
-    async def __call__(self, message: types.Message, bot: Bot) -> bool:
-        return message.from_user.id in bot.admin_session_users_list
-
-
-
-
+# -------------------------- Общие
 
 
+class TypeSessionFilter(Filter):
+    def __init__(self, allowed_types: list[str]):
+        self.allowed_types = allowed_types   # <- session_type_str разрешенные типы
+
+    async def __call__(self, message: types.Message, data: dict) -> bool:
+        get_session_type_in_data = data.get("session_type")
+        return get_session_type_in_data in self.session_type_str
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+# ------------------------------------------------ Архив
     # def ff(self, mockup_class, session):
     #     # SQL = text(
     #     #     f"SELECT {tb_name}.{columns_search} FROM {tb_name} "
@@ -111,13 +128,12 @@ class UsersAdminSession_(Filter):
             # await async_connection.dispose()
             # async_connection.commit()
             # async_connection = async_engine.connect() - можно так (вроде то же самое, но без ролбека транзакций)
+
+
 #             # connect() в этом методе явно надо прописывать комит, а в аналогичной begin - есть автокомит.
 #
 #         # Выдает в текстовом формате (не точно)
 #         result = result_temp.scalar()
-
-
-
 
     # Проверяем входной id с id в retail_session_users_list = []
     # лист наполняется из базы данных по типу разрешенной сессии для пользователя.:
@@ -133,15 +149,6 @@ class UsersAdminSession_(Filter):
 
 # ------------------------------------
 
-
-
-
-
-
-
-
-
-# ------------------------------------------------ Архив
 #  typical session users  IsTypeUserSession
 # class IsTypeUser(Filter):
 #
