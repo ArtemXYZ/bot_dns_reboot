@@ -49,7 +49,7 @@ class ChatTypeFilter(Filter):
         return message.chat.type in self.chat_types
 
 # -------------------------- Кастомные фильтры для разграничения доступа различным типам пользователей #6
-class UsersRetailSession(Filter):
+class UsersRetailSession_(Filter):
     """Для фильтрации розницы"""
     def __init__(self) -> None:
         pass
@@ -59,7 +59,7 @@ class UsersRetailSession(Filter):
     async def __call__(self, message: types.Message, bot: Bot) -> bool:
         return message.from_user.id in bot.retail_session_users_list
 
-class UsersOAiTSession(Filter):
+class UsersOAiTSession_(Filter):
     """Для фильтрации сотрудников OAiT"""
     def __init__(self) -> None:
         pass
@@ -69,7 +69,7 @@ class UsersOAiTSession(Filter):
     async def __call__(self, message: types.Message, bot: Bot) -> bool:
         return message.from_user.id in bot.oait_session_users_list
 
-class UsersOAiTManagerSession(Filter):
+class UsersOAiTManagerSession_(Filter):
     """Для фильтрации сообщений заместителей начальника и начальников OAiT"""
     def __init__(self) -> None:
         pass
@@ -79,7 +79,7 @@ class UsersOAiTManagerSession(Filter):
     async def __call__(self, message: types.Message, bot: Bot) -> bool:
         return message.from_user.id in bot.oait_manager_session_users_list
 
-class UsersAdminSession(Filter):
+class UsersAdminSession_(Filter):
     """Для фильтрации админов"""
     def __init__(self) -> None:
         pass
@@ -90,38 +90,48 @@ class UsersAdminSession(Filter):
         return message.from_user.id in bot.admin_session_users_list
 
 
-# class UsersAdminSession_(Filter):
-#     """Для фильтрации админов"""
-#     def __init__(self, mockup_class, session, engine_obj: AsyncEngine) -> None:
-#         self.mockup_class = mockup_class
-#         self.session = session
-#         self.engine_obj = engine_obj
-#     def ff(self, mockup_class, session):
-#         # SQL = text(
-#         #     f"SELECT {tb_name}.{columns_search} FROM {tb_name} "
-#         #     f"WHERE {tb_name}.{where_columns_name} = '{where_columns_value}'")
-#         # {schema_and_table} WHERE {where_columns_name} = {where_columns_value} # - Работает
-#
-#         async with engine_obj.connect() as async_connection:  # todo здесь может быть проблема с connect()
-#             # connection
-#             result_temp = await async_connection.execute(SQL)
-#
-#             # async_connection.close() - не нужно
-#             # await async_connection.dispose()
-#             # async_connection.commit()
-#             # async_connection = async_engine.connect() - можно так (вроде то же самое, но без ролбека транзакций)
-            # connect() в этом методе явно надо прописывать комит, а в аналогичной begin - есть автокомит.
 
-        # Выдает в текстовом формате (не точно)
-        result = result_temp.scalar()
+
+
+
+
+
+
+    # def ff(self, mockup_class, session):
+    #     # SQL = text(
+    #     #     f"SELECT {tb_name}.{columns_search} FROM {tb_name} "
+    #     #     f"WHERE {tb_name}.{where_columns_name} = '{where_columns_value}'")
+    #     # {schema_and_table} WHERE {where_columns_name} = {where_columns_value} # - Работает
+    #
+    #     async with engine_obj.connect() as async_connection:  # todo здесь может быть проблема с connect()
+    #         # connection
+    #         result_temp = await async_connection.execute(SQL)
+
+            # async_connection.close() - не нужно
+            # await async_connection.dispose()
+            # async_connection.commit()
+            # async_connection = async_engine.connect() - можно так (вроде то же самое, но без ролбека транзакций)
+#             # connect() в этом методе явно надо прописывать комит, а в аналогичной begin - есть автокомит.
+#
+#         # Выдает в текстовом формате (не точно)
+#         result = result_temp.scalar()
+
+
+
 
     # Проверяем входной id с id в retail_session_users_list = []
     # лист наполняется из базы данных по типу разрешенной сессии для пользователя.:
-    async def __call__(self, message: types.Message, bot: Bot) -> bool:
-        return message.from_user.id in bot.admin_session_users_list
+    # async def __call__(self, message: types.Message, bot: Bot) -> bool:
+    #     return message.from_user.id in bot.admin_session_users_list
 
 
+# def __init__(self, mockup_class, session, engine_obj: AsyncEngine) -> None:
+    #     self.mockup_class = mockup_class
+    #     self.session = session
+    #     self.engine_obj = engine_obj
 
+
+# ------------------------------------
 
 
 
