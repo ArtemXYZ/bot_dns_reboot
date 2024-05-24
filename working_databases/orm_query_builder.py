@@ -69,13 +69,14 @@ async def null_filter(row_data):
     :return:
     """
 
-    insert_row_tuple = []
+    # insert_row_tuple = []
     bug_tuple = []
 
-    # Перебираем строки данных:
+    # Перебираем строки данных по элементам кортежа:
     for next_column_row in row_data:
 
-        print(next_column_row)
+        # Перебираем строку по элементам
+
         #
         # if not isinstance(row_data, tuple):
         #     print(f'это не тупл {row_data}')
@@ -87,59 +88,21 @@ async def null_filter(row_data):
         #     bug_tuple.append(row_data)
         #     continue # завершение итерации, переход к следующей.
 
-        if next_column_row[0] is None:
+        if next_column_row is None:
+            print(f'Эта строка с косяком пустая: {row_data}')
             bug_tuple.append(row_data)
-            continue  # завершение итерации, переход к следующей.
-        elif next_column_row[1] is None:
-            bug_tuple.append(row_data)
-            continue
-        elif next_column_row[2] is None:
-            bug_tuple.append(row_data)
-            continue
-        elif next_column_row[3] is None:
-            bug_tuple.append(row_data)
-            continue
-        elif next_column_row[4] is None:
-            bug_tuple.append(row_data)
-            continue
-        elif next_column_row[5] is None:
-            bug_tuple.append(row_data)
-            continue
-        elif next_column_row[6] is None:
-            bug_tuple.append(row_data)
-            continue
-        elif next_column_row[7] is None:
-            bug_tuple.append(rrow_dataow)
-            continue
-        elif next_column_row[8] is None:
-            bug_tuple.append(row_data)
-            continue
-        elif next_column_row[9] is None:
-            bug_tuple.append(row_data)
-            continue
-        elif next_column_row[10] is None:
-            bug_tuple.append(row_data)
-            continue
-        elif next_column_row[11] is None:
-            bug_tuple.append(row_data)
-            continue
-        elif next_column_row[12] is None:
-            bug_tuple.append(row_data)
-            continue
-        elif next_column_row[13] is None:
-            bug_tuple.append(row_data)
-            continue
-        elif next_column_row[14] is None:
-            bug_tuple.append(row_data)
-            continue
-        else:
-            pass
+            break  # завершение цикла, переход к следующему.
 
-        insert_row_tuple.append(row_data)
-        print(insert_row_tuple)
-    print(bug_tuple)
 
-    return insert_row_tuple, bug_tuple
+        insert_row_tuple = row_data
+
+        # insert_row_tuple.append(row_data)
+        # print(f'Здесь только чистые строки: {insert_row_tuple}')
+
+    # print(bug_tuple)
+
+
+    return insert_row_tuple, bug_tuple  # insert_row_tuple, bug_tuple
 
 
 async def insert_data(data, session_pool: AsyncSession): # todo - не доделано - пересмотреть Все.
@@ -163,6 +126,8 @@ async def insert_data(data, session_pool: AsyncSession): # todo - не доде�
         # Перебираем строки данных:
         for row_data in data:
 
+            print( f'На вход поступило: {row_data}')
+
             row_tuple, bug_row = await null_filter(row_data)
             # на выходе 2 картежа с багами и отфильтрованный от NULL
             # todo  bug_row - что с ними ? - делать продумать позже
@@ -170,24 +135,24 @@ async def insert_data(data, session_pool: AsyncSession): # todo - не доде�
             bugs_tuple.append(bug_row) # Копим косяки в кортеж.
 
             # Жесткая типизация данных:
-            insert_obj = Users(
-                    id_tg=int(row_tuple[0]),
-                    code=str(row_tuple[1]),
-                    session_type=str(row_tuple[2]),
-                    full_name=str(row_tuple[3]),
-                    post_id=int(row_tuple[4]),
-                    post_name=str(row_tuple[5]),
-                    branch_id=int(row_tuple[6]),
-                    branch_name=str(row_tuple[7]),
-                    rrs_name=str(row_tuple[8]),
-                    division_name=str(row_tuple[9]),
-                    user_mail=str(row_tuple[10]),
-                    is_deleted=bool(row_tuple[11]),
-                    employee_status=bool(row_tuple[12]),
-                    holiday_status = bool(row_tuple[13]),
-                    admin_status =bool(row_tuple[14])
-                )
-            pool.add(insert_obj)
+            # insert_obj = Users(
+            #         id_tg=int(row_tuple[0]),
+            #         code=str(row_tuple[1]),
+            #         session_type=str(row_tuple[2]),
+            #         full_name=str(row_tuple[3]),
+            #         post_id=int(row_tuple[4]),
+            #         post_name=str(row_tuple[5]),
+            #         branch_id=int(row_tuple[6]),
+            #         branch_name=str(row_tuple[7]),
+            #         rrs_name=str(row_tuple[8]),
+            #         division_name=str(row_tuple[9]),
+            #         user_mail=str(row_tuple[10]),
+            #         is_deleted=bool(row_tuple[11]),
+            #         employee_status=bool(row_tuple[12]),
+            #         holiday_status = bool(row_tuple[13]),
+            #         admin_status =bool(row_tuple[14])
+            #     )
+            # pool.add(insert_obj)
 
         await pool.commit()
     print('Данные удачно мигрировали в локальную базу данных!')
@@ -584,3 +549,51 @@ async def check_insert_data_for_null_old(data):
     print(f'Косяки в данных для этих строк: {bugs_dict}')
     print(result_insert_list)
     return result_insert_list, bugs_dict
+
+
+
+#  elif next_column_row is None:
+#             bug_tuple.append(row_data)
+#             continue
+#         elif next_column_row is None:
+#             bug_tuple.append(row_data)
+#             continue
+#         elif next_column_row is None:
+#             bug_tuple.append(row_data)
+#             continue
+#         elif next_column_row is None:
+#             bug_tuple.append(row_data)
+#             continue
+#         elif next_column_row[5] is None:
+#             bug_tuple.append(row_data)
+#             continue
+#         elif next_column_row[6] is None:
+#             bug_tuple.append(row_data)
+#             continue
+#         elif next_column_row[7] is None:
+#             bug_tuple.append(rrow_dataow)
+#             continue
+#         elif next_column_row[8] is None:
+#             bug_tuple.append(row_data)
+#             continue
+#         elif next_column_row[9] is None:
+#             print(f'Здесь ноль: {next_column_row}')
+#             bug_tuple.append(row_data)
+#             continue
+#         elif next_column_row[10] is None:
+#             bug_tuple.append(row_data)
+#             continue
+#         elif next_column_row[11] is None:
+#             bug_tuple.append(row_data)
+#             continue
+#         elif next_column_row[12] is None:
+#             bug_tuple.append(row_data)
+#             continue
+#         elif next_column_row[13]is None:
+#             bug_tuple.append(row_data)
+#             continue
+#         elif next_column_row[14] is None:
+#             bug_tuple.append(row_data)
+#             continue
+#         else:
+#             pass

@@ -96,7 +96,7 @@ async def get_user_data(engine_obj:AsyncEngine, *args_format: tuple[int, str, fl
         # for r in data:
         #     print(f'{r}')
 
-        return tuple(data)  #, columns
+        return data  #, columns tuple(
 
     #  Если наступит ошибка в значениях:
     except (ValueError, TypeError):

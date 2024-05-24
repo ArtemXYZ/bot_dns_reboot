@@ -17,10 +17,11 @@ select
         , 	user_data_bot.user_mail
         , 	user_data_bot.is_deleted        
       	,	False as employee_status
+      	,	user_data_bot.holiday_status
       	,	False as admin_status
 FROM
             inlet.staff_for_bot as bot_table
-LEFT JOIN            
+INNER JOIN            
             inlet.user_data_bot as user_data_bot
 ON
             bot_table.code = user_data_bot.code 
