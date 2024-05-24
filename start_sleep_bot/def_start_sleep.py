@@ -38,15 +38,12 @@ async def startup_on(session: AsyncSession):
 
     # ------------------ Раздел наполнеия и обновления локал БД:
     # Извлекаем все данные с удаленного сервера о пользователях через сырой запрос:
-    data = await get_user_data(engine_obj=await get_async_engine(CONFIG_JAR_ASYNCPG)) #  , columns - упразднено.
+    # data = await get_user_data(engine_obj=await get_async_engine(CONFIG_JAR_ASYNCPG))
 
-    # test
-    # insert_data_dict_list = await check_insert_data_for_null(data, 14) - упразднено.
 
     # Наполнение внутренней БД проекта данными пользователей через ОРМ:
     # !! Открывается 2 сесии еще одна в мидел вери
-
-    bugs = await insert_data(data, session_pool=session)  #, columns - упразднено.!!
+    # bugs = await insert_data(data, session_pool=session)
 
 
     # включить проверку (при включении и переодически) если база есть
