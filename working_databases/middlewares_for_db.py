@@ -27,7 +27,7 @@ class DataBaseSession(BaseMiddleware):
         data: Dict[str, Any],
     ) -> Any:
         async with self.session_pool() as session:
-            data['session'] = session
+            data['session'] = session  #    Передаем в словарь переменную, которая будет доступна в хендлерах.
             return await handler(event, data)
 
 # -------------------------------------------- Фильтры из id БД ------------
@@ -70,28 +70,28 @@ class TypeSessionMiddleware(BaseMiddleware):
     async def __call__(
             self,
             handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
-            event: Message,
+            event: TelegramObject,  # Message
             data: Dict[str, Any],
     ) -> Any:
 
         # Проверка принадлежности сообщения:
-        # if isinstance(event, Message):  # message: types.Message
+        if isinstance(event, Message):  # message: types.Message
 
-        get_id_tg = event.from_user.id # + работает
-        # print(get_id_tg)
-        query = select(Users.session_type).where(Users.id_tg==get_id_tg)
-        # print(query)
-        async with self.session_pool() as session:
-            get_session_types = await session.execute(query)
-            session_type_str = get_session_types.scalar_one_or_none()   #. .one() one_or_none() # + работает
-            # print(session_type_str)
-            await session.commit()
+            get_id_tg = event.from_user.id # + работает
+            # print(get_id_tg)
+            query = select(Users.session_type).where(Users.id_tg==get_id_tg)
+            # print(query)
+            async with self.session_pool() as session:
+                get_session_types = await session.execute(query)
+                session_type_str = get_session_types.scalar_one_or_none()   #. .one() one_or_none() # + работает
+                # print(session_type_str)
+                await session.commit()
 
-            # Передаем в словарик данных наш тип сесии:
-            data["session_type"] = session_type_str # + работает
-            print(data["session_type"])
-        # Если тип сессии из базы (разрешенный) совпадает со значением в фильтре:
-        return await handler(event, data)
+                # Передаем в словарик данных наш тип сесии:
+                data["session_type"] = session_type_str # + работает
+                print(f'Передаем в словарик данных наш тип сесии: {data["session_type"]}')
+            # Если тип сессии из базы (разрешенный) совпадает со значением в фильтре:
+            return await handler(event, data)
 
 # --------------------------------------------------
 # class TypeSessionMiddleware(BaseMiddleware):

@@ -96,7 +96,7 @@ bot: Bot = Bot(token=os.getenv('API_TOKEN'), default=DefaultBotProperties(parse_
 dp = Dispatcher()
 
 # Будет работать до фильтров !!!
-dp.message.outer_middleware(TypeSessionMiddleware(session_pool=session_pool_LOCAL_DB))
+dp.message.middleware(TypeSessionMiddleware(session_pool=session_pool_LOCAL_DB))
 
 
 # Назначаем роутеры:
@@ -105,7 +105,7 @@ dp.message.outer_middleware(TypeSessionMiddleware(session_pool=session_pool_LOCA
 #  Распределение роутеров - порядок записи имеет значение. не трогать! (3й урок)
 # dp.include_router(admin_router)
 # dp.include_router(general_router)
-# dp.include_router(retail_router)
+dp.include_router(retail_router)
 # dp.include_router(oait_manager_router)
 
 # -------------------------------------------------- Тело бота:

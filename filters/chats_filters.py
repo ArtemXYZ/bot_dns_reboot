@@ -24,13 +24,17 @@
 
 from aiogram.filters import Filter
 from aiogram import types, Bot
+
 from sqlalchemy.orm import DeclarativeBase
 
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from sqlalchemy.ext.asyncio import AsyncSession
 from aiogram.types import Message, TelegramObject
-
+from typing import Any, Awaitable, Callable, Dict
 from working_databases.local_db_mockup import *
+
+from working_databases.middlewares_for_db import TypeSessionMiddleware
+
 
 admins_list = []
 # импортировать ссесию.
@@ -97,9 +101,11 @@ class TypeSessionFilter(Filter):
     def __init__(self, allowed_types: list[str]):
         self.allowed_types = allowed_types   # <- session_type_str разрешенные типы
         # self.data = data
-    async def __call__(self, event: TelegramObject, data: dict) -> bool:
+    async def __call__(self, handler, event: TelegramObject, data: Dict[str, Any]) -> bool:  # event: TelegramObject  event: Message
 
-        get_session_type_in_data = data.get("session_type")
+        get_session_type_in_data = data["session_type"]               # data["session_type"]  data.get("session_type") update_data(request_message=message.text)
+        print(f'Итог: {get_session_type_in_data}')
+
         return get_session_type_in_data in self.allowed_types
 
 
