@@ -74,35 +74,17 @@ async def null_filter(row_data):
 
     # Перебираем строки данных по элементам кортежа:
     for next_column_row in row_data:
-
-        # Перебираем строку по элементам
-
-        #
-        # if not isinstance(row_data, tuple):
-        #     print(f'это не тупл {row_data}')
-        # num_columns = len(row)  - не работает с тупл
-
-
-        # # Проверка на пустоту в каждом столбце строки  - шляпа!!!
-        # if any(value is None for value in next_column_row):
-        #     bug_tuple.append(row_data)
-        #     continue # завершение итерации, переход к следующей.
-
+        # Перебираем строку по элементам:
         if next_column_row is None:
-            print(f'Эта строка с косяком пустая: {row_data}')
+            # print(f'Эта строка с косяком: {row_data}')
             bug_tuple.append(row_data)
+            row_data = None
             break  # завершение цикла, переход к следующему.
 
-
-        insert_row_tuple = row_data
-
         # insert_row_tuple.append(row_data)
-        # print(f'Здесь только чистые строки: {insert_row_tuple}')
-
+    print(f'Здесь только чистые строки: {row_data}')
     # print(bug_tuple)
-
-
-    return insert_row_tuple, bug_tuple  # insert_row_tuple, bug_tuple
+    return row_data, bug_tuple
 
 
 async def insert_data(data, session_pool: AsyncSession): # todo - не доделано - пересмотреть Все.
@@ -123,36 +105,35 @@ async def insert_data(data, session_pool: AsyncSession): # todo - не доде�
         bugs_tuple = []  # Словарь строк с кривыми исходными данными.
         # insert_row_tuple = []
 
-        # Перебираем строки данных:
+        # Перебираем данные по строчно:
         for row_data in data:
 
-            print( f'На вход поступило: {row_data}')
-
-            row_tuple, bug_row = await null_filter(row_data)
             # на выходе 2 картежа с багами и отфильтрованный от NULL
             # todo  bug_row - что с ними ? - делать продумать позже
+            insert_row_tuple, bug_row = await null_filter(row_data)
 
-            bugs_tuple.append(bug_row) # Копим косяки в кортеж.
-
-            # Жесткая типизация данных:
-            # insert_obj = Users(
-            #         id_tg=int(row_tuple[0]),
-            #         code=str(row_tuple[1]),
-            #         session_type=str(row_tuple[2]),
-            #         full_name=str(row_tuple[3]),
-            #         post_id=int(row_tuple[4]),
-            #         post_name=str(row_tuple[5]),
-            #         branch_id=int(row_tuple[6]),
-            #         branch_name=str(row_tuple[7]),
-            #         rrs_name=str(row_tuple[8]),
-            #         division_name=str(row_tuple[9]),
-            #         user_mail=str(row_tuple[10]),
-            #         is_deleted=bool(row_tuple[11]),
-            #         employee_status=bool(row_tuple[12]),
-            #         holiday_status = bool(row_tuple[13]),
-            #         admin_status =bool(row_tuple[14])
-            #     )
-            # pool.add(insert_obj)
+            if insert_row_tuple is None:
+                bugs_tuple.append(bug_row) # Копим косяки в кортеж.!!
+            else:
+                # Жесткая типизация данных:
+                insert_obj = Users(
+                        id_tg=int(insert_row_tuple[0]),
+                        code=str(insert_row_tuple[1]),
+                        session_type=str(insert_row_tuple[2]),
+                        full_name=str(insert_row_tuple[3]),
+                        post_id=int(insert_row_tuple[4]),
+                        post_name=str(insert_row_tuple[5]),
+                        branch_id=int(insert_row_tuple[6]),
+                        branch_name=str(insert_row_tuple[7]),
+                        rrs_name=str(insert_row_tuple[8]),
+                        division_name=str(insert_row_tuple[9]),
+                        user_mail=str(insert_row_tuple[10]),
+                        is_deleted=bool(insert_row_tuple[11]),
+                        employee_status=bool(insert_row_tuple[12]),
+                        holiday_status = bool(insert_row_tuple[13]),
+                        admin_status =bool(insert_row_tuple[14])
+                    )
+                pool.add(insert_obj)
 
         await pool.commit()
     print('Данные удачно мигрировали в локальную базу данных!')
@@ -597,3 +578,8 @@ async def check_insert_data_for_null_old(data):
 #             continue
 #         else:
 #             pass
+
+# # Проверка на пустоту в каждом столбце строки  - шляпа!!!
+        # if any(value is None for value in next_column_row):
+        #     bug_tuple.append(row_data)
+        #     continue # завершение итерации, переход к следующей.
