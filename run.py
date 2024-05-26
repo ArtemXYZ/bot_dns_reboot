@@ -90,7 +90,7 @@ bot: Bot = Bot(token=os.getenv('API_TOKEN'), default=DefaultBotProperties(parse_
 
 #  К экземпляру бота добавляем свойства (списки с users_id под каждый тип сессии:
 # Обязательно присвоить значение, чтоб зарегестрировать переменную в экземпляре бота.
-
+bot.retail_session_users_list: list[int] = [1034809823, 141407179]
 
 # bot.retail_session_users_list: list[int] = [1034809823, 141407179]
 # bot.oait_session_users_list = [1034809823, 141407179]

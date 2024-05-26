@@ -34,7 +34,7 @@ from typing import Any, Awaitable, Callable, Dict
 
 from working_databases.local_db_mockup import *
 
-from working_databases.middlewares_for_db import TypeSessionMiddleware
+# from working_databases.middlewares_for_db import TypeSessionMiddleware
 
 
 # from working_databases.middlewares_for_db import TypeSessionMiddleware
@@ -59,15 +59,15 @@ class ChatTypeFilter(Filter):
         return message.chat.type in self.chat_types
 
 # -------------------------- Кастомные фильтры для разграничения доступа различным типам пользователей #6
-# class UsersRetailSession_(Filter):
-#     """Для фильтрации розницы"""
-#     def __init__(self) -> None:
-#         pass
-#
-#     # Проверяем входной id с id в retail_session_users_list = []
-#     # лист наполняется из базы данных по типу разрешенной сессии для пользователя.:
-#     async def __call__(self, message: types.Message, bot: Bot) -> bool:
-#         return message.from_user.id in bot.retail_session_users_list
+class UsersRetailSession(Filter):
+    """Для фильтрации розницы"""
+    def __init__(self) -> None:
+        pass
+
+    # Проверяем входной id с id в retail_session_users_list = []
+    # лист наполняется из базы данных по типу разрешенной сессии для пользователя.:
+    async def __call__(self, message: types.Message, bot: Bot) -> bool:
+        return message.from_user.id in bot.retail_session_users_list
 
 
 
@@ -116,19 +116,19 @@ class ChatTypeFilter(Filter):
 #         pass
 
 
-session_users_list = TypeSessionMiddleware.get_type_session()
+# session_users_list = TypeSessionMiddleware
 
 
 class TypeSessionFilter(Filter):
     def __init__(self, allowed_types: list[str]):
         self.allowed_types = allowed_types   # <- session_type_str разрешенные типы
-
-    async def __call__(self, session_users_list:str) -> bool:  # event: TelegramObject  event: Message ,  event: TelegramObject
+        # self.session_users_list = session_users_list
+    async def __call__(self, session_users_list:str, bot: Bot) -> bool:  # event: TelegramObject  event: Message ,  event: TelegramObject
 
 
         print(f'Пришло в фильтр: {session_users_list}')
 
-        return session_users_list in self.allowed_types
+        return bot.retail_session_users_list in self.allowed_types
 
 
 

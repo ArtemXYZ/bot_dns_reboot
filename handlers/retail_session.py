@@ -40,8 +40,8 @@ retail_router = Router()
 
 
 
-retail_router.message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
-retail_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
+retail_router.message.filter(ChatTypeFilter(['private']))
+# retail_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Кнопки меню внизу (первый старт)

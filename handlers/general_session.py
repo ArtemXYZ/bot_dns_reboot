@@ -22,7 +22,7 @@ from aiogram.client.default import DefaultBotProperties  # Обработка т
 
 # -------------------------------- Локальные модули
 from handlers.text_message import swearing_list  # Список ругательств:
-from filters.chats_filters import ChatTypeFilter
+from filters.chats_filters import *
 
 # from aiogram.utils.formatting import as_list, as_marked_section, Bold, Italic
 
@@ -37,7 +37,7 @@ from working_databases.configs import *
 general_router = Router()
 
 # фильтрует (пропускает) только личные сообщения и только определенных пользователей:
-general_router.edited_message.filter(ChatTypeFilter(['private']))
+general_router.edited_message.filter(ChatTypeFilter(['private']), UsersRetailSession())
 general_router.edited_message.filter(ChatTypeFilter(['private']))
 # ----------------------------------------------------------------------------------------------------------------------
 # Вспомогательная функция проверки регистрации:

@@ -118,11 +118,11 @@ class TypeSessionMiddleware(BaseMiddleware):
             # return await session_users_list
 
             print(f'Наш тип сесcии: {self.session_type_str}')
-            return await self.session_type_str
+            return self.session_type_str
 
 
     async def get_type_session(self) -> Any:  #, data: Dict[str, Any]
-        return await self.session_type_str
+        return self.session_type_str
 
 
 
