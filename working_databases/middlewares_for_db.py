@@ -12,15 +12,16 @@ from sqlalchemy import select, update, delete
 from aiogram import BaseMiddleware
 from aiogram.types import Message, TelegramObject
 
-# from aiogram import types, Bot, Dispatcher
+
+from aiogram import types, Bot
 
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from working_databases.local_db_mockup import *
 
 
-session_users_list:str = None
-
+# session_users_list:str = None
+from aiogram.filters import Filter
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -85,7 +86,6 @@ class TypeSessionMiddleware(BaseMiddleware):
             handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
             event: TelegramObject,
             data: Dict[str, Any]
-            # bot:Bot
             # dp:Dispatcher
            # , retail_session_users_list
 
@@ -117,24 +117,34 @@ class TypeSessionMiddleware(BaseMiddleware):
             # print(f'Передаем в переменную наш тип сесcии: {session_users_list}')
             # return await session_users_list
 
+            bot.retail_session_users_list
+
             print(f'Наш тип сесcии: {self.session_type_str}')
             return self.session_type_str
 
 
-    async def get_type_session(self) -> Any:  #, data: Dict[str, Any]
-        return self.session_type_str
 
 
+    # async def get_type_session(self) -> Any:  #, data: Dict[str, Any]
+    #     return self.session_type_str
 
 
-
-
-# class GetDataEvent(TypeSessionMiddleware):
+# class GetDataEvent(Filter):
+#
 #     def __init__(self) -> None:
 #         pass
 #
-#     async def get_type_session(self) -> Any:  #, data: Dict[str, Any]
-#         return await data["session_type"]
+#     async def __call__(self, bot: Bot) -> bool:
+#         return bot.retail_session_users_list
+#
+# class GetDataEvent(TypeSessionMiddleware):
+#     def __init__(self) -> None:
+#         pass
+
+
+
+    # async def get_type_session(self) -> Any:  #, data: Dict[str, Any]
+    #     return await data["session_type"]
 
 #   тесты      ---------------------------
 
