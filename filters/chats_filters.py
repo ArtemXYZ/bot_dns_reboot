@@ -22,19 +22,20 @@
 Можно назначать права администратора другим участникам.
 """
 
+
 from aiogram.filters import Filter
-from aiogram import types, Bot
 
+from aiogram import types, Bot, Dispatcher
 from sqlalchemy.orm import DeclarativeBase
-
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from sqlalchemy.ext.asyncio import AsyncSession
 from aiogram.types import Message, TelegramObject
 from typing import Any, Awaitable, Callable, Dict
-from working_databases.local_db_mockup import *
 
+from working_databases.local_db_mockup import *
 from working_databases.middlewares_for_db import TypeSessionMiddleware
 
+# from aiogram.filters import BaseFilter # ???
 
 admins_list = []
 # импортировать ссесию.
@@ -97,13 +98,34 @@ class ChatTypeFilter(Filter):
 # -------------------------- Общие
 
 
+# ---------------- тесты
+# class TypeSessionFilterSuper(TypeSessionMiddleware):
+#
+#     def __init__(self, allowed_types: list[str]):
+#         self.allowed_types = allowed_types
+#
+#     def __init__(self) -> None:
+#         pass
+
+
+
+
+
 class TypeSessionFilter(Filter):
-    def __init__(self, allowed_types: list[str]):
+    def __init__(self, allowed_types: list[str]): # , data: Dict[str, Any]
         self.allowed_types = allowed_types   # <- session_type_str разрешенные типы
         # self.data = data
-    async def __call__(self, handler, event: TelegramObject, data: Dict[str, Any]) -> bool:  # event: TelegramObject  event: Message
+    async def __call__(self, message: Message, data: Dict[str, Any] ) -> bool:  # event: TelegramObject  event: Message ,  event: TelegramObject
 
-        get_session_type_in_data = data["session_type"]               # data["session_type"]  data.get("session_type") update_data(request_message=message.text)
+        # print(event.dict)
+        # get_session_type_in_data = event.get("session_type")
+        get_session_type_in_data = data.get("session_type")
+
+        # get_session_type_in_data = data
+        # get_session_type_in_data = data["session_type"]
+
+        # data["session_type"]  data.get("session_type") update_data(request_message=message.text)
+
         print(f'Итог: {get_session_type_in_data}')
 
         return get_session_type_in_data in self.allowed_types
@@ -195,3 +217,39 @@ class TypeSessionFilter(Filter):
 #         # или продумать.
 #
 #         return type_user_id in session_types
+
+# class TypeSessionFilter(BaseFilter): - почти работало.
+#     def __init__(self, allowed_types: list[str], data: Dict[str, Any]):
+#         self.allowed_types = allowed_types   # <- session_type_str разрешенные типы
+#         self.data = data
+#     async def __call__(self, event: Message, data: Dict[str, Any] ) -> bool:  # event: TelegramObject  event: Message ,  event: TelegramObject
+#
+#         # print(event.dict)
+#         # get_session_type_in_data = event.get("session_type")
+#         get_session_type_in_data = data
+#         get_session_type_in_data = data["session_type"]
+#         # data["session_type"]  data.get("session_type") update_data(request_message=message.text)
+#
+#         print(f'Итог: {get_session_type_in_data}')
+#
+#         # return get_session_type_in_data in self.allowed_types
+
+
+# class TypeSessionFilter(TypeSessionMiddleware, Filter):
+#     def __init__(self, allowed_types: list[str], data: Dict[str, Any]):
+#         self.allowed_types = allowed_types   # <- session_type_str разрешенные типы
+#
+#     async def __call__(self, message: Message, data: Dict[str, Any] ) -> bool:  # event: TelegramObject  event: Message ,  event: TelegramObject
+#
+#         # print(event.dict)
+#         # get_session_type_in_data = event.get("session_type")
+#         get_session_type_in_data = data.get("session_type")
+#
+#         # get_session_type_in_data = data
+#         # get_session_type_in_data = data["session_type"]
+#
+#         # data["session_type"]  data.get("session_type") update_data(request_message=message.text)
+#
+#         print(f'Итог: {get_session_type_in_data}')
+#
+#         return get_session_type_in_data in self.allowed_types

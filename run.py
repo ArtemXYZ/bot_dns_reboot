@@ -51,10 +51,12 @@ requests Helper Bot manager
 """
 
 # -------------------------------- Стандартные модули
+# import logging
+# logging.basicConfig(level=logging.INFO)
 # -------------------------------- Сторонние библиотеки
 from aiogram import Bot, Dispatcher, types
 from aiogram.client.default import DefaultBotProperties  # Обработка текста HTML разметкой
-
+# from aiogram.utils import executor
 # -------------------------------- Локальные модули
 from working_databases.configs import *
 
@@ -86,7 +88,7 @@ bot: Bot = Bot(token=os.getenv('API_TOKEN'), default=DefaultBotProperties(parse_
 
 
 #  К экземпляру бота добавляем свойства (списки с users_id под каждый тип сессии :
-# bot.retail_session_users_list = [1034809823, 141407179]
+bot.retail_session_users_list:str     # = [1034809823, 141407179]
 # bot.oait_session_users_list = [1034809823, 141407179]
 # bot.oait_manager_session_users_list = [1034809823]
 # bot.admin_session_users_list = [1034809823]  #! надо в int , 1372644288
@@ -95,8 +97,8 @@ bot: Bot = Bot(token=os.getenv('API_TOKEN'), default=DefaultBotProperties(parse_
 # Принимает все события и отвечает за порядок их обработки в асинхронном режиме.
 dp = Dispatcher()
 
-# Будет работать до фильтров !!!
-dp.message.middleware(TypeSessionMiddleware(session_pool=session_pool_LOCAL_DB))
+# Будет работать до фильтров !!! На все типы обновлений (событий).
+dp.message.outer_middleware(TypeSessionMiddleware(session_pool=session_pool_LOCAL_DB))
 
 
 # Назначаем роутеры:
@@ -110,7 +112,8 @@ dp.include_router(retail_router)
 
 # -------------------------------------------------- Тело бота:
 
-
+# type_session: GetDataEvent = GetDataEvent() тесты!
+# print(type_session.get_type_session())
 
 
 # ---------------------------------------------------- Зацикливание работы бота

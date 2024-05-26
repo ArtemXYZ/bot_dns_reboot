@@ -23,6 +23,9 @@ from menu import keyboard_menu  # Кнопки меню - клавиатура �
 from menu import inline_menu  # Кнопки встроенного меню - для сообщений
 
 from menu.button_generator import get_keyboard
+
+from middlewares_for_db import GetDataEvent
+
 from working_databases.orm_query_builder import *
 # ----------------------------------------------------------------------------------------------------------------------
 # Назначаем роутер для чата под розницу:
@@ -32,7 +35,12 @@ retail_router = Router()
 # 1-й фильтр: чат может быть “приватным”, ”групповым“, ”супер групповым“ или "каналом” - > \
 #  ( “private”, “group”, “supergroup”, “channel”)
 # 2-й фильтр: по типу юзеров (тип сессии).
-retail_router.message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))  # retail
+
+
+
+
+
+retail_router.message.filter(ChatTypeFilter(['private']))  #  , TypeSessionFilter(allowed_types=['oait'])
 retail_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
 
 # ----------------------------------------------------------------------------------------------------------------------

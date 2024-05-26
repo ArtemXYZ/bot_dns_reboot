@@ -11,7 +11,7 @@ from sqlalchemy import select, String, Table, update, delete, text
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from sqlalchemy.ext.asyncio import AsyncSession
 from aiogram import types
-import pandas as pd
+
 # -------------------------------- Локальные модули
 from sql.get_user_data_sql import *
 from working_databases.configs import *
