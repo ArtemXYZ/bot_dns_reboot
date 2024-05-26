@@ -24,7 +24,7 @@ from menu import inline_menu  # Кнопки встроенного меню - �
 
 from menu.button_generator import get_keyboard
 
-from middlewares_for_db import GetDataEvent
+
 
 from working_databases.orm_query_builder import *
 # ----------------------------------------------------------------------------------------------------------------------
@@ -40,7 +40,7 @@ retail_router = Router()
 
 
 
-retail_router.message.filter(ChatTypeFilter(['private']))  #  , TypeSessionFilter(allowed_types=['oait'])
+retail_router.message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
 retail_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
 
 # ----------------------------------------------------------------------------------------------------------------------

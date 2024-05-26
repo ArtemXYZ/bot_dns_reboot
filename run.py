@@ -49,6 +49,7 @@ DNS requests handler Bot
 
 requests Helper Bot manager
 """
+from typing import List
 
 # -------------------------------- Стандартные модули
 # import logging
@@ -87,8 +88,11 @@ from start_sleep_bot.def_start_sleep import *
 bot: Bot = Bot(token=os.getenv('API_TOKEN'), default=DefaultBotProperties(parse_mode='HTML'))  # Для переменных окружения
 
 
-#  К экземпляру бота добавляем свойства (списки с users_id под каждый тип сессии :
-bot.retail_session_users_list:str     # = [1034809823, 141407179]
+#  К экземпляру бота добавляем свойства (списки с users_id под каждый тип сессии:
+# Обязательно присвоить значение, чтоб зарегестрировать переменную в экземпляре бота.
+
+
+# bot.retail_session_users_list: list[int] = [1034809823, 141407179]
 # bot.oait_session_users_list = [1034809823, 141407179]
 # bot.oait_manager_session_users_list = [1034809823]
 # bot.admin_session_users_list = [1034809823]  #! надо в int , 1372644288
@@ -96,6 +100,10 @@ bot.retail_session_users_list:str     # = [1034809823, 141407179]
 # --------------------------------------------- Инициализация диспетчера событий
 # Принимает все события и отвечает за порядок их обработки в асинхронном режиме.
 dp = Dispatcher()
+
+
+
+
 
 # Будет работать до фильтров !!! На все типы обновлений (событий).
 dp.message.outer_middleware(TypeSessionMiddleware(session_pool=session_pool_LOCAL_DB))

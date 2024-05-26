@@ -12,9 +12,17 @@ from sqlalchemy import select, update, delete
 from aiogram import BaseMiddleware
 from aiogram.types import Message, TelegramObject
 
+# from aiogram import types, Bot, Dispatcher
+
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from working_databases.local_db_mockup import *
+
+
+session_users_list:str = None
+
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 class DataBaseSession(BaseMiddleware):
     def __init__(self, session_pool: async_sessionmaker):
@@ -77,6 +85,10 @@ class TypeSessionMiddleware(BaseMiddleware):
             handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
             event: TelegramObject,
             data: Dict[str, Any]
+            # bot:Bot
+            # dp:Dispatcher
+           # , retail_session_users_list
+
     ) -> Any:
 
         # self.data = data
@@ -96,25 +108,36 @@ class TypeSessionMiddleware(BaseMiddleware):
                 await session.commit()
 
                 # Передаем в словарик данных наш тип сесии:
-                data['session_type'] = self.session_type_str  # + работает (data["session_type"] = self.session_pool.get_session_type(event))
-
+                # data['session_type'] = self.session_type_str  # + работает (data["session_type"] = self.session_pool.get_session_type(event))
                 # print(f'Передаем в словарик данных наш тип сесcии: {data["session_type"]}')
-
             # Если тип сессии из базы (разрешенный) совпадает со значением в фильтре:
-            return await handler(event, data)
-              # return await rou
+            # return await handler(event, data)
+
+            # session_users_list:str = self.session_type_str
+            # print(f'Передаем в переменную наш тип сесcии: {session_users_list}')
+            # return await session_users_list
+
+            print(f'Наш тип сесcии: {self.session_type_str}')
+            return await self.session_type_str
+
+
     async def get_type_session(self) -> Any:  #, data: Dict[str, Any]
         return await self.session_type_str
 
 
+
+
+
+
+# class GetDataEvent(TypeSessionMiddleware):
+#     def __init__(self) -> None:
+#         pass
+#
+#     async def get_type_session(self) -> Any:  #, data: Dict[str, Any]
+#         return await data["session_type"]
+
 #   тесты      ---------------------------
 
-class GetDataEvent(TypeSessionMiddleware):
-    def __init__(self) -> None:
-        pass
-
-    # async def get_type_session(self) -> Any:  #, data: Dict[str, Any]
-    #     return await data["session_type"]
 
 
 
