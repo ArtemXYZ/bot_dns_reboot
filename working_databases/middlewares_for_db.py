@@ -120,7 +120,8 @@ class TypeSessionMiddleware(BaseMiddleware):
             bot.retail_session_users_list = self.session_type_str
 
             print(f'Наш тип сесcии: {bot.retail_session_users_list}')
-            return bot.retail_session_users_list
+            # return bot.retail_session_users_list
+            return await handler(event, data)
 
 
 

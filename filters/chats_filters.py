@@ -25,12 +25,14 @@
 
 from aiogram.filters import Filter
 
+
+
 from aiogram import types, Bot
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from sqlalchemy.ext.asyncio import AsyncSession
 from aiogram.types import Message, TelegramObject
-from typing import Any, Awaitable, Callable, Dict
+from typing import Any, Awaitable, Callable, Dict, Union
 
 from working_databases.local_db_mockup import *
 
@@ -125,13 +127,17 @@ class TypeSessionFilter(Filter):
         # self.session_users_list = session_users_list
 
     # async def __call__(self, session_users_list:str, bot: Bot) -> bool:  # event: TelegramObject  event: Message ,  event: TelegramObject
-    async def __call__(self, bot: Bot) -> bool:
+    # async def __call__(self, bot: Bot) -> bool:
+
+    async def __call__(self, message: Message) -> bool:
+        bot = message.bot
+
         print(f'Пришло в фильтр: {bot.retail_session_users_list}')
 
 
         # return self.session_users_list in self.allowed_types
 
-        return bot.retail_session_users_list in self.allowed_types
+        return bot.retail_session_users_list == self.allowed_types
 
 
 
