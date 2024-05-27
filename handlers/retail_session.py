@@ -20,7 +20,7 @@ from filters.chats_filters import *
 # from aiogram.utils.formatting import as_list, as_marked_section, Bold, Italic
 
 from menu import keyboard_menu  # Кнопки меню - клавиатура внизу
-from menu import inline_menu  # Кнопки встроенного меню - для сообщений
+from menu.inline_menu import *  # Кнопки встроенного меню - для сообщений
 
 from menu.button_generator import get_keyboard
 
@@ -39,8 +39,8 @@ retail_router = Router()
 
 
 
-retail_router.message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['retail']))  # retail oait
-retail_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['retail']))
+retail_router.message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))  # retail oait
+retail_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Кнопки меню внизу (первый старт)
@@ -108,7 +108,7 @@ async def hello_after_on_next(message: types.Message, state: FSMContext):
                          f'а после уже помогу в решении твоих вопросов, ну или '
                          f'можешь приступать самостоятельно!',
                          parse_mode='HTML',
-                         reply_markup=inline_menu.get_callback_btns(
+                         reply_markup=get_callback_btns(
                              btns={'▶️ КРАТКИЙ ИНСТРУКТАЖ': 'instruction',
                                    '⏩ ПРИСТУПИТЬ К РАБОТЕ': 'go_work'
                                    },
@@ -197,15 +197,17 @@ async def get_request_problem(message: types.Message, state: FSMContext):
     # await message.answer(f'Задачу понял!', reply_markup=types.ReplyKeyboardRemove())  # удаляет клаву
     # todo удаляем полностью клаву! Оставить только инлайн меню.
 
+    # ---------------------------------------- Инлайновое меню (уровень 0):
+
     # Вывод инлайнового меню (категории обращений), реакция при создании заявки
     await asyncio.sleep(1)
-    await message.answer(f'Выберите категорию обращения',
-                         reply_markup=inline_menu.get_callback_btns(
-                             btns={'ПРОБЛЕМЫ С АВТОМАТОМ РАСПРЕДЕЛЕНИЯ, НЕ ЕДЕТ ТОВАР': 'analytics',
-                                   'ФОРМАТЫ': 'formats',
-                                   'ТОВАРООБОРОТ': 'trade _turnover',
-                                   'ОТМЕНА': 'cancel'},
-                             sizes=(1, 1, 1)
+    await message.answer(f'Выберите категорию обращения 🚨', parse_mode='HTML', # 🛟
+                         reply_markup=get_callback_btns(
+                             btns={'📈 АНАЛИТИКА': 'problem_analytics',
+                                   '🏬 ФОРМАТЫ': 'problem_formats',
+                                   '🛞 ТОВАРООБОРОТ': 'problem_trade_turnover',
+                                   '⏹ ОТМЕНА': 'problem_cancel'},
+                             sizes=(1, 1, 1, 1)
                          )
                          )
     # Очистка состояния пользователя: ??
@@ -216,7 +218,7 @@ async def get_request_problem(message: types.Message, state: FSMContext):
 #
 
 # # # # 1.1.0 Родитель (Ветка при создании заявки) -> Реакции на нажатие кнопок инлайнового меню на категории обращений:
-@retail_router.callback_query(StateFilter(None), F.data.startswith('cancel'))
+@retail_router.callback_query(StateFilter(None), F.data.startswith('problem_cancel'))
 # Если у пользователя нет активного состояния (StateFilter(None) + он ввел команду "cancel")
 async def get_cancel(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()  #
@@ -225,14 +227,44 @@ async def get_cancel(callback: types.CallbackQuery, state: FSMContext):
 
 
 
-
-@retail_router.callback_query(StateFilter(None), F.data.startswith('analytics'))
+# ----------------------- callback на АНАЛИТИКА !!!
+@retail_router.callback_query(StateFilter(None), F.data.startswith('problem_analytics'))
 # Если у пользователя нет активного состояния (StateFilter(None) + он ввел команду "analytics")
 async def press_button_request_message(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
-    await callback.message.answer('Введите текст обращения', reply_markup=types.ReplyKeyboardRemove())
-    await state.set_state(AddRequests.request_message)
-    # todo замутить удаление всех сообщений с меню
+
+    await callback.message.edit_text(f'Выберите подкатегорию обращения в разделе АНАЛИТИКА:', parse_mode='HTML',
+                                     reply_markup=get_callback_btns(
+                                         btns={'📊 ДАШБОРДЫ': 'problem_dashboards',
+                                               '🔖 ЦЕННИКИ': 'problem_tags',
+                                               '🤖 TELEGRAM-БОТЫ': 'problem_bot',
+                                               '⬅️ НАЗАД': 'problem_inline_back',
+                                               '⏹ ОТМЕНА': 'problem_cancel'},
+                                         sizes=(1, 1, 1, 2)
+                                     )
+                                     )
+
+    # await state.set_state(AddRequests.request_message)
+
+
+
+
+
+
+
+
+
+# @retail_router.callback_query(StateFilter(None), F.data.startswith('problem_analytics'))
+# # Если у пользователя нет активного состояния (StateFilter(None) + он ввел команду "analytics")
+# async def press_button_request_message(callback: types.CallbackQuery, state: FSMContext):
+#     await callback.answer()
+#     await callback.message.answer('Введите текст обращения', reply_markup=types.ReplyKeyboardRemove())
+#     await state.set_state(AddRequests.request_message)
+#     # todo замутить удаление всех сообщений с меню
+
+# ----------------------- callback на АНАЛИТИКА
+
+
 
 
 # Становимся в состояние ожидания ввода
