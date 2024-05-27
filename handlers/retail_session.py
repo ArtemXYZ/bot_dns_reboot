@@ -24,9 +24,8 @@ from menu.inline_menu import *  # Кнопки встроенного меню -
 
 from menu.button_generator import get_keyboard
 
-
-
 from working_databases.orm_query_builder import *
+
 # ----------------------------------------------------------------------------------------------------------------------
 # Назначаем роутер для чата под розницу:
 retail_router = Router()
@@ -35,8 +34,6 @@ retail_router = Router()
 # 1-й фильтр: чат может быть “приватным”, ”групповым“, ”супер групповым“ или "каналом” - > \
 #  ( “private”, “group”, “supergroup”, “channel”)
 # 2-й фильтр: по типу юзеров (тип сессии).
-
-
 
 
 retail_router.message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))  # retail oait
@@ -83,7 +80,6 @@ class Instructor(StatesGroup):
     instruct_or_gowork = State()
 
 
-
 class CetCategory(StatesGroup):
     """
     Шаги выбора категории.
@@ -117,6 +113,7 @@ async def hello_after_on_next(message: types.Message, state: FSMContext):
     # Встает в ожидании нажатия кнопки
     await state.set_state(Instructor.instruct_or_gowork)
 
+
 # Фильтруем все, кроме события нажатия 2-х кнопок (Если что-то напишет левое в чат, то удалим)
 @retail_router.message(StateFilter(Instructor.instruct_or_gowork))
 async def filter_unresolved_ext(message: types.Message, state: FSMContext):
@@ -124,6 +121,8 @@ async def filter_unresolved_ext(message: types.Message, state: FSMContext):
     # if not message.text in {'Создать заявку', 'Изменить заявку',
     #                          'Удалить заявку', 'Запросить статус заявки', 'Перейти в чат с исполнителем'}:
     await message.delete()
+
+
 # ----------------------------- Конец 0.
 
 # ----------------------------- 0.1. Если нажали кнопку "Инструктаж" - ответ на кнопку:
@@ -171,8 +170,6 @@ async def get_instruction(callback: types.CallbackQuery, state: FSMContext):
 async def get_instruction(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()  # Для сервера ответ о нажатии кнопки (кнопка не будет переливаться в ожидании).
 
-
-
     await callback.message.answer(f'Вот тебе рабочий инструмент (меню внизу 👇 экрана), думаю разберешься 😉.',
                                   reply_markup=RETAIL_KEYB_MAIN)
 
@@ -180,6 +177,7 @@ async def get_instruction(callback: types.CallbackQuery, state: FSMContext):
     await state.clear()
     # await asyncio.sleep(5)
     # await callback.message.delete() - удалит кнопки
+
 
 # ----------------------------- Конец 0.1/2
 
@@ -190,7 +188,6 @@ async def get_instruction(callback: types.CallbackQuery, state: FSMContext):
 # -------------- 1.1. Ветка при создании заявки:
 @retail_router.message(StateFilter(None), F.text == 'Создать заявку')
 async def get_request_problem(message: types.Message, state: FSMContext):
-
     # удалит сообщение 'Создать заявку' - отправляется в чат после нажатия клавиатуры (не изменяемое поведение)
     await message.delete()
 
@@ -201,118 +198,125 @@ async def get_request_problem(message: types.Message, state: FSMContext):
     # todo удаляем полностью клаву! Оставить только инлайн меню.
 
     # ---------------------------------------- Инлайновое меню (уровень 0):
+    btn_main_retail_inline = get_callback_btns(
+        btns={'📈 АНАЛИТИКА': 'problem_analytics',
+              '🏬 ФОРМАТЫ': 'problem_formats',
+              '🛞 ТОВАРООБОРОТ': 'problem_trade_turnover',
+              '⏹ ОТМЕНА': 'problem_cancel'},
+        sizes=(1, 1, 1, 1)
+    )
 
     # Вывод инлайнового меню (категории обращений), реакция при создании заявки
-    await asyncio.sleep(1)
-    await message.answer(f'Выберите категорию обращения 🚨', parse_mode='HTML', # 🛟
-                         reply_markup=get_callback_btns(
-                             btns={'📈 АНАЛИТИКА': 'problem_analytics',
-                                   '🏬 ФОРМАТЫ': 'problem_formats',
-                                   '🛞 ТОВАРООБОРОТ': 'problem_trade_turnover',
-                                   '⏹ ОТМЕНА': 'problem_cancel'},
-                             sizes=(1, 1, 1, 1)
-                         )
-                         )
+
+    await message.answer(f'Выберите категорию обращения 🚨',
+                         parse_mode='HTML',  # 🛟
+                         reply_markup=btn_main_retail_inline)
     # Очистка состояния пользователя: ??
     # await state.clear()
+
 
 #
 #
 #
 
 # # # # 1.1.0 Родитель (Ветка при создании заявки) -> Реакции на нажатие кнопок инлайнового меню на категории обращений:
+# ----------------------- callback на cancel
 @retail_router.callback_query(StateFilter(None), F.data.startswith('problem_cancel'))
 # Если у пользователя нет активного состояния (StateFilter(None) + он ввел команду "cancel")
 async def get_cancel(callback: types.CallbackQuery, state: FSMContext):
-    await callback.answer()  #
-
-    # todo Надо получить либо стейт либо айди предыдущего действия и удалить его!!
-    # await callback.message.delete() # удалит кнопки
-    await callback.message.answer('Ушли назад. доделай нормальное инлайновое меню!!!')
+    await callback.answer()
+    await callback.message.delete()  # удалит кнопки
     # await state.set_state(AddRequests.request_message)
 
 
-
-# ----------------------- callback на АНАЛИТИКА !!!
+# ----------------------- callback на АНАЛИТИКА
 @retail_router.callback_query(StateFilter(None), F.data.startswith('problem_analytics'))
 # Если у пользователя нет активного состояния (StateFilter(None) + он ввел команду "analytics")
 async def press_button_request_message(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
 
+    btn_problem_analytics = get_callback_btns(
+        btns={'📊 ДАШБОРДЫ': 'problem_dashboards',
+              '🔖 ЦЕННИКИ': 'problem_tags',
+              '🤖 TELEGRAM-БОТЫ': 'problem_bot',
+              '⬅️ НАЗАД': 'problem_inline_back',
+              '⏹ ОТМЕНА': 'problem_cancel'},
+        sizes=(1, 1, 1, 2))
 
-
-    await callback.message.edit_text(f'Выберите подкатегорию обращения в разделе АНАЛИТИКА:', parse_mode='HTML',
-                                     reply_markup=get_callback_btns(
-                                         btns={'📊 ДАШБОРДЫ': 'problem_dashboards',
-                                               '🔖 ЦЕННИКИ': 'problem_tags',
-                                               '🤖 TELEGRAM-БОТЫ': 'problem_bot',
-                                               '⬅️ НАЗАД': 'problem_inline_back',
-                                               '⏹ ОТМЕНА': 'problem_cancel'},
-                                         sizes=(1, 1, 1, 2)
-                                     )
-                                     )
+    await callback.message.edit_text(f'Выберите подкатегорию обращения в разделе АНАЛИТИКА:',
+                                     parse_mode='HTML',
+                                     reply_markup=btn_problem_analytics)
 
     # await state.set_state(AddRequests.request_message)
 
-# ----------------------- callback на ФОРМАТЫ !!!
+
+# ----------------------- callback на ФОРМАТЫ
 @retail_router.callback_query(StateFilter(None), F.data.startswith('problem_formats'))
 # Если у пользователя нет активного состояния (StateFilter(None) + он ввел команду "analytics")
 async def press_button_request_message(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
 
-    await callback.message.edit_text(f'Выберите подкатегорию обращения в разделе ФОРМАТЫ:', parse_mode='HTML',
-                                     reply_markup=get_callback_btns(
-                                         btns={'АР (ВЕЗЕТ ТОВАР)': 'problem_coming',
-                                               'АР (НЕ ВЕЗЕТ ТОВАР) ': 'problem_no_coming',
-                                               'СЕ': 'problem_ce',
-                                               'ГРАНИЦЫ КАТЕГОРИЙ': 'problem_borders',
-                                               'ЛЕЖАКИ': 'problem_unsold',
-                                               '⬅️ НАЗАД': 'problem_inline_back',
-                                               '⏹ ОТМЕНА': 'problem_cancel'},
-                                         sizes=(1, 1, 1, 2)
-                                     )
-                                     )
+    btn_problem_formats = get_callback_btns(btns={'АР (ВЕЗЕТ ТОВАР)': 'problem_coming',
+                                                  'АР (НЕ ВЕЗЕТ ТОВАР) ': 'problem_no_coming',
+                                                  'СЕ': 'problem_ce',
+                                                  'ГРАНИЦЫ КАТЕГОРИЙ': 'problem_borders',
+                                                  'ЛЕЖАКИ': 'problem_unsold',
+                                                  '⬅️ НАЗАД': 'problem_inline_back',
+                                                  '⏹ ОТМЕНА': 'problem_cancel'},
+                                            sizes=(1, 1, 1, 1, 1, 2))
+
+    await callback.message.edit_text(f'Выберите подкатегорию обращения в разделе ФОРМАТЫ:',
+                                     parse_mode='HTML',
+                                     reply_markup=btn_problem_formats)
     # await state.set_state(AddRequests.request_message)
 
 
-
-# ----------------------- callback на ТОВАРООБОРОТ !!!
-@retail_router.callback_query(StateFilter(None), F.data.startswith('problem_formats'))
+# ----------------------- callback на ТОВАРООБОРОТ
+@retail_router.callback_query(StateFilter(None), F.data.startswith('problem_trade_turnover'))
 # Если у пользователя нет активного состояния (StateFilter(None) + он ввел команду "analytics")
 async def press_button_request_message(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
 
-    await callback.message.edit_text(f'Выберите подкатегорию обращения в разделе ТОВАРООБОРОТ:', parse_mode='HTML',
-                                     reply_markup=get_callback_btns(
-                                         btns={'МП': 'problem_sales',
-                                               'МЕРЧИ': 'problem_merch',
-                                               'ЦЕНА НА ТОВАР': 'problem_price',
-                                               'ЗАКУПКА ТОВАРА': 'problem_purchase',
-                                               'ВЕ': 'problem_ve',
-                                               'СТМ': 'problem_stm',
-                                               'УЦЕНКА': 'problem_discount',
-                                               '⬅️ НАЗАД': 'problem_inline_back',
-                                               '⏹ ОТМЕНА': 'problem_cancel'},
-                                         sizes=(1, 1, 1, 2)
-                                     )
-                                     )
+    btn_problem_trade_turnover = get_callback_btns(
+        btns={'МП': 'problem_sales',
+              'МЕРЧИ': 'problem_merch',
+              'ЦЕНА НА ТОВАР': 'problem_price',
+              'ЗАКУПКА ТОВАРА': 'problem_purchase',
+              'ВЕ': 'problem_ve',
+              'СТМ': 'problem_stm',
+              'УЦЕНКА': 'problem_discount',
+              '⬅️ НАЗАД': 'problem_inline_back',
+              '⏹ ОТМЕНА': 'problem_cancel'},
+        sizes=(1, 1, 1, 1, 1, 1, 1, 2))
+
+    await callback.message.edit_text(f'Выберите подкатегорию обращения в разделе ТОВАРООБОРОТ:',
+                                     parse_mode='HTML',
+                                     reply_markup=btn_problem_trade_turnover)
+    #  запрос в базу д
+
     # await state.set_state(AddRequests.request_message)
 
 
+# ----------------------- callback на problem_inline_back
+@retail_router.callback_query(StateFilter(None), F.data.startswith('problem_inline_back'))
+# Если у пользователя нет активного состояния (StateFilter(None) + он ввел команду "cancel")
+async def get_cancel(callback: types.CallbackQuery, state: FSMContext):
+    await callback.answer()
+    await callback.message.edit_text(f'Выберите категорию обращения 🚨',
+                                     parse_mode='HTML',
+                                     reply_markup=get_callback_btns(
+                                         btns={'📈 АНАЛИТИКА': 'problem_analytics',
+                                               '🏬 ФОРМАТЫ': 'problem_formats',
+                                               '🛞 ТОВАРООБОРОТ': 'problem_trade_turnover',
+                                               '⏹ ОТМЕНА': 'problem_cancel'},
+                                         sizes=(1, 1, 1, 1)))
+
+    # todo Надо получить либо стейт либо айди предыдущего действия и удалить его!!
+    # await callback.message.delete() # удалит кнопки
+    # await state.set_state(AddRequests.request_message)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+# todo написать функцию по условию выдает айцди  для функции внизу что бы не писать ответ для каждого нажатия.
 
 
 # @retail_router.callback_query(StateFilter(None), F.data.startswith('problem_analytics'))
@@ -324,8 +328,6 @@ async def press_button_request_message(callback: types.CallbackQuery, state: FSM
 #     # todo замутить удаление всех сообщений с меню
 
 # ----------------------- callback на АНАЛИТИКА
-
-
 
 
 # Становимся в состояние ожидания ввода
@@ -343,7 +345,7 @@ async def get_request_message(message: types.Message, state: FSMContext, session
     # Запрос в БД на добавление обращения:
     await add_request_message(message, session, data)
 
-     # ------------------------------------- SQL
+    # ------------------------------------- SQL
 
     await message.answer(f'Обращение зарегистрировано, ожидайте ответа!', reply_markup=RETAIL_KEYB_MAIN)
 
@@ -356,6 +358,7 @@ async def get_request_message(message: types.Message, state: FSMContext, session
     # Очистка состояния пользователя:
     await state.clear()
 
+
 # -------------- 1.2. Ветка при отмене заявки:
 # back_step
 @retail_router.message(StateFilter(None), F.text == 'Отменить заявку')
@@ -364,6 +367,7 @@ async def get_back_request(message: types.Message):
 
     # Заменяет старое меню на новое
     await message.answer(f'Ок!', reply_markup=RETAIL_KEYB_MAIN)
+
 
 # -------------- 1.3. Ветка при изменеии заявки:
 @retail_router.message(StateFilter(None), F.text == 'Изменить заявку')
@@ -384,6 +388,7 @@ async def get_change_request(message: types.Message):
                          f'Что будет? Запрос в локал бд - найти заяки по айди пользователя'
                          f'Выдать список заявок и тд. -> (продумать логику) ')
 
+
 # -------------- 1.5. Ветка при удалении заявки:
 @retail_router.message(StateFilter(None), F.text == 'Запросить статус заявки')
 async def get_status_request(message: types.Message):
@@ -393,6 +398,7 @@ async def get_status_request(message: types.Message):
                          f'Что будет? Запрос в локал бд - найти заяки по айди пользователя'
                          f'Выдать список заявок и тд. -> (продумать логику) ')
 
+
 # -------------- 1.6. Ветка при удалении заявки:
 @retail_router.message(StateFilter(None), F.text == 'Перейти в чат с исполнителем')
 async def get_chat_with_worker(message: types.Message):
@@ -401,13 +407,9 @@ async def get_chat_with_worker(message: types.Message):
     await message.answer(f'Эта функция еще в разработке! \n'
                          f'Что будет? Запрос в локал бд - найти активные заяки по айди пользователя'
                          f'Выдать список заявок и тд. -> (продумать логику) ')
-    await message.answer(category_problem, parse_mode='HTML') # !!
+    await message.answer(category_problem, parse_mode='HTML')  # !!
 
 # ----------------------------- Конец 1.0. Работа с нижней клавиатурой меню.
-
-
-
-
 
 
 # ----------------------------------------------------------------------------------------------------------------------
