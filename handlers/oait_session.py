@@ -22,6 +22,7 @@ from menu import inline_menu  # Кнопки встроенного меню - �
 from menu.button_generator import get_keyboard
 
 from working_databases.query_builder import *
+
 # ----------------------------------------------------------------------------------------------------------------------
 # Назначаем роутер для всех типов чартов:
 oait_router = Router()
@@ -29,6 +30,8 @@ oait_router = Router()
 # фильтрует (пропускает) только личные сообщения и только определенных пользователей:
 oait_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
 oait_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 # Приветствие для ОАИТ
 @oait_router.message(StateFilter(None), F.text == 'next')

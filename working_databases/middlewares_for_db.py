@@ -12,13 +12,11 @@ from sqlalchemy import select, update, delete
 from aiogram import BaseMiddleware
 from aiogram.types import Message, TelegramObject
 
-
 from aiogram import types, Bot
 
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from working_databases.local_db_mockup import *
-
 
 # session_users_list:str = None
 from aiogram.filters import Filter
@@ -30,14 +28,15 @@ class DataBaseSession(BaseMiddleware):
         self.session_pool = session_pool
 
     async def __call__(
-        self,
-        handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
-        event: TelegramObject,
-        data: Dict[str, Any],
+            self,
+            handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
+            event: TelegramObject,
+            data: Dict[str, Any],
     ) -> Any:
         async with self.session_pool() as session:
-            data['session'] = session  #    Передаем в словарь переменную, которая будет доступна в хендлерах.
+            data['session'] = session  # Передаем в словарь переменную, которая будет доступна в хендлерах.
             return await handler(event, data)
+
 
 # -------------------------------------------- Фильтры из id БД ------------
 # class UsersRetailSession(BaseMiddleware):
@@ -65,7 +64,6 @@ class DataBaseSession(BaseMiddleware):
 #   тесты      ---------------------------
 
 class TypeSessionMiddleware(BaseMiddleware):
-
     """
     Универсальный слой-определитель пользователей.
     На основе from_user.id выдает текстовый тип сессии (session_types = ['admin', 'retail', 'oait', '', '', '', ''])
@@ -74,8 +72,6 @@ class TypeSessionMiddleware(BaseMiddleware):
 
     # todo - добавить проверку (досмтуп к этой функци после проверки на регистрацию.
     """
-
-
 
     def __init__(self, session_pool: async_sessionmaker) -> Any:
         self.session_pool = session_pool
@@ -88,9 +84,7 @@ class TypeSessionMiddleware(BaseMiddleware):
             data: Dict[str, Any]
             # bot: Bot - # todo надо в базовый класс передать объект бота/ окрутка фйограмм
 
-
     ) -> Any:
-
         # self.data = data
         bot: Bot = data.get('bot')
 
@@ -103,7 +97,7 @@ class TypeSessionMiddleware(BaseMiddleware):
 
             async with self.session_pool() as session:
                 get_session_types = await session.execute(query)
-                self.session_type_str = get_session_types.scalar_one_or_none()   # + работает
+                self.session_type_str = get_session_types.scalar_one_or_none()  # + работает
                 # print(session_type_str)
                 await session.commit()
 
@@ -117,19 +111,13 @@ class TypeSessionMiddleware(BaseMiddleware):
             # print(f'Передаем в переменную наш тип сесcии: {session_users_list}')
             # return await session_users_list
 
-            bot.retail_session_users_list = self.session_type_str
+            bot.get_type_session = self.session_type_str
 
-            print(f'Наш тип сесcии: {bot.retail_session_users_list}')
+            print(f'Наш тип сесcии: {bot.get_type_session}')
             # return bot.retail_session_users_list
             return await handler(event, data)
 
-
-
-
-    # async def get_type_session(self) -> Any:  #, data: Dict[str, Any]
-    #     return self.session_type_str
-
-
+#  -------------------------------------------- тесты/ Архив  ---------------------------
 # class GetDataEvent(Filter):
 #
 #     def __init__(self) -> None:
@@ -143,14 +131,8 @@ class TypeSessionMiddleware(BaseMiddleware):
 #         pass
 
 
-
-    # async def get_type_session(self) -> Any:  #, data: Dict[str, Any]
-    #     return await data["session_type"]
-
-#   тесты      ---------------------------
-
-
-
+# async def get_type_session(self) -> Any:  #, data: Dict[str, Any]
+#     return await data["session_type"]
 
 
 # class TypeSessionMiddleware(BaseMiddleware):
@@ -226,5 +208,3 @@ class TypeSessionMiddleware(BaseMiddleware):
 #
 #             # Если тип сессии из базы (разрешенный) совпадает со значением в фильтре:
 #             return get_session_types == next_type
-
-

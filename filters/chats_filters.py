@@ -132,14 +132,14 @@ class TypeSessionFilter(Filter):
     async def __call__(self, message: Message) -> bool:
         bot = message.bot
 
-        print(f'Пришло в фильтр: {bot.retail_session_users_list}')
+        print(f'Пришло в фильтр: {bot.get_type_session}')
 
 
         # return self.session_users_list in self.allowed_types
 
-        return bot.retail_session_users_list in self.allowed_types
+        return bot.get_type_session in self.allowed_types
 
-
+# get_type_session_for_retail
 
 # class UsersRetailSession_(Filter):
 #     """Для фильтрации розницы"""

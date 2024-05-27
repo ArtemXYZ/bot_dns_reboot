@@ -88,15 +88,6 @@ from start_sleep_bot.def_start_sleep import *
 bot: Bot = Bot(token=os.getenv('API_TOKEN'), default=DefaultBotProperties(parse_mode='HTML'))  # Для переменных окружения
 
 
-#  К экземпляру бота добавляем свойства (списки с users_id под каждый тип сессии:
-# Обязательно присвоить значение, чтоб зарегестрировать переменную в экземпляре бота.
-# bot.retail_session_users_list: list[int] = None  # [1034809823, 141407179]
-
-# bot.retail_session_users_list: list[int] = [1034809823, 141407179]
-# bot.oait_session_users_list = [1034809823, 141407179]
-# bot.oait_manager_session_users_list = [1034809823]
-# bot.admin_session_users_list = [1034809823]  #! надо в int , 1372644288
-
 # --------------------------------------------- Инициализация диспетчера событий
 # Принимает все события и отвечает за порядок их обработки в асинхронном режиме.
 dp = Dispatcher()
@@ -228,3 +219,13 @@ if __name__ == "__main__":
 # можно передать изначальную функцию сессии прямо в целевую функцию так:
 # session_pool=await get_async_sessionmaker(CONFIG_LOCAL_DB)), но повторный вызов уже существующей сессии
 # будет невозможен. По этому, здесь эта вспомог. функция.
+
+
+#
+#  К экземпляру бота добавляем свойства (списки с users_id под каждый тип сессии:
+# Обязательно присвоить значение, чтоб зарегестрировать переменную в экземпляре бота.
+# bot.retail_session_users_list: list[int] = None  # [1034809823, 141407179]
+# bot.retail_session_users_list: list[int] = [1034809823, 141407179]
+# bot.oait_session_users_list = [1034809823, 141407179]
+# bot.oait_manager_session_users_list = [1034809823]
+# bot.admin_session_users_list = [1034809823]  #! надо в int , 1372644288
