@@ -137,7 +137,7 @@ class TypeSessionFilter(Filter):
 
         # return self.session_users_list in self.allowed_types
 
-        return bot.retail_session_users_list == self.allowed_types
+        return bot.retail_session_users_list in self.allowed_types
 
 
 
