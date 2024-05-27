@@ -86,13 +86,13 @@ class TypeSessionMiddleware(BaseMiddleware):
             handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
             event: TelegramObject,
             data: Dict[str, Any]
-            # dp:Dispatcher
-           # , retail_session_users_list
+            # bot: Bot - # todo надо в базовый класс передать объект бота/ окрутка фйограмм
+
 
     ) -> Any:
 
         # self.data = data
-
+        bot: Bot = data.get('bot')
 
         # Проверка принадлежности сообщения:
         if isinstance(event, Message):  # message: types.Message
@@ -117,10 +117,10 @@ class TypeSessionMiddleware(BaseMiddleware):
             # print(f'Передаем в переменную наш тип сесcии: {session_users_list}')
             # return await session_users_list
 
-            bot.retail_session_users_list
+            bot.retail_session_users_list = self.session_type_str
 
-            print(f'Наш тип сесcии: {self.session_type_str}')
-            return self.session_type_str
+            print(f'Наш тип сесcии: {bot.retail_session_users_list}')
+            return bot.retail_session_users_list
 
 
 

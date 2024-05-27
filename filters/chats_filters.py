@@ -122,13 +122,16 @@ class ChatTypeFilter(Filter):
 class TypeSessionFilter(Filter):
     def __init__(self, allowed_types: list[str]):
         self.allowed_types = allowed_types   # <- session_type_str разрешенные типы
-        self.session_users_list = session_users_list
-    async def __call__(self, session_users_list:str) -> bool:  # event: TelegramObject  event: Message ,  event: TelegramObject
+        # self.session_users_list = session_users_list
+
+    # async def __call__(self, session_users_list:str, bot: Bot) -> bool:  # event: TelegramObject  event: Message ,  event: TelegramObject
+    async def __call__(self, bot: Bot) -> bool:
+        print(f'Пришло в фильтр: {bot.retail_session_users_list}')
 
 
-        print(f'Пришло в фильтр: {session_users_list}')
+        # return self.session_users_list in self.allowed_types
 
-        return self.session_users_list in self.allowed_types
+        return bot.retail_session_users_list in self.allowed_types
 
 
 
