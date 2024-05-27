@@ -178,6 +178,9 @@ async def get_instruction(callback: types.CallbackQuery, state: FSMContext):
 
     # Очистка состояния пользователя:
     await state.clear()
+    # await asyncio.sleep(5)
+    # await callback.message.delete() - удалит кнопки
+
 # ----------------------------- Конец 0.1/2
 
 #
@@ -222,6 +225,9 @@ async def get_request_problem(message: types.Message, state: FSMContext):
 # Если у пользователя нет активного состояния (StateFilter(None) + он ввел команду "cancel")
 async def get_cancel(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()  #
+
+    # todo Надо получить либо стейт либо айди предыдущего действия и удалить его!!
+    # await callback.message.delete() # удалит кнопки
     await callback.message.answer('Ушли назад. доделай нормальное инлайновое меню!!!')
     # await state.set_state(AddRequests.request_message)
 
@@ -245,6 +251,59 @@ async def press_button_request_message(callback: types.CallbackQuery, state: FSM
                                      )
 
     # await state.set_state(AddRequests.request_message)
+
+# ----------------------- callback на ФОРМАТЫ !!!
+@retail_router.callback_query(StateFilter(None), F.data.startswith('problem_formats'))
+# Если у пользователя нет активного состояния (StateFilter(None) + он ввел команду "analytics")
+async def press_button_request_message(callback: types.CallbackQuery, state: FSMContext):
+    await callback.answer()
+
+    await callback.message.edit_text(f'Выберите подкатегорию обращения в разделе ФОРМАТЫ:', parse_mode='HTML',
+                                     reply_markup=get_callback_btns(
+                                         btns={'АР (ВЕЗЕТ ТОВАР)': 'problem_coming',
+                                               'АР (НЕ ВЕЗЕТ ТОВАР) ': 'problem_no_coming',
+                                               'СЕ': 'problem_ce',
+                                               'ГРАНИЦЫ КАТЕГОРИЙ': 'problem_borders',
+                                               'ЛЕЖАКИ': 'problem_unsold',
+                                               '⬅️ НАЗАД': 'problem_inline_back',
+                                               '⏹ ОТМЕНА': 'problem_cancel'},
+                                         sizes=(1, 1, 1, 2)
+                                     )
+                                     )
+    # await state.set_state(AddRequests.request_message)
+
+
+
+# ----------------------- callback на ТОВАРООБОРОТ !!!
+@retail_router.callback_query(StateFilter(None), F.data.startswith('problem_formats'))
+# Если у пользователя нет активного состояния (StateFilter(None) + он ввел команду "analytics")
+async def press_button_request_message(callback: types.CallbackQuery, state: FSMContext):
+    await callback.answer()
+
+    await callback.message.edit_text(f'Выберите подкатегорию обращения в разделе ТОВАРООБОРОТ:', parse_mode='HTML',
+                                     reply_markup=get_callback_btns(
+                                         btns={'МП': 'problem_sales',
+                                               'МЕРЧИ': 'problem_merch',
+                                               'ЦЕНА НА ТОВАР': 'problem_price',
+                                               'ЗАКУПКА ТОВАРА': 'problem_purchase',
+                                               'ВЕ': 'problem_ve',
+                                               'СТМ': 'problem_stm',
+                                               'УЦЕНКА': 'problem_discount',
+                                               '⬅️ НАЗАД': 'problem_inline_back',
+                                               '⏹ ОТМЕНА': 'problem_cancel'},
+                                         sizes=(1, 1, 1, 2)
+                                     )
+                                     )
+    # await state.set_state(AddRequests.request_message)
+
+
+
+
+
+
+
+
+
 
 
 
