@@ -315,11 +315,26 @@ async def get_problem_inline_back_state(callback: types.CallbackQuery, state: FS
 async def get_problem_trade_turnover_state(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
 
+    # Узнаем какая кнопка была нажата:
     selected_subcategory = callback.data
     print(selected_subcategory)
 
+    # Отбрасываем не нужные события для последующей записи:
+    if selected_subcategory == 'problem_cancel' | 'problem_inline_back':
+        pass
+    else:
+        if selected_subcategory == ''
+            problem_analytics
+
+'problem_dashboards',
+              '🔖 ЦЕННИКИ': 'problem_tags',
+              '🤖 TELEGRAM-БОТЫ': 'problem_bot',
+
+
+
+
     # Вытаскиваем данные:
-    get_category_data = await state.get_data()
+    # get_category_data = await state.get_data()
 
     # print(f'get_category_data = {get_category_data}')
 
