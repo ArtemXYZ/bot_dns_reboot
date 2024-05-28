@@ -35,30 +35,9 @@ retail_router = Router()
 #  ( “private”, “group”, “supergroup”, “channel”)
 # 2-й фильтр: по типу юзеров (тип сессии).
 
-
 retail_router.message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))  # retail oait
 retail_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
-
-
 # ----------------------------------------------------------------------------------------------------------------------
-# # Кнопки меню внизу (первый старт)
-# RETAIL_KEYB_MAIN = get_keyboard(
-#     'Создать заявку',
-#     'Изменить заявку',
-#     'Удалить заявку',
-#     'Запросить статус заявки',
-#     'Перейти в чат с исполнителем',
-#     placeholder='Выберите действие',
-#     sizes=(2, 1, 1)  # кнопок в ряду, по порядку 1й ряд и тд.
-# )
-#
-# REQUEST_PROBLEM = get_keyboard(
-#     # 'Изменить категорию',
-#     'Отменить заявку',
-#     'Показать категори',
-#     placeholder='Выберите действие',
-#     sizes=(2,)  # кнопок в ряду, по порядку 1й ряд и тд. 2, 1
-# )
 # ---------------------------------- Код ниже для машины состояний (FSM)
 class AddRequests(StatesGroup):
     """Шаги состояний для обращений"""
@@ -257,6 +236,9 @@ async def get_problem_analytics_state(callback: types.CallbackQuery, state: FSMC
     # Встает в ожидании нажатия кнопки и переходит к меню отправки сообщения:
     await state.set_state(SetCategory.sab_category)
 
+    # selected_subcategory = callback.data
+    # print(selected_subcategory)
+    # await state.update_data(request_message=message.text) !!!
 
 # ----------------------- callback на ФОРМАТЫ
 @retail_router.callback_query(StateFilter(SetCategory.main_category), F.data.startswith('problem_formats'))
@@ -332,8 +314,7 @@ async def get_problem_inline_back_state(callback: types.CallbackQuery, state: FS
     F.data.startswith('problem_') & (~F.data.startswith('problem_cancel') | ~F.data.startswith('problem_inline_back')))
 async def get_problem_trade_turnover_state(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
-    # Формируем полученные данные:
-    # Сначала нужно апдейтить? !!!!!!
+    # Вытаскиваем данные:
     get_category_data = await state.get_data()
 
     print(f'get_category_data = {get_category_data}')
@@ -544,3 +525,23 @@ async def get_chat_with_worker(message: types.Message):
 #     #
 #     # await asyncio.sleep(3)
 #     # await callback.message.answer(f'Если что, - я готов! Жалуйся ✍️ !')
+
+
+# # Кнопки меню внизу (первый старт)
+# RETAIL_KEYB_MAIN = get_keyboard(
+#     'Создать заявку',
+#     'Изменить заявку',
+#     'Удалить заявку',
+#     'Запросить статус заявки',
+#     'Перейти в чат с исполнителем',
+#     placeholder='Выберите действие',
+#     sizes=(2, 1, 1)  # кнопок в ряду, по порядку 1й ряд и тд.
+# )
+#
+# REQUEST_PROBLEM = get_keyboard(
+#     # 'Изменить категорию',
+#     'Отменить заявку',
+#     'Показать категори',
+#     placeholder='Выберите действие',
+#     sizes=(2,)  # кнопок в ряду, по порядку 1й ряд и тд. 2, 1
+# )
