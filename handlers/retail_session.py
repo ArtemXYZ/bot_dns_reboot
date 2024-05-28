@@ -314,10 +314,14 @@ async def get_problem_inline_back_state(callback: types.CallbackQuery, state: FS
     F.data.startswith('problem_') & (~F.data.startswith('problem_cancel') | ~F.data.startswith('problem_inline_back')))
 async def get_problem_trade_turnover_state(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
+
+    selected_subcategory = callback.data
+    print(selected_subcategory)
+
     # Вытаскиваем данные:
     get_category_data = await state.get_data()
 
-    print(f'get_category_data = {get_category_data}')
+    # print(f'get_category_data = {get_category_data}')
 
     # Заменяем клаву:
     await callback.message.edit_text('Введите текст обращения', reply_markup=get_callback_btns(
