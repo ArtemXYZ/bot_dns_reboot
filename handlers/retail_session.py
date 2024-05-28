@@ -54,10 +54,9 @@ RETAIL_KEYB_MAIN = get_keyboard(
 REQUEST_PROBLEM = get_keyboard(
     # 'Изменить категорию',
     'Отменить заявку',
-    'Показать справку по категориям',
-
+    'Показать категори',
     placeholder='Выберите действие',
-    sizes=(1, 1)  # кнопок в ряду, по порядку 1й ряд и тд. 2, 1
+    sizes=(2,)  # кнопок в ряду, по порядку 1й ряд и тд. 2, 1
 )
 
 
@@ -80,13 +79,19 @@ class Instructor(StatesGroup):
     instruct_or_gowork = State()
 
 
-class CetCategory(StatesGroup):
+class SetCategory(StatesGroup):
     """
     Шаги выбора категории.
     Выбираем сначала родительскую категорию - содержит в себе подкатегории, после подкатегорию.
     """
-    category = State()
+
+    main_category = State()
     sab_category = State()
+    # SetCategory.main_category  SetCategory.sab_category
+
+    # sab_category_problem_analytics = State()
+    # main_category_problem_formats = State()
+    # main_category_problem_trade_turnover = State()
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -193,7 +198,6 @@ async def get_request_problem(message: types.Message, state: FSMContext):
 
     # Заменяет старое меню на новое
     # await message.answer(f'Задачу понял!', reply_markup=REQUEST_PROBLEM)
-
     # await message.answer(f'Задачу понял!', reply_markup=types.ReplyKeyboardRemove())  # удаляет клаву
     # todo удаляем полностью клаву! Оставить только инлайн меню.
 
@@ -207,12 +211,11 @@ async def get_request_problem(message: types.Message, state: FSMContext):
     )
 
     # Вывод инлайнового меню (категории обращений), реакция при создании заявки
-
-    await message.answer(f'Выберите категорию обращения 🚨',
-                         parse_mode='HTML',  # 🛟
-                         reply_markup=btn_main_retail_inline)
-    # Очистка состояния пользователя: ??
-    # await state.clear()
+    await message.answer(
+        f'Выберите категорию обращения 🚨', parse_mode='HTML', reply_markup=btn_main_retail_inline)
+    # Встает в ожидании нажатия кнопки
+    await state.set_state(SetCategory.main_category)
+    #  CetCategory.sab_category
 
 
 #
@@ -221,18 +224,22 @@ async def get_request_problem(message: types.Message, state: FSMContext):
 
 # # # # 1.1.0 Родитель (Ветка при создании заявки) -> Реакции на нажатие кнопок инлайнового меню на категории обращений:
 # ----------------------- callback на cancel
-@retail_router.callback_query(StateFilter(None), F.data.startswith('problem_cancel'))
+@retail_router.callback_query(
+    StateFilter(SetCategory.main_category, SetCategory.sab_category,
+                AddRequests.request_message), F.data.startswith('problem_cancel'))
 # Если у пользователя нет активного состояния (StateFilter(None) + он ввел команду "cancel")
 async def get_cancel(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
     await callback.message.delete()  # удалит кнопки
-    # await state.set_state(AddRequests.request_message)
+
+    # Очистка состояния пользователя:
+    await state.clear()
 
 
 # ----------------------- callback на АНАЛИТИКА
-@retail_router.callback_query(StateFilter(None), F.data.startswith('problem_analytics'))
+@retail_router.callback_query(StateFilter(SetCategory.main_category), F.data.startswith('problem_analytics'))
 # Если у пользователя нет активного состояния (StateFilter(None) + он ввел команду "analytics")
-async def press_button_request_message(callback: types.CallbackQuery, state: FSMContext):
+async def get_problem_analytics_state(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
 
     btn_problem_analytics = get_callback_btns(
@@ -246,14 +253,15 @@ async def press_button_request_message(callback: types.CallbackQuery, state: FSM
     await callback.message.edit_text(f'Выберите подкатегорию обращения в разделе АНАЛИТИКА:',
                                      parse_mode='HTML',
                                      reply_markup=btn_problem_analytics)
-
-    # await state.set_state(AddRequests.request_message)
+    await state.clear()
+    # Встает в ожидании нажатия кнопки и переходит к меню отправки сообщения:
+    await state.set_state(SetCategory.sab_category)
 
 
 # ----------------------- callback на ФОРМАТЫ
-@retail_router.callback_query(StateFilter(None), F.data.startswith('problem_formats'))
+@retail_router.callback_query(StateFilter(SetCategory.main_category), F.data.startswith('problem_formats'))
 # Если у пользователя нет активного состояния (StateFilter(None) + он ввел команду "analytics")
-async def press_button_request_message(callback: types.CallbackQuery, state: FSMContext):
+async def get_problem_formats_state(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
 
     btn_problem_formats = get_callback_btns(btns={'АР (ВЕЗЕТ ТОВАР)': 'problem_coming',
@@ -268,13 +276,15 @@ async def press_button_request_message(callback: types.CallbackQuery, state: FSM
     await callback.message.edit_text(f'Выберите подкатегорию обращения в разделе ФОРМАТЫ:',
                                      parse_mode='HTML',
                                      reply_markup=btn_problem_formats)
-    # await state.set_state(AddRequests.request_message)
+    await state.clear()
+    # Встает в ожидании нажатия кнопки и переходит к меню отправки сообщения:
+    await state.set_state(SetCategory.sab_category)
 
 
 # ----------------------- callback на ТОВАРООБОРОТ
-@retail_router.callback_query(StateFilter(None), F.data.startswith('problem_trade_turnover'))
+@retail_router.callback_query(StateFilter(SetCategory.main_category), F.data.startswith('problem_trade_turnover'))
 # Если у пользователя нет активного состояния (StateFilter(None) + он ввел команду "analytics")
-async def press_button_request_message(callback: types.CallbackQuery, state: FSMContext):
+async def get_problem_trade_turnover_state(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
 
     btn_problem_trade_turnover = get_callback_btns(
@@ -292,15 +302,16 @@ async def press_button_request_message(callback: types.CallbackQuery, state: FSM
     await callback.message.edit_text(f'Выберите подкатегорию обращения в разделе ТОВАРООБОРОТ:',
                                      parse_mode='HTML',
                                      reply_markup=btn_problem_trade_turnover)
-    #  запрос в базу д
-
-    # await state.set_state(AddRequests.request_message)
+    await state.clear()
+    # Встает в ожидании нажатия кнопки и переходит к меню отправки сообщения:
+    await state.set_state(SetCategory.sab_category)
 
 
 # ----------------------- callback на problem_inline_back
-@retail_router.callback_query(StateFilter(None), F.data.startswith('problem_inline_back'))
+@retail_router.callback_query(
+    StateFilter(SetCategory.sab_category, AddRequests.request_message), F.data.startswith('problem_inline_back'))
 # Если у пользователя нет активного состояния (StateFilter(None) + он ввел команду "cancel")
-async def get_cancel(callback: types.CallbackQuery, state: FSMContext):
+async def get_problem_inline_back_state(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
     await callback.message.edit_text(f'Выберите категорию обращения 🚨',
                                      parse_mode='HTML',
@@ -310,32 +321,44 @@ async def get_cancel(callback: types.CallbackQuery, state: FSMContext):
                                                '🛞 ТОВАРООБОРОТ': 'problem_trade_turnover',
                                                '⏹ ОТМЕНА': 'problem_cancel'},
                                          sizes=(1, 1, 1, 1)))
-
-    # todo Надо получить либо стейт либо айди предыдущего действия и удалить его!!
-    # await callback.message.delete() # удалит кнопки
-    # await state.set_state(AddRequests.request_message)
-
-
-# todo написать функцию по условию выдает айцди  для функции внизу что бы не писать ответ для каждого нажатия.
+    await state.clear()
+    # Встает в ожидании нажатия кнопки и переходит к меню отправки сообщения:
+    await state.set_state(SetCategory.main_category)
 
 
-# @retail_router.callback_query(StateFilter(None), F.data.startswith('problem_analytics'))
-# # Если у пользователя нет активного состояния (StateFilter(None) + он ввел команду "analytics")
-# async def press_button_request_message(callback: types.CallbackQuery, state: FSMContext):
-#     await callback.answer()
-#     await callback.message.answer('Введите текст обращения', reply_markup=types.ReplyKeyboardRemove())
-#     await state.set_state(AddRequests.request_message)
-#     # todo замутить удаление всех сообщений с меню
+# ----------------------- callback на все возможные варианты
+@retail_router.callback_query(
+    StateFilter(SetCategory.sab_category),
+    F.data.startswith('problem_') & (~F.data.startswith('problem_cancel') | ~F.data.startswith('problem_inline_back')))
+async def get_problem_trade_turnover_state(callback: types.CallbackQuery, state: FSMContext):
+    await callback.answer()
+    # Формируем полученные данные:
+    # Сначала нужно апдейтить? !!!!!!
+    get_category_data = await state.get_data()
 
-# ----------------------- callback на АНАЛИТИКА
+    print(f'get_category_data = {get_category_data}')
+
+    # Заменяем клаву:
+    await callback.message.edit_text('Введите текст обращения', reply_markup=get_callback_btns(
+        btns={'⬅️ НАЗАД': 'problem_inline_back',
+              '⏹ ОТМЕНА': 'problem_cancel'},
+        sizes=(2,)))
+
+    # # Удаляем клаву:
+    # await callback.message.answer('Введите текст обращения', reply_markup=types.ReplyKeyboardRemove())
+
+    await state.clear()
+    # await callback.message.delete()  # удалит кнопки
+    await state.set_state(AddRequests.request_message)
 
 
+# ----------------------- callback на ввод сообщения:
 # Становимся в состояние ожидания ввода
 # Пользователь ввел текст
 @retail_router.message(StateFilter(AddRequests.request_message), F.text)
 # Если ввел текст обращения (AddRequests.request_message, F.text):
 async def get_request_message(message: types.Message, state: FSMContext, session: AsyncSession):
-    # Передам словарь с данными ( ключ = request_message, к нему присваиваем данные message.text), после апдейтим
+    # Передам словарь с данными (ключ = request_message, к нему присваиваем данные message.text), после апдейтим
     await state.update_data(request_message=message.text)
 
     # Формируем полученные данные:
@@ -361,13 +384,14 @@ async def get_request_message(message: types.Message, state: FSMContext, session
 
 # -------------- 1.2. Ветка при отмене заявки:
 # back_step
-@retail_router.message(StateFilter(None), F.text == 'Отменить заявку')
-async def get_back_request(message: types.Message):
-    await message.delete()
-
-    # Заменяет старое меню на новое
-    await message.answer(f'Ок!', reply_markup=RETAIL_KEYB_MAIN)
-
+# @retail_router.message(StateFilter(AddRequests.request_message), F.text == 'Отменить заявку')
+# async def get_back_request(message: types.Message):
+#     await state.clear()
+#     await message.delete()
+#     # Заменяет старое меню на новое
+#     await message.answer(f'Ок!', reply_markup=RETAIL_KEYB_MAIN)
+# 'Отменить заявку',
+# 'Показать категори',
 
 # -------------- 1.3. Ветка при изменеии заявки:
 @retail_router.message(StateFilter(None), F.text == 'Изменить заявку')
@@ -488,3 +512,10 @@ async def get_chat_with_worker(message: types.Message):
 #                          f' чтобы я точно понял, кому из сотрудников направить твою <b>боль</b>,'
 #                          f' а дальше и так интуитивно понятно. \n'
 #                          f'К тому же я всегда буду подсказывать по ходу твоих действий.')
+
+
+#     data_main_category = callback_query.data
+#     if data == 'problem_analytics':
+#         await bot.send_message(callback_query.from_user.id, 'Выберите отчет:', reply_markup=analytics_menu_keyboard())
+#         await state.set_state(CetCategory.analytics)
+#     elif data == 'problem_formats':
