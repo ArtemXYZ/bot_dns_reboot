@@ -236,10 +236,6 @@ async def get_problem_analytics_state(callback: types.CallbackQuery, state: FSMC
     # Встает в ожидании нажатия кнопки и переходит к меню отправки сообщения:
     await state.set_state(SetCategory.sab_category)
 
-    # selected_subcategory = callback.data
-    # print(selected_subcategory)
-    # await state.update_data(request_message=message.text) !!!
-
 # ----------------------- callback на ФОРМАТЫ
 @retail_router.callback_query(StateFilter(SetCategory.main_category), F.data.startswith('problem_formats'))
 # Если у пользователя нет активного состояния (StateFilter(None) + он ввел команду "analytics")
@@ -317,18 +313,49 @@ async def get_problem_trade_turnover_state(callback: types.CallbackQuery, state:
 
     # Узнаем какая кнопка была нажата:
     selected_subcategory = callback.data
-    print(selected_subcategory)
+    # print(selected_subcategory)
 
     # Отбрасываем не нужные события для последующей записи:
-    if selected_subcategory == 'problem_cancel' | 'problem_inline_back':
+    if selected_subcategory in ('problem_cancel', 'problem_inline_back'):
         pass
     else:
-        if selected_subcategory == ''
-            problem_analytics
+        # Для ветки АНАЛИТИКА (problem_analytics):
+        if selected_subcategory == 'problem_dashboards':
+            print(selected_subcategory)
+        elif selected_subcategory == 'problem_tags':
+            print(selected_subcategory)
+        elif selected_subcategory == 'problem_bot':
+            print(selected_subcategory)
 
-'problem_dashboards',
-              '🔖 ЦЕННИКИ': 'problem_tags',
-              '🤖 TELEGRAM-БОТЫ': 'problem_bot',
+
+        # Для ветки ФОРМАТЫ (problem_formats):
+        elif selected_subcategory == 'problem_coming':
+            print(selected_subcategory)
+        elif selected_subcategory == 'problem_no_coming':
+            print(selected_subcategory)
+        elif selected_subcategory == 'problem_ce':
+            print(selected_subcategory)
+        elif selected_subcategory == 'problem_borders':
+            print(selected_subcategory)
+        elif selected_subcategory == 'problem_unsold':
+            print(selected_subcategory)
+
+
+        # Для ветки ТОВАРООБОРОТ (problem_trade_turnover):
+        elif selected_subcategory == 'problem_sales':
+            print(selected_subcategory)
+        elif selected_subcategory == 'problem_merch':
+            print(selected_subcategory)
+        elif selected_subcategory == 'problem_price':
+            print(selected_subcategory)
+        elif selected_subcategory == 'problem_purchase':
+            print(selected_subcategory)
+        elif selected_subcategory == 'problem_ve':
+            print(selected_subcategory)
+        elif selected_subcategory == 'problem_stm':
+            print(selected_subcategory)
+        elif selected_subcategory == 'problem_discount':
+            print(selected_subcategory)
 
 
 

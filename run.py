@@ -62,6 +62,7 @@ from aiogram.client.default import DefaultBotProperties  # Обработка т
 from working_databases.configs import *
 
 from dotenv import find_dotenv, load_dotenv  # Для переменных окружения
+
 load_dotenv(find_dotenv())  # Загружаем переменную окружения
 
 from working_databases.init_db import *
@@ -85,20 +86,15 @@ from start_sleep_bot.def_start_sleep import *
 # phone_number_id = message.сontact.phone_number # достать номер телефона
 
 # ----------------------------------------------------------------------------------------------------------------------
-bot: Bot = Bot(token=os.getenv('API_TOKEN'), default=DefaultBotProperties(parse_mode='HTML'))  # Для переменных окружения
-
+bot: Bot = Bot(token=os.getenv('API_TOKEN'),
+               default=DefaultBotProperties(parse_mode='HTML'))  # Для переменных окружения
 
 # --------------------------------------------- Инициализация диспетчера событий
 # Принимает все события и отвечает за порядок их обработки в асинхронном режиме.
 dp = Dispatcher()
 
-
-
-
-
 # Будет работать до фильтров !!! На все типы обновлений (событий).
 dp.message.outer_middleware(TypeSessionMiddleware(session_pool=session_pool_LOCAL_DB))
-
 
 # Назначаем роутеры:
 # dp.include_routers(general_router, admin_router, oait_manager_router, oait_router, retail_router) #
@@ -107,6 +103,8 @@ dp.message.outer_middleware(TypeSessionMiddleware(session_pool=session_pool_LOCA
 # dp.include_router(admin_router)
 # dp.include_router(general_router)
 dp.include_router(retail_router)
+
+
 # dp.include_router(oait_router)
 # dp.include_router(oait_manager_router)
 
@@ -119,18 +117,20 @@ dp.include_router(retail_router)
 # ---------------------------------------------------- Зацикливание работы бота
 # Отслеживание событий на сервере тг бота:
 async def run_bot():
-
     # ---------------------
     async def on_startup(bot):
+        # Удаление Webhook и всех ожидающих обновлений
+        await bot.delete_webhook(drop_pending_updates=True)
+        print("Webhook удален и ожидающие обновления сброшены.")
+
         await startup_on(session=session_pool_LOCAL_DB)
 
     async def on_shutdown(bot):
         await shutdown_on()
+
     # ---------------------
-    dp.startup.register(on_startup) # действия при старте бота +
+    dp.startup.register(on_startup)  # действия при старте бота +
     dp.shutdown.register(on_shutdown)  # действия при остановке бота +
-
-
 
     # -------------------------------------------------------------------------------
     # Установка промежуточного слоя (сразу для диспетчера, не для роутеров):
@@ -144,7 +144,8 @@ async def run_bot():
     # BotCommandScopeAllPrivateChats - для приват чартов  # todo здесь переделать разобраться!
     # BotCommandScopeDefault - для всех чартов
 
-    await dp.start_polling(bot, allowed_updates=['message', 'edited_message', 'callback_query']) #, interval=1
+    await dp.start_polling(bot, skip_updates=True,
+                           allowed_updates=['message', 'edited_message', 'callback_query'])  # , interval=1
     # todo allowed_updates=ALLOWED_UPDATES, - передаем туда список разрешенных
     #  событий для бота с сервера
     # , interval=2 интервал запросов на обновление.
@@ -153,7 +154,6 @@ async def run_bot():
 # Запуск асинхронной функции run_bot:
 if __name__ == "__main__":
     asyncio.run(run_bot())
-
 
 # todo типы message
 # todo message_reaction()
@@ -208,8 +208,6 @@ if __name__ == "__main__":
 # В этой переменной содержатся все типы обновлений на сервере которые мы пропускаем (не фильтруем) на бота
 # остальные мимо
 # ALLOWED_UPDATES = ['message', 'edited_message', 'callback_query']  # !!! Добавить типы фильтров
-
-
 
 
 # my_admins_list =[] # наполняем адишниками админов переменную.
