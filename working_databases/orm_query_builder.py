@@ -29,15 +29,20 @@ async def check_id_tg_in_users(session: AsyncSession, id: int):
     return result.scalar()
 
 
-async def add_request_message(message: types.Message, session: AsyncSession, data: dict):  # , get_tg_id: int
+async def add_request_message(session: AsyncSession, data: dict):  # , get_tg_id: int , message: types.Message, - упразднено.
     """
     Запрос в БД на добавление обращения:
     session=await get_async_sessionmaker(CONFIG_LOCAL_DB)
     """
+
     #  Формируем набор данных для вставки:
-    id_tg: int = message.from_user.id
-    request_data_set = Requests(request_message=data['request_message'], tg_id=id_tg)
-    session.add(request_data_set)
+    # id_tg: int = message.from_user.id - упразднено.
+    # request_data_set = Requests(request_message=data['request_message'], tg_id=id_tg) - упразднено.
+
+    request_data_set = Requests(data)
+
+
+    session.add(**request_data_set)
     await session.commit()
     # check_id = check_id_tg_in_users(session, id_tg)
 

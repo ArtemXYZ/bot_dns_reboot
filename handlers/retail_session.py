@@ -361,9 +361,8 @@ async def get_request_message(message: types.Message, state: FSMContext, session
     data = await state.get_data()
     print(data)
 
-
     # Запрос в БД на добавление обращения:
-    # await add_request_message(message, session, data) !!!!
+    await add_request_message(message, session, data)
 
     # ------------------------------------- SQL
 
