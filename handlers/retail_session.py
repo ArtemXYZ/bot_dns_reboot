@@ -25,6 +25,8 @@ from menu.inline_menu import *  # Кнопки встроенного меню -
 from menu.button_generator import get_keyboard
 
 from working_databases.orm_query_builder import *
+from handlers.data_preparation import *
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Назначаем роутер для чата под розницу:
@@ -318,135 +320,7 @@ async def get_problem_trade_turnover_state(callback: types.CallbackQuery, state:
     selected_subcategory = callback.data
     # print(selected_subcategory)
 
-    # Отбрасываем не нужные события для последующей записи:
-    if selected_subcategory in ('problem_cancel', 'problem_inline_back'):
-        pass
-    else:
-        # Для ветки АНАЛИТИКА (problem_analytics):
-        if selected_subcategory == 'problem_dashboards':
-
-            write_to_base = {
-                'name_category': 'problem_analytics', 'name_sabcategory': 'problem_dashboards',
-                'category_id': 1, 'sabcategory_id': 1} # tg_id - получим в функц отлавливания текста.
-
-            print(write_to_base)
-
-        elif selected_subcategory == 'problem_tags':
-
-            write_to_base = {
-                'name_category': 'problem_analytics', 'name_sabcategory': 'problem_tags',
-                'category_id': 1, 'sabcategory_id': 2}
-
-            print(write_to_base)
-
-        elif selected_subcategory == 'problem_bot':
-
-            write_to_base = {
-                'name_category': 'problem_analytics', 'name_sabcategory': 'problem_bot',
-                'category_id': 1, 'sabcategory_id': 3}
-
-            print(write_to_base)
-
-
-        # Для ветки ФОРМАТЫ (problem_formats):
-        elif selected_subcategory == 'problem_coming':
-
-            write_to_base = {
-                'name_category': 'problem_formats', 'name_sabcategory': 'problem_coming',
-                'category_id': 2, 'sabcategory_id': 4}
-
-            print(write_to_base)
-
-        elif selected_subcategory == 'problem_no_coming':
-
-            write_to_base = {
-                'name_category': 'problem_formats', 'name_sabcategory': 'problem_no_coming',
-                'category_id': 2, 'sabcategory_id': 5}
-            print(write_to_base)
-
-        elif selected_subcategory == 'problem_ce':
-
-            write_to_base = {
-                'name_category': 'problem_formats', 'name_sabcategory': 'problem_ce',
-                'category_id': 2, 'sabcategory_id': 6}
-
-            print(write_to_base)
-
-        elif selected_subcategory == 'problem_borders':
-
-            write_to_base = {
-                'name_category': 'problem_formats', 'name_sabcategory': 'problem_borders',
-                'category_id': 2, 'sabcategory_id': 7}
-
-            print(write_to_base)
-
-        elif selected_subcategory == 'problem_unsold':
-
-            write_to_base = {
-                'name_category': 'problem_formats', 'name_sabcategory': 'problem_unsold',
-                'category_id': 2, 'sabcategory_id': 8}
-
-            print(write_to_base)
-
-
-        # Для ветки ТОВАРООБОРОТ (problem_trade_turnover):
-        elif selected_subcategory == 'problem_sales':
-
-            write_to_base = {
-                'name_category': 'problem_trade_turnover', 'name_sabcategory': 'problem_sales',
-                'category_id': 3, 'sabcategory_id': 9}
-
-            print(write_to_base)
-
-        elif selected_subcategory == 'problem_merch':
-
-            write_to_base = {
-                'name_category': 'problem_trade_turnover', 'name_sabcategory': 'problem_merch',
-                'category_id': 3, 'sabcategory_id': 10}
-
-            print(write_to_base)
-
-        elif selected_subcategory == 'problem_price':
-
-            write_to_base = {
-                'name_category': 'problem_trade_turnover', 'name_sabcategory': 'problem_price',
-                'category_id': 3, 'sabcategory_id': 11}
-
-            print(write_to_base)
-
-        elif selected_subcategory == 'problem_purchase':
-
-            write_to_base = {
-                'name_category': 'problem_trade_turnover', 'name_sabcategory': 'problem_purchase',
-                'category_id': 3, 'sabcategory_id': 12}
-
-            print(write_to_base)
-
-        elif selected_subcategory == 'problem_ve':
-
-            write_to_base = {
-                'name_category': 'problem_trade_turnover', 'name_sabcategory': 'problem_ve',
-                'category_id': 3, 'sabcategory_id': 13}
-
-            print(write_to_base)
-
-        elif selected_subcategory == 'problem_stm':
-
-            write_to_base = {
-                'name_category': 'problem_trade_turnover', 'name_sabcategory': 'problem_stm',
-                'category_id': 3, 'sabcategory_id': 14}
-
-            print(write_to_base)
-
-        elif selected_subcategory == 'problem_discount':
-
-            write_to_base = {
-                'name_category': 'problem_trade_turnover', 'name_sabcategory': 'problem_discount',
-                'category_id': 3, 'sabcategory_id': 15}
-
-            print(write_to_base)
-
-    return  write_to_base
+    generator_category_data(selected_subcategory)
 
     # Вытаскиваем данные:
     # get_category_data = await state.get_data()
@@ -465,6 +339,8 @@ async def get_problem_trade_turnover_state(callback: types.CallbackQuery, state:
     await state.clear()
     # await callback.message.delete()  # удалит кнопки
     await state.set_state(AddRequests.request_message)
+
+    await state.update_data(write_to_base)
 
 
 # ----------------------- callback на ввод сообщения:

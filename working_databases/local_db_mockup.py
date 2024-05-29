@@ -34,21 +34,21 @@ class Users(Base):
     """
     __tablename__ = 'user_data'
 
-    # index_add: Mapped[int] = mapped_column(autoincrement=True) # орядковый номер добавления обратившегося сотрудника.
+    # index_add: Mapped[int] = mapped_column(autoincrement=True) # порядковый номер добавления обратившегося сотрудника.
     # телеграмм id
     id_tg: Mapped[int] = mapped_column(primary_key=True, autoincrement=False, nullable=False, unique=True)  # Pk  index=True,
     # # id сотрудника в 1С и первичный ключ в этой таблице.
     code: Mapped[str] = mapped_column(String(50), unique=True)
     # session_type_id: Mapped[int] = mapped_column(nullable=True, server_default='None')
-    #  session_type_id: 0 - ретейл, 1 - Оаит, 2 -
-    session_type: Mapped[str] = mapped_column(String(100), nullable=True) # подзапрос в SQL CASE !
+    #  session_type_id: 0 - ритейл, 1 - Оаит, 2 -
+    session_type: Mapped[str] = mapped_column(String(100), nullable=True) # под запрос в SQL CASE !
 
     full_name: Mapped[str] = mapped_column(String(100), nullable=False)  # ФИО сотрудника
 
     post_id: Mapped[int] = mapped_column(nullable=False)  # id Должности
     post_name: Mapped[str] = mapped_column(Text(), nullable=False)
 
-    branch_id: Mapped[int] = mapped_column(nullable=False) # + для вильтрации отделов.
+    branch_id: Mapped[int] = mapped_column(nullable=False) # + для фильтрации отделов.
     branch_name:Mapped[str] = mapped_column(String(200), nullable=False)
     rrs_name: Mapped[str] = mapped_column(String(100), nullable=False)
     division_name: Mapped[str] = mapped_column(String(100), nullable=False)
@@ -76,7 +76,7 @@ class Requests(Base):
 
     # id request history
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    # code_id: Mapped[str] = mapped_column(String(50))  # id сотрудника в 1С и нешний ключ в этой таблице.
+    # code_id: Mapped[str] = mapped_column(String(50))  # id сотрудника в 1С и внешний ключ в этой таблице.
 
     # телеграмм id обращающегося пользователя
     tg_id: Mapped[int] = mapped_column(ForeignKey('user_data.id_tg'), nullable=False, index=True) # Fk
@@ -94,8 +94,8 @@ class Requests(Base):
     name_category: Mapped[str] = mapped_column(String(50),nullable=False)
     #
     # # Подкатегория обращения (по какому виду деятельности распределять)
-    sabcategory_id: Mapped[int] = mapped_column(nullable=False, index=True)
-    name_sabcategory: Mapped[str] = mapped_column(String(50),nullable=False)
+    subcategory_id: Mapped[int] = mapped_column(nullable=False, index=True)
+    name_subcategory: Mapped[str] = mapped_column(String(50),nullable=False)
     #  ---------------------------- Идентификаторы
 
     # В работе ли заявка: "at_work" , "complete" - статус запроса (insert, in_work, done или complete (, onupdate='insert') )
