@@ -37,8 +37,8 @@ retail_router = Router()
 #  ( “private”, “group”, “supergroup”, “channel”)
 # 2-й фильтр: по типу юзеров (тип сессии).
 
-retail_router.message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))  # retail oait
-retail_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
+retail_router.message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait', 'boss']))  # retail oait
+retail_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait', 'boss']))
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -86,7 +86,9 @@ async def hello_after_on_next(message: types.Message, state: FSMContext):
     await message.answer((hello_users_retail.format(user)),
                          parse_mode='HTML')
 
-    await asyncio.sleep(1)
+    # await asyncio.sleep(5) !!! тут не верно отрабатывает
+    # await message.delete()
+
     await message.answer(f'Если хочешь, я кратко расскажу, как со мной работать, '
                          f'а после уже помогу в решении твоих вопросов, ну или '
                          f'можешь приступать самостоятельно!',
@@ -336,46 +338,69 @@ async def get_problem_trade_turnover_state(callback: types.CallbackQuery, state:
               '⏹ ОТМЕНА': 'problem_cancel'},
         sizes=(2,)))
 
-    # # Удаляем клаву:
-    # await callback.message.answer('Введите текст обращения', reply_markup=types.ReplyKeyboardRemove())
+    # Вытаскиваем идентификеатор сообщения (до того, как обнулим состояние):
+    chat_id = callback.message.chat.id   # chat_id_before_entering_text
+    message_id = callback.message.message_id  # message_id_before_entering_text
 
     await state.clear()
-    # await callback.message.delete()  # удалит кнопки
     await state.set_state(AddRequests.request_message)
 
     # Перекидываем в стейт дату наши подготовленные данные для отправки сообщения
     await state.update_data(write_to_base)
+    await state.update_data(chat_id = chat_id, message_id = message_id)
 
-
-# ----------------------- callback на ввод сообщения:
+# ----------------------- callback на ввод сообщения: # await callback.message.delete()  # удалит кнопки
 # Становимся в состояние ожидания ввода
 # Пользователь ввел текст
-@retail_router.message(StateFilter(AddRequests.request_message), F.text)
+
+@retail_router.message(StateFilter(AddRequests.request_message), F.text)  #from aiogram import Bot
 # Если ввел текст обращения (AddRequests.request_message, F.text):
-async def get_request_message(message: types.Message, state: FSMContext, session: AsyncSession):
+async def get_request_message(message: types.Message, state: FSMContext, session: AsyncSession, bot: Bot):
+
+    # удаляем инлайновые кнопки (при вводе сообщения):
+    data = await state.get_data() # Формируем полученные данные:
+    chat_id = data['chat_id']
+    message_id = data['message_id']
+    await bot.delete_message(chat_id=chat_id, message_id=message_id) # Удаляем конкретное сообщение.
+    await message.delete() # Удаляет введенное сообщение пользователя (для чистоты чата)
 
     # Передам словарь с данными (ключ = request_message, к нему присваиваем данные message.text), после апдейтим
     await state.update_data(request_message=message.text, tg_id=message.from_user.id)
 
-    # Формируем полученные данные:
-    data = await state.get_data()
-    print(data)
+    # Забираем обновленные данные:
+    new_data = await state.get_data()
+
+
+    print(new_data)
+
+    # Удаляем ключи и их значения из словаря (они больше не нужны):
+    del new_data['chat_id']  # temp_data =
+    del new_data['message_id']
 
     # Запрос в БД на добавление обращения:
-    await add_request_message(session, data)
+    await add_request_message(session, new_data)
 
-    # ------------------------------------- SQL
+    await message.answer(f'<b>Обращение зарегистрировано, ожидайте ответа!</b> \n'
+                         f'Как только обращение будет взято в работу, я направлю уведомление.'
+                         f'\n'
+                         f'<em><b>Ваше обращение:</b> {new_data.get("request_message")}</em>'
+                         )
 
-    await message.answer(f'Обращение зарегистрировано, ожидайте ответа!')
-
-    await asyncio.sleep(1)
-    await message.answer(f'Я направлю уведомление, как только обращение будет взято в работу.')
-
-    # Отправка для наглядности записанного сообщения:
-    await message.answer(f'Ваше обращение: {data.get("request_message")}')
+    # Через 2 секунды возвращаем исходное главное меню.
+    await asyncio.sleep(2)
+    await message.edit_text(f'Терминал:',
+                                     reply_markup=get_callback_btns(
+                                         btns={'СОЗДАТЬ ЗАЯВКУ': 'go_create_request',
+                                               'ПЕРЕЙТИ В ЧАТ': 'go_chat_user',
+                                               'ИЗМЕНИТЬ ЗАЯВКУ': 'go_chenge_request',
+                                               'УДАЛИТЬ ЗАЯВКУ': 'go_delete_request',
+                                               'ЗАПРОСИТЬ СТАТУС ЗАЯВКИ': 'go_status_request'
+                                               },
+                                         sizes=(2, 2, 1)))
 
     # Очистка состояния пользователя:
     await state.clear()
+
 
 
 # -------------- 1.2. Ветка при отмене заявки:
