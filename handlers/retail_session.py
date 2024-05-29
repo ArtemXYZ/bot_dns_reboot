@@ -324,12 +324,14 @@ async def get_problem_trade_turnover_state(callback: types.CallbackQuery, state:
     write_to_base = generator_category_data(selected_subcategory)
 
     # Вытаскиваем данные:
-    # get_category_data = await state.get_data()
+    # get_category = await state.get_data()
 
     # print(f'get_category_data = {get_category_data}')
 
     # Заменяем клаву:
-    await callback.message.edit_text('Введите текст обращения', reply_markup=get_callback_btns(
+    await callback.message.edit_text(f'Введите текст обращения ', reply_markup=get_callback_btns(  # todo: по \
+        # todo:  {get_category} - доработать , так , что бы выволдило категорию обращения.
+
         btns={'⬅️ НАЗАД': 'problem_inline_back',
               '⏹ ОТМЕНА': 'problem_cancel'},
         sizes=(2,)))
@@ -351,13 +353,14 @@ async def get_problem_trade_turnover_state(callback: types.CallbackQuery, state:
 @retail_router.message(StateFilter(AddRequests.request_message), F.text)
 # Если ввел текст обращения (AddRequests.request_message, F.text):
 async def get_request_message(message: types.Message, state: FSMContext, session: AsyncSession):
+
     # Передам словарь с данными (ключ = request_message, к нему присваиваем данные message.text), после апдейтим
-    await state.update_data(request_message=message.text)
+    await state.update_data(request_message=message.text, tg_id=message.from_user.id)
 
     # Формируем полученные данные:
     data = await state.get_data()
     print(data)
-    # tg_id = message.from_user.id
+
 
     # Запрос в БД на добавление обращения:
     # await add_request_message(message, session, data) !!!!
