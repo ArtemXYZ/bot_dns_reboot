@@ -37,6 +37,8 @@ retail_router = Router()
 
 retail_router.message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))  # retail oait
 retail_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 # ---------------------------------- Код ниже для машины состояний (FSM)
 class AddRequests(StatesGroup):
@@ -236,6 +238,7 @@ async def get_problem_analytics_state(callback: types.CallbackQuery, state: FSMC
     # Встает в ожидании нажатия кнопки и переходит к меню отправки сообщения:
     await state.set_state(SetCategory.sab_category)
 
+
 # ----------------------- callback на ФОРМАТЫ
 @retail_router.callback_query(StateFilter(SetCategory.main_category), F.data.startswith('problem_formats'))
 # Если у пользователя нет активного состояния (StateFilter(None) + он ввел команду "analytics")
@@ -322,51 +325,128 @@ async def get_problem_trade_turnover_state(callback: types.CallbackQuery, state:
         # Для ветки АНАЛИТИКА (problem_analytics):
         if selected_subcategory == 'problem_dashboards':
 
-            write_to_base = {'name_category' : 'problem_analytics',
-                 'name_sabcategory' : 'problem_dashboards',
-                 'category_id': 1 , 'sabcategory_id' : 1}
-                 # tg_id - получим в функц отлавливания текста.
+            write_to_base = {
+                'name_category': 'problem_analytics', 'name_sabcategory': 'problem_dashboards',
+                'category_id': 1, 'sabcategory_id': 1} # tg_id - получим в функц отлавливания текста.
 
-            print(selected_subcategory)
-
+            print(write_to_base)
 
         elif selected_subcategory == 'problem_tags':
-            print(selected_subcategory)
+
+            write_to_base = {
+                'name_category': 'problem_analytics', 'name_sabcategory': 'problem_tags',
+                'category_id': 1, 'sabcategory_id': 2}
+
+            print(write_to_base)
+
         elif selected_subcategory == 'problem_bot':
-            print(selected_subcategory)
+
+            write_to_base = {
+                'name_category': 'problem_analytics', 'name_sabcategory': 'problem_bot',
+                'category_id': 1, 'sabcategory_id': 3}
+
+            print(write_to_base)
 
 
         # Для ветки ФОРМАТЫ (problem_formats):
         elif selected_subcategory == 'problem_coming':
-            print(selected_subcategory)
+
+            write_to_base = {
+                'name_category': 'problem_formats', 'name_sabcategory': 'problem_coming',
+                'category_id': 2, 'sabcategory_id': 4}
+
+            print(write_to_base)
+
         elif selected_subcategory == 'problem_no_coming':
-            print(selected_subcategory)
+
+            write_to_base = {
+                'name_category': 'problem_formats', 'name_sabcategory': 'problem_no_coming',
+                'category_id': 2, 'sabcategory_id': 5}
+            print(write_to_base)
+
         elif selected_subcategory == 'problem_ce':
-            print(selected_subcategory)
+
+            write_to_base = {
+                'name_category': 'problem_formats', 'name_sabcategory': 'problem_ce',
+                'category_id': 2, 'sabcategory_id': 6}
+
+            print(write_to_base)
+
         elif selected_subcategory == 'problem_borders':
-            print(selected_subcategory)
+
+            write_to_base = {
+                'name_category': 'problem_formats', 'name_sabcategory': 'problem_borders',
+                'category_id': 2, 'sabcategory_id': 7}
+
+            print(write_to_base)
+
         elif selected_subcategory == 'problem_unsold':
-            print(selected_subcategory)
+
+            write_to_base = {
+                'name_category': 'problem_formats', 'name_sabcategory': 'problem_unsold',
+                'category_id': 2, 'sabcategory_id': 8}
+
+            print(write_to_base)
 
 
         # Для ветки ТОВАРООБОРОТ (problem_trade_turnover):
         elif selected_subcategory == 'problem_sales':
-            print(selected_subcategory)
+
+            write_to_base = {
+                'name_category': 'problem_trade_turnover', 'name_sabcategory': 'problem_sales',
+                'category_id': 3, 'sabcategory_id': 9}
+
+            print(write_to_base)
+
         elif selected_subcategory == 'problem_merch':
-            print(selected_subcategory)
+
+            write_to_base = {
+                'name_category': 'problem_trade_turnover', 'name_sabcategory': 'problem_merch',
+                'category_id': 3, 'sabcategory_id': 10}
+
+            print(write_to_base)
+
         elif selected_subcategory == 'problem_price':
-            print(selected_subcategory)
+
+            write_to_base = {
+                'name_category': 'problem_trade_turnover', 'name_sabcategory': 'problem_price',
+                'category_id': 3, 'sabcategory_id': 11}
+
+            print(write_to_base)
+
         elif selected_subcategory == 'problem_purchase':
-            print(selected_subcategory)
+
+            write_to_base = {
+                'name_category': 'problem_trade_turnover', 'name_sabcategory': 'problem_purchase',
+                'category_id': 3, 'sabcategory_id': 12}
+
+            print(write_to_base)
+
         elif selected_subcategory == 'problem_ve':
-            print(selected_subcategory)
+
+            write_to_base = {
+                'name_category': 'problem_trade_turnover', 'name_sabcategory': 'problem_ve',
+                'category_id': 3, 'sabcategory_id': 13}
+
+            print(write_to_base)
+
         elif selected_subcategory == 'problem_stm':
-            print(selected_subcategory)
+
+            write_to_base = {
+                'name_category': 'problem_trade_turnover', 'name_sabcategory': 'problem_stm',
+                'category_id': 3, 'sabcategory_id': 14}
+
+            print(write_to_base)
+
         elif selected_subcategory == 'problem_discount':
-            print(selected_subcategory)
 
+            write_to_base = {
+                'name_category': 'problem_trade_turnover', 'name_sabcategory': 'problem_discount',
+                'category_id': 3, 'sabcategory_id': 15}
 
+            print(write_to_base)
 
+    return  write_to_base
 
     # Вытаскиваем данные:
     # get_category_data = await state.get_data()
