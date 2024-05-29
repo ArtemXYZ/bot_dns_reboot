@@ -7,6 +7,7 @@
 # -------------------------------- Стандартные модули
 import asyncio
 # -------------------------------- Сторонние библиотеки
+from typing import Dict
 from aiogram import types, Router, F
 from aiogram.filters import CommandStart, Command, StateFilter, or_f
 from aiogram.client.default import DefaultBotProperties  # Обработка текста HTML разметкой
