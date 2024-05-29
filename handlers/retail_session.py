@@ -321,7 +321,15 @@ async def get_problem_trade_turnover_state(callback: types.CallbackQuery, state:
     else:
         # Для ветки АНАЛИТИКА (problem_analytics):
         if selected_subcategory == 'problem_dashboards':
+
+            write_to_base = {'name_category' : 'problem_analytics',
+                 'name_sabcategory' : 'problem_dashboards',
+                 'category_id': 1 , 'sabcategory_id' : 1}
+                 # tg_id - получим в функц отлавливания текста.
+
             print(selected_subcategory)
+
+
         elif selected_subcategory == 'problem_tags':
             print(selected_subcategory)
         elif selected_subcategory == 'problem_bot':
