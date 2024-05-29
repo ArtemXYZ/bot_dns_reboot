@@ -320,7 +320,8 @@ async def get_problem_trade_turnover_state(callback: types.CallbackQuery, state:
     selected_subcategory = callback.data
     # print(selected_subcategory)
 
-    generator_category_data(selected_subcategory)
+    # Интерпретация келбек ключей,  генерации данных для БД:
+    write_to_base = generator_category_data(selected_subcategory)
 
     # Вытаскиваем данные:
     # get_category_data = await state.get_data()
@@ -340,6 +341,7 @@ async def get_problem_trade_turnover_state(callback: types.CallbackQuery, state:
     # await callback.message.delete()  # удалит кнопки
     await state.set_state(AddRequests.request_message)
 
+    # Перекидываем в стейт дату наши подготовленные данные для отправки сообщения
     await state.update_data(write_to_base)
 
 
@@ -354,10 +356,11 @@ async def get_request_message(message: types.Message, state: FSMContext, session
 
     # Формируем полученные данные:
     data = await state.get_data()
+    print(data)
     # tg_id = message.from_user.id
 
     # Запрос в БД на добавление обращения:
-    await add_request_message(message, session, data)
+    # await add_request_message(message, session, data) !!!!
 
     # ------------------------------------- SQL
 
