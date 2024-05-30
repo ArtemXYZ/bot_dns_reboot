@@ -22,14 +22,16 @@ from menu import inline_menu  # Кнопки встроенного меню - �
 from menu.button_generator import get_keyboard
 
 from working_databases.query_builder import *
+from working_databases.events import *
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Назначаем роутер для всех типов чартов:
 oait_router = Router()
 
 # фильтрует (пропускает) только личные сообщения и только определенных пользователей:
-oait_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
-oait_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
+oait_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['retail']))
+# oait_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -39,3 +41,8 @@ async def hello_after_on_next(message: types.Message):
     user = message.from_user.first_name  # Имя пользователя
     await message.answer((hello_users_oait.format(user)),
                          parse_mode='HTML')
+
+
+@oait_router.message(StateFilter(None))
+async def send_message(record):
+    message_text = f'Новая запись в Requests: {record.name}'
