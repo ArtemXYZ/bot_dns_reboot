@@ -82,3 +82,18 @@ where
 			staff.is_deleted = false
 and         bot_table.tg is not null		
 """
+
+
+table_for_reg_bot="""
+SELECT
+        bot_table.tg as id_tg    
+FROM
+        inlet.staff_for_bot as bot_table 
+INNER JOIN            
+        inlet.user_data_bot as user_data_bot        
+ON
+        bot_table.code = user_data_bot.code         
+WHERE        
+        user_data_bot.is_deleted = false        
+and     bot_table.tg is not null		
+"""

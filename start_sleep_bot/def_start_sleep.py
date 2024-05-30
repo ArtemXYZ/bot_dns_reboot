@@ -61,11 +61,27 @@ async def updating_local_db(session: AsyncSession):
         # Делаем выборку всех id_tg из Джарвиса (запрос к таблице бота регистрации на удаленном хосте):
         get_id_tg_list_in_jarvis = await get_data_in_jarvis(
             engine_obj=await get_async_engine(CONFIG_JAR_ASYNCPG),
-            sql=)
+            sql=table_for_reg_bot)
 
         # Проверяем, равны ли массивы поэлементно (сравниваем выборки из 2-х баз):
-        arrays_equal = np.array_equal(get_id_tg_list_local_db, array2)
+        arrays_equal: bool = np.array_equal(get_id_tg_list_local_db, get_id_tg_list_in_jarvis)
+        #  Функция np.array_equal проверяет, равны ли два массива.
+        #  Она вернет True, если массивы одинаковы по форме и содержимому, и False в противном случае.
 
+        #  если массивы одинаковы по форме и содержимому
+        if arrays_equal is True:
+            print(f'Инфоромация в локальной базе данных актуальна и не требует обновления.')
+
+        else:
+            # Найдем индексы, где элементы различаются
+            # different_indices = np.where(array1 != array2)[0]
+
+            # # Найдем значения в первом массиве (в локальной бд), которые отличаются от значений второго массива (jarvis)
+            # different_values_local_db = get_id_tg_list_local_db[get_id_tg_list_local_db != get_id_tg_list_in_jarvis]
+
+            # НАйдем удаленных пользователей:
+            # Найдем значения в первом массиве, которые отсутствуют во втором массиве:
+            not_values_in_local_db = np.setdiff1d(get_id_tg_list_local_db, get_id_tg_list_in_jarvis)
 
 # -------------------- При старте и при выключении бота:
 async def startup_on(session: AsyncSession):
