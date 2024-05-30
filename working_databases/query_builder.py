@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from aiogram import types
 
 # -------------------------------- Локальные модули
-from sql.get_user_data_sql import *
+# from sql.get_user_data_sql import *
 from working_databases.configs import *
 # from working_databases.async_engine import *
 # from working_databases.local_db_mockup import *
@@ -59,7 +59,8 @@ async def async_select(tb_name: str, columns_search: str,
 
     return fin
 # ---------------------------------------
-async def get_user_data(engine_obj:AsyncEngine, *args_format: tuple[int, str, float]):
+
+async def get_data_in_jarvis(engine_obj:AsyncEngine, sql, *args_format: tuple[int, str, float]):
 
     """ Возвращает все данные с удаленного сервера о пользователях через сырой запрос
     НА выходе:  # Список всех данных:
@@ -76,10 +77,10 @@ async def get_user_data(engine_obj:AsyncEngine, *args_format: tuple[int, str, fl
 
             if args_format:  # is not None
                 # Форматируем SQL запрос, если есть аргументы для форматирования
-                formatted_query = user_data_sql_text.format(*args_format) # todo sql - заменить после дагов!!!
+                formatted_query = sql.format(*args_format) # todo sql - заменить после дагов!!!
                 # user_data_sql_text_old, user_data_sql_text
             else:
-                formatted_query = user_data_sql_text # todo sql
+                formatted_query = sql # todo sql
 
             # Забираем данные:
             async with engine_obj.connect() as conn:
@@ -106,6 +107,13 @@ async def get_user_data(engine_obj:AsyncEngine, *args_format: tuple[int, str, fl
     except Exception as error:
         print(f'Ошибка: {type(error).__name__}, сообщение: {str(error)}!')
         # Ошибка извлечения данных.
+
+
+# async def get_id_tg_in_jarvis(engine_obj:AsyncEngine):
+    """ Возвращает одномерный массив (все id_tg с удаленного сервера в таблице регистрации ботом)
+       НА выходе:  # Список id_tg
+    """
+
 
 
 

@@ -27,10 +27,10 @@ from filters.chats_filters import *
 # from aiogram.utils.formatting import as_list, as_marked_section, Bold, Italic
 
 # from menu import keyboard_menu  # Кнопки меню - клавиатура внизу
-from menu import inline_menu  # Кнопки встроенного меню - для сообщений
+from menu.inline_menu import * # Кнопки встроенного меню - для сообщений
 
 from working_databases.query_builder import *
-
+from working_databases.orm_query_builder import *
 from working_databases.configs import *
 
 # Назначаем роутер для всех типов чартов:
@@ -41,7 +41,7 @@ general_router.edited_message.filter(ChatTypeFilter(['private']))
 general_router.edited_message.filter(ChatTypeFilter(['private']))
 # ----------------------------------------------------------------------------------------------------------------------
 # Вспомогательная функция проверки регистрации:
-async def chek_registration(message: types.Message):
+async def chek_registration(message: types.Message, session_pool: AsyncSession):
     while True:  # Цикличная проверка:
 
         # ---------------------------------------- Подготовка данных:
@@ -59,18 +59,26 @@ async def chek_registration(message: types.Message):
         # await message.answer(f'✅ <b>Ваш tg_id: {where_value}</b>', parse_mode='HTML')  # - тест tg_id
 
         # ---------------------------------------- Условия проверки пользователя на регистрацию.
-        # Если tg_id - отсутствует - отправляем регаться
-        if int(where_value) == async_check_telegram_id:
+        # Если tg_id - совпадает (зарегистрирован) - отправляемся проверять наличие его данных на локал БД:
+        tg_id_in_jarvis = int(where_value)
+        if tg_id_in_jarvis == async_check_telegram_id:
 
-            # 1 Проверяем тип айдишника (админ или зам. или розница)
-            # * добавить в режиме админа регистрацию сотрудников по типу пользователя и режим входа под другими оболочками
+            # Запрос на сравнение во внутреннюю базу (bool):
+            check_telegram_id_in_local_db = await check_id_tg_in_users(id=tg_id_in_jarvis, session=session_pool)
 
-            # Ссылаемся на внутреннюю базу или удаленную.
+            # Если нет данных о пользователе, тогда:
+            if check_telegram_id_in_local_db == False:
+                ...
+
+                # ишем функцию в отдельлном модуле тк она будет вызываться еще и при старте:
+                # выбираем все telegram_id из таблицы регистрации (бота регистрации) в джарвисе \
+                # и джойним с аналогичной выборкой из локал бд (юзерс):
+
 
             # если на внутреннюю, то лезем в бд, где находится клон (или запускаем клонирование сразу)
             # * придумать механизм аутентификации если сотрудник удален.
 
-            # создание базы при запуске бюота = тестовую программу, какую нибудь.
+
 
             # Выводим приветствие в зависимости от типа айдишника
             await message.answer(f'✅ <b>Доступ разрешен!</b>', parse_mode='HTML')
@@ -90,7 +98,7 @@ async def chek_registration(message: types.Message):
                 await message.answer(
                     f'❌ <b>Доступ закрыт!'
                     f'\n Пройдите аутентификацию в <a>@authorize_sv_bot</a></b>'
-                    , parse_mode='HTML', reply_markup=inline_menu.get_callback_btns(
+                    , parse_mode='HTML', reply_markup=get_callback_btns(
                         btns={'Я прошел аутентификацию, продолжить!': 'next'}))
 
             # Ожидание следующего сообщения пользователя
@@ -103,13 +111,18 @@ async def chek_registration(message: types.Message):
 
 
 @general_router.message(CommandStart())
-async def on_start(message: types.Message):
-    await chek_registration(message)
+async def on_start(message: types.Message, session_pool: AsyncSession):
+    await chek_registration(message, session_pool)
     #  todo удалять кнопки и все сообщение раньше, выводить приветствие!
 
     await message.delete()  # Удаляем сообщение и кнопки?. todo !!!
 
     # await message.answer(f'✅ <b>Ошибка подключения к серверу!</b>', parse_mode='HTML')
+
+
+
+
+
 
 
 # 0. -------------------------- Очистка сообщений от ругательств для всех типов чартов:
@@ -145,4 +158,6 @@ async def cleaner(message: types.Message):
 #         await message.answer(message.text)
 
 
-
+# ------------------------------------------------- Устарело
+# 1 Проверяем тип айдишника (админ или зам. или розница)
+            # * добавить в режиме админа регистрацию сотрудников по типу пользователя и режим входа под другими оболочками

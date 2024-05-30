@@ -6,7 +6,8 @@
 # ---------------------------------- Импорт стандартных библиотек Пайтона
 # ---------------------------------- Импорт сторонних библиотек
 import asyncio
-from sqlalchemy import select, String, Table, update, delete, text
+from sqlalchemy import select, String, Table, update, delete, text, or_
+
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from sqlalchemy.ext.asyncio import AsyncSession
 from aiogram import types
@@ -21,12 +22,52 @@ from sql.get_user_data_sql import *
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-async def check_id_tg_in_users(session: AsyncSession, id: int):
-    # + добавить логику (обработчик ошибок), если такого нет в базе
-    """Сравниваем айдишник из сообщения в локальной базе данных"""
+async def check_id_tg_in_users(id: int, session: AsyncSession) -> bool:
+
+    """
+    Проверяем данные о пользователе в локал БД.
+    Сравниваем telegram айдишник из сообщения в локальной базе данных
+    """
+
     query = select(Users).where(Users.id_tg == id)
-    result = await session.execute(query)
-    return result.scalar()
+    result_tmp = await session.execute(query)
+    result = int(result_tmp.scalar())
+
+    # Если во внутренней базе нет данных на нового пользователя:
+    if result is None:
+        result_bool: bool = False
+    else:
+        result_bool: bool  = True
+
+    return result_bool
+
+async def get_id_tg_in_users(session: AsyncSession) -> list:
+
+    """
+    Забираем выборку id_tg из локал БД. Только действующие сотрудники.
+    Далее сравниваем с id_tg с выборкой из внешней базы данных.
+    """
+
+    # Только действующие сотрудники:
+    # Либо ноль либо фелсе:
+    query = select(Users.id_tg).where(or_(Users.is_deleted == False, Users.is_deleted == 0))
+    # В SQLAlchemy условие выборки должно быть записано без использования Python-оператора not.
+
+    result_tmp = await session.execute(query)
+    results = result_tmp.scalars().all()  #
+
+    # Преобразование всех значений в целые числа:
+    results_list_int = [int(result) for result in results]
+
+    # выдаст либо список либо пусой список.
+    return results_list_int
+
+
+
+
+
+
+
 
 
 async def add_request_message(session: AsyncSession, data: dict):  # , get_tg_id: int , message: types.Message, - упразднено.

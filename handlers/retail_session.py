@@ -416,11 +416,6 @@ async def get_request_message_users(message: types.Message, state: FSMContext, s
                                          sizes=(2, 2, 1)))
 
 
-
-
-
-
-
     # await message.edit_text(f'Терминал:',
     #                                  reply_markup=get_callback_btns(
     #                                      btns={'СОЗДАТЬ ЗАЯВКУ': 'go_create_request',
