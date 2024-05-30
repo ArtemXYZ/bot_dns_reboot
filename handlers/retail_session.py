@@ -356,40 +356,56 @@ async def get_problem_trade_turnover_state(callback: types.CallbackQuery, state:
 
 @retail_router.message(StateFilter(AddRequests.request_message), F.text)  #from aiogram import Bot
 # Если ввел текст обращения (AddRequests.request_message, F.text):
-async def get_request_message(message: types.Message, state: FSMContext, session: AsyncSession, bot: Bot):
+async def get_request_message_users(message: types.Message, state: FSMContext, session: AsyncSession, bot: Bot):
 
-    # удаляем инлайновые кнопки (при вводе сообщения):
-    data = await state.get_data() # Формируем полученные данные:
+    # ---------------------------- удаляем инлайновые кнопки (при вводе сообщения):
+    # Формируем полученные данные из другого стейта (chat_id, message_id):
+    data = await state.get_data()
     chat_id = data['chat_id']
     message_id = data['message_id']
-    await bot.delete_message(chat_id=chat_id, message_id=message_id) # Удаляем конкретное сообщение.
-    await message.delete() # Удаляет введенное сообщение пользователя (для чистоты чата)
 
-    # Передам словарь с данными (ключ = request_message, к нему присваиваем данные message.text), после апдейтим
+    # Удаляем конкретное сообщение. +- (может быть ошибка, если до этого ботт был выключен и история не очищена \
+    # (протестить еще раз))
+    await bot.delete_message(chat_id=chat_id, message_id=message_id)
+
+    await message.delete() # Удаляет введенное сообщение пользователя (для чистоты чата) +
+
+    # Передам словарь с данными (ключ = request_message, к нему присваиваем данные message.text), после апдейтим +
     await state.update_data(request_message=message.text, tg_id=message.from_user.id)
 
     # Забираем обновленные данные:
     new_data = await state.get_data()
-
-
-    print(new_data)
+    # print(f' До удаления:  {new_data}')
 
     # Удаляем ключи и их значения из словаря (они больше не нужны):
-    del new_data['chat_id']  # temp_data =
-    del new_data['message_id']
+    del new_data['chat_id']  # temp_data  +
+    del new_data['message_id'] # temp_data  +
+
+    print(f' После удаления:  {new_data}')  # - Работает +
 
     # Запрос в БД на добавление обращения:
     await add_request_message(session, new_data)
 
-    await message.answer(f'<b>Обращение зарегистрировано, ожидайте ответа!</b> \n'
+    # Очистка состояния пользователя:
+    await state.clear()
+
+    sent_message = await message.answer(f'<b>Обращение зарегистрировано, ожидайте ответа!</b> \n'
                          f'Как только обращение будет взято в работу, я направлю уведомление.'
                          f'\n'
                          f'<em><b>Ваше обращение:</b> {new_data.get("request_message")}</em>'
                          )
+    # del new_data
 
+    # -------------------------- Удаляем введенное сообщение выше 👆:
+    # Очищаем данные, тк, на прямую удалить сообщение выше не получится - выходит ошибка
+    # (скорее всего из-за удаления сообщения выше)
+
+    await asyncio.sleep(1)
+
+    # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
     # Через 2 секунды возвращаем исходное главное меню.
-    await asyncio.sleep(2)
-    await message.edit_text(f'Терминал:',
+
+    await sent_message.edit_text(f'Терминал:',
                                      reply_markup=get_callback_btns(
                                          btns={'СОЗДАТЬ ЗАЯВКУ': 'go_create_request',
                                                'ПЕРЕЙТИ В ЧАТ': 'go_chat_user',
@@ -399,8 +415,46 @@ async def get_request_message(message: types.Message, state: FSMContext, session
                                                },
                                          sizes=(2, 2, 1)))
 
-    # Очистка состояния пользователя:
-    await state.clear()
+
+
+
+
+
+
+    # await message.edit_text(f'Терминал:',
+    #                                  reply_markup=get_callback_btns(
+    #                                      btns={'СОЗДАТЬ ЗАЯВКУ': 'go_create_request',
+    #                                            'ПЕРЕЙТИ В ЧАТ': 'go_chat_user',
+    #                                            'ИЗМЕНИТЬ ЗАЯВКУ': 'go_chenge_request',
+    #                                            'УДАЛИТЬ ЗАЯВКУ': 'go_delete_request',
+    #                                            'ЗАПРОСИТЬ СТАТУС ЗАЯВКИ': 'go_status_request'
+    #                                            },
+    #                                      sizes=(2, 2, 1)))
+
+
+
+
+    # await bot.edit_message_text(chat_id=message.chat.id,
+    #                             message_id=message.message_id,
+    #                             text=f'Терминал:',
+    #                                  reply_markup=get_callback_btns(
+    #                                      btns={'СОЗДАТЬ ЗАЯВКУ': 'go_create_request',
+    #                                            'ПЕРЕЙТИ В ЧАТ': 'go_chat_user',
+    #                                            'ИЗМЕНИТЬ ЗАЯВКУ': 'go_chenge_request',
+    #                                            'УДАЛИТЬ ЗАЯВКУ': 'go_delete_request',
+    #                                            'ЗАПРОСИТЬ СТАТУС ЗАЯВКИ': 'go_status_request'
+    #                                            },
+    #                                      sizes=(2, 2, 1)))
+
+
+
+
+
+
+# -- Если понадобятся кнопки, то делаем через новый обработчик:
+# @retail_router.message(StateFilter(AddRequests.request_message), F.text)
+# async def change_request_message_users(message: types.Message, state: FSMContext):
+
 
 
 
