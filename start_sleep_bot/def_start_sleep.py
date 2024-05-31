@@ -133,6 +133,23 @@ async def updating_local_db(session_pool: AsyncSession):
                 print(f'Анализ локальной базы данных: отсутствуют новые зарегистрированные пользователи. '
                       f'Добавим их базу:\n{not_values_in_local_db}')
 
+                # формируем остальные данные для пользователя
+                # подготовить даные и передать в функцию записи.
+                for id_tg in not_values_in_local_db:
+                    id = int(id_tg)
+
+                    # Извлекаем все данные с удаленного сервера на искомого пользователя:
+                    # data_user = await get_data_in_jarvis(
+                    #     engine_obj=await get_async_engine(CONFIG_JAR_ASYNCPG),
+                    #     sql=user_data_sql_for_one_id_tg, id)
+                    # print({data_user})
+
+                    data_user = await get_data_in_jarvis(
+                        await get_async_engine(CONFIG_JAR_ASYNCPG), user_data_sql_for_one_id_tg, id)
+                    print(f'{data_user}')
+                # # Преобразуем массив в словарь для пердачи в ОРМ на добавление в БД:
+                # new_id_tg_dict = [{'id_tg': row} for row in not_values_in_local_db]
+                # print(new_id_tg_dict)
 
 
 
@@ -142,8 +159,8 @@ async def updating_local_db(session_pool: AsyncSession):
 
 
 
+            # -------------------- При старте и при выключении бота:
 
-# -------------------- При старте и при выключении бота:
 async def startup_on(session_pool: AsyncSession):
     """Общая функция при запуске бота выполняет ряд программ для обеспечения  нормальной работы бота"""
 
@@ -170,4 +187,3 @@ async def shutdown_on():
     print('Бот лег!')
 
 
-# # get_id_tg_list_in_jarvis = [{'id_tg': row[0]} for row in raw_data_jarvis ] - нумпи не понимает словари и тупл

@@ -67,8 +67,8 @@ async def chek_registration(message: types.Message, session_pool: AsyncSession):
             check_telegram_id_in_local_db = await check_id_tg_in_users(id=tg_id_in_jarvis, session=session_pool)
 
             # Если нет данных о пользователе, тогда:
-            if check_telegram_id_in_local_db == False:
-                ...
+            # if check_telegram_id_in_local_db == False:
+            #     ...
 
                 # ишем функцию в отдельлном модуле тк она будет вызываться еще и при старте:
                 # выбираем все telegram_id из таблицы регистрации (бота регистрации) в джарвисе \

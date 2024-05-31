@@ -60,7 +60,7 @@ async def async_select(tb_name: str, columns_search: str,
     return fin
 # ---------------------------------------
 
-async def get_data_in_jarvis(engine_obj:AsyncEngine, sql, *args_format: tuple[int, str, float]):
+async def get_data_in_jarvis(engine_obj:AsyncEngine, sql: str, *args_format: tuple[int, str, float]):
 
     """ Возвращает все данные с удаленного сервера о пользователях через сырой запрос
     НА выходе:  # Список всех данных:
@@ -77,10 +77,10 @@ async def get_data_in_jarvis(engine_obj:AsyncEngine, sql, *args_format: tuple[in
 
             if args_format:  # is not None
                 # Форматируем SQL запрос, если есть аргументы для форматирования
-                formatted_query = sql.format(*args_format) # todo sql - заменить после дагов!!!
+                formatted_query = sql.format(*args_format)
                 # user_data_sql_text_old, user_data_sql_text
             else:
-                formatted_query = sql # todo sql
+                formatted_query = sql
 
             # Забираем данные:
             async with engine_obj.connect() as conn:
@@ -88,7 +88,7 @@ async def get_data_in_jarvis(engine_obj:AsyncEngine, sql, *args_format: tuple[in
                 select_data = await conn.execute(text(formatted_query))
 
                 # Список всех данных:
-                data = select_data.fetchall()
+                data = select_data.fetchall() # todo выдает конченый формат с которым много мароки
                 # Имена колонок:
                 # columns = select_data.keys() - не нукжны!
 
