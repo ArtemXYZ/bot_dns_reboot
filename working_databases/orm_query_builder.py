@@ -31,7 +31,7 @@ async def check_id_tg_in_users(id: int, session: AsyncSession) -> bool:
 
     query = select(Users).where(Users.id_tg == id)
     result_tmp = await session.execute(query)
-    result = int(result_tmp.scalar())
+    result = result_tmp.scalar()
 
     # Если во внутренней базе нет данных на нового пользователя:
     if result is None:
@@ -41,20 +41,23 @@ async def check_id_tg_in_users(id: int, session: AsyncSession) -> bool:
 
     return result_bool
 
-async def get_id_tg_in_users(session: AsyncSession) -> list:
+async def get_id_tg_in_users(session_pool: AsyncSession) -> list:
 
     """
     Забираем выборку id_tg из локал БД. Только действующие сотрудники.
     Далее сравниваем с id_tg с выборкой из внешней базы данных.
     """
 
-    # Только действующие сотрудники:
-    # Либо ноль либо фелсе:
-    query = select(Users.id_tg).where(or_(Users.is_deleted == False, Users.is_deleted == 0))
-    # В SQLAlchemy условие выборки должно быть записано без использования Python-оператора not.
+    # Открываем контекстный менеджер для сохранения данных.
+    async with session_pool() as pool:
 
-    result_tmp = await session.execute(query)
-    results = result_tmp.scalars().all()  #
+        # Только действующие сотрудники:
+        # Либо ноль либо фелсе:
+        query = select(Users.id_tg).where(or_(Users.is_deleted == False, Users.is_deleted == 0))
+        # В SQLAlchemy условие выборки должно быть записано без использования Python-оператора not.
+
+        result_tmp = await pool.execute(query)
+        results = result_tmp.scalars().all()  #
 
     # Преобразование всех значений в целые числа:
     results_list_int = [int(result) for result in results]

@@ -102,7 +102,7 @@ dp.message.outer_middleware(TypeSessionMiddleware(session_pool=session_pool_LOCA
 #  Распределение роутеров - порядок записи имеет значение. не трогать! (3й урок)
 # dp.include_router(admin_router)
 dp.include_router(retail_router)
-dp.include_router(general_router)
+# dp.include_router(general_router)
 
 
 
@@ -124,7 +124,7 @@ async def run_bot():
         await bot.delete_webhook(drop_pending_updates=True)
         print("Webhook удален и ожидающие обновления сброшены.")
 
-        await startup_on(session=session_pool_LOCAL_DB)
+        await startup_on(session_pool=session_pool_LOCAL_DB)
 
     async def on_shutdown(bot):
         await shutdown_on()
