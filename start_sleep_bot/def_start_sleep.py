@@ -44,7 +44,7 @@ async def updating_local_db(session_pool: AsyncSession):
     # Преобразуем выходные данные (список кортежей) в список, тк это единственное, что понимает нумпи.
     get_id_tg_list_local_db = []
     for row in raw_data_local_db:
-        get_id_tg_list_local_db.append(row)
+        get_id_tg_list_local_db.append(int(row))
     # print(f' Делаем выборку всех id_tg из Локал БД: {get_id_tg_list_local_db}')  # +
 
 
@@ -78,19 +78,22 @@ async def updating_local_db(session_pool: AsyncSession):
         # Преобразуем выходные данные в список, тк это единственное, что понимает нумпи.
         get_id_tg_list_in_jarvis = []
         for row in raw_data_jarvis:
-            get_id_tg_list_in_jarvis.append(int(row[0]))  # +
+            if row is None:
+                print(row)
+            else:
+                get_id_tg_list_in_jarvis.append(int(row[0]))  # +
 
         # get_id_tg_list_in_jarvis = [{'id_tg': row[0]} for row in raw_data_jarvis ] - нумпи не понимает словари и тупл
-        # print(f' Делаем выборку всех id_tg из Джарвиса (запрос к таблице бота регистрации на удаленном хосте):'
-        #       f' {get_id_tg_list_in_jarvis}')
+        print(f' Делаем выборку всех id_tg из Джарвиса (запрос к таблице бота регистрации на удаленном хосте):'
+              f' {get_id_tg_list_in_jarvis}')
 
         # ------------------------------------------------ NumPy
         # Преобразуем списки в массивы (объекты нумпи):
         local_db_array = np.array(get_id_tg_list_local_db)
         jarvis_db_array = np.array(get_id_tg_list_in_jarvis)
 
-        # print(local_db_array)
-        # print(jarvis_db_array)
+        print(local_db_array)
+        print(jarvis_db_array)
 
         # Чистим списки (чтобы исключить в последующем добавление к старым объектам в списке - новых):
         get_id_tg_list_local_db.clear()
@@ -112,11 +115,11 @@ async def updating_local_db(session_pool: AsyncSession):
             # different_indices = np.where(array1 != array2)[0]
 
             # # Найдем значения в первом массиве (в локальной бд), которые отличаются от значений второго массива (jarvis)
-            # different_values_local_db = get_id_tg_list_local_db[get_id_tg_list_local_db != get_id_tg_list_in_jarvis]
+            not_values_in_local_db = local_db_array[local_db_array != jarvis_db_array]
 
             # Найдем удаленных пользователей:
             # Найдем значения в первом массиве, которые отсутствуют во втором массиве:
-            not_values_in_local_db = np.setdiff1d(local_db_array, jarvis_db_array)
+            # not_values_in_local_db = np.setdiff1d(local_db_array, jarvis_db_array)
 
             print(f'В локальной базе для записей {not_values_in_local_db} будет выставлена пометка удалены.')
 
