@@ -97,6 +97,9 @@ async def get_data_in_jarvis(engine_obj:AsyncEngine, sql, *args_format: tuple[in
         # for r in data:
         #     print(f'{r}')
 
+        # Преобразование данных в список значений
+        # return [row[0] for row in data]  - пока не переделываю, тк уже выстроена логики обработки в связанных функциях
+
         return data  #, columns tuple(
 
     #  Если наступит ошибка в значениях:
