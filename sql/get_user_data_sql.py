@@ -2,7 +2,7 @@
 Порядок колонок в запросе (очередность в selekt) имеет значение!!
 иначе сломается построение данных!
  """
-user_data_sql_text ="""
+user_data_sql_text = """
 select         
          	bot_table.tg as id_tg         	
         ,	user_data_bot.code
@@ -30,8 +30,7 @@ where
 			and bot_table.tg is not null		
 """
 
-
-user_data_sql_for_one_id_tg ="""
+user_data_sql_new = """
 select         
          	bot_table.tg as id_tg         	
         ,	user_data_bot.code
@@ -55,13 +54,29 @@ INNER JOIN
 ON
             bot_table.code = user_data_bot.code 
 where
-			bot_table.tg = '{0}'
+			bot_table.tg in ({0})
         and user_data_bot.is_deleted = false 
         and bot_table.tg is not null		
 """
 
 
-user_data_sql_text_old ="""
+
+table_for_reg_bot = """
+SELECT
+        bot_table.tg as id_tg    
+FROM
+        inlet.staff_for_bot as bot_table 
+INNER JOIN            
+        inlet.user_data_bot as user_data_bot        
+ON
+        bot_table.code = user_data_bot.code         
+WHERE        
+        user_data_bot.is_deleted = false        
+and     bot_table.tg is not null		
+"""
+
+#  ------------------------------------- не используется, архив.
+user_data_sql_text_old = """
 select 
          	bot_table.tg as id_tg  
       	,	bot_table.code
@@ -113,17 +128,31 @@ where
 and         bot_table.tg is not null		
 """
 
-
-table_for_reg_bot="""
-SELECT
-        bot_table.tg as id_tg    
+user_data_sql_for_one_id_tg = """
+select         
+         	bot_table.tg as id_tg         	
+        ,	user_data_bot.code
+        , 	user_data_bot.session_type	
+        , 	user_data_bot.full_name 
+        , 	user_data_bot.post_id
+        , 	user_data_bot.post_name
+        , 	user_data_bot.branch_id
+        , 	user_data_bot.branch_name
+        , 	user_data_bot.rrs_name
+        , 	user_data_bot.division_name
+        , 	user_data_bot.user_mail
+        , 	user_data_bot.is_deleted        
+      	,	False as employee_status
+      	,	user_data_bot.holiday_status
+      	,	False as admin_status
 FROM
-        inlet.staff_for_bot as bot_table 
+            inlet.staff_for_bot as bot_table
 INNER JOIN            
-        inlet.user_data_bot as user_data_bot        
+            inlet.user_data_bot as user_data_bot
 ON
-        bot_table.code = user_data_bot.code         
-WHERE        
-        user_data_bot.is_deleted = false        
-and     bot_table.tg is not null		
+            bot_table.code = user_data_bot.code 
+where
+			bot_table.tg = '{0}'
+        and user_data_bot.is_deleted = false 
+        and bot_table.tg is not null		
 """
