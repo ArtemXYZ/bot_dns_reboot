@@ -60,6 +60,13 @@ async def async_select(tb_name: str, columns_search: str,
     return fin
 # ---------------------------------------
 
+
+
+
+
+
+
+
 async def get_data_in_jarvis(engine_obj:AsyncEngine, sql: str, *args_format: tuple[int, str, float]):
 
     """ Возвращает все данные с удаленного сервера о пользователях через сырой запрос
@@ -88,7 +95,9 @@ async def get_data_in_jarvis(engine_obj:AsyncEngine, sql: str, *args_format: tup
                 select_data = await conn.execute(text(formatted_query))
 
                 # Список всех данных:
-                data = select_data.fetchall() # todo выдает конченый формат с которым много мароки
+                data = select_data.fetchall() # todo выдает конченый формат с которым много мароки, \
+                # todo но других вариантов нет - это единственный метод.
+
                 # Имена колонок:
                 # columns = select_data.keys() - не нукжны!
 
@@ -112,10 +121,7 @@ async def get_data_in_jarvis(engine_obj:AsyncEngine, sql: str, *args_format: tup
         # Ошибка извлечения данных.
 
 
-# async def get_id_tg_in_jarvis(engine_obj:AsyncEngine):
-    """ Возвращает одномерный массив (все id_tg с удаленного сервера в таблице регистрации ботом)
-       НА выходе:  # Список id_tg
-    """
+
 
 
 

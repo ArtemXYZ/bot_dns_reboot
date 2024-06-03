@@ -44,7 +44,7 @@ async def updating_local_db(session_pool: AsyncSession):
     # Преобразуем выходные данные (список кортежей) в список, тк это единственное, что понимает нумпи.
     get_id_tg_list_local_db = []
     for row in raw_data_local_db:
-        if row is None: # todo Потом переделать, обработать нули и пустоты
+        if row is None: # todo Потом переделать, обработать нули и пустоты. Возмолжны ошибки!
             print(row)
         else:
             get_id_tg_list_local_db.append(int(row))
@@ -61,7 +61,7 @@ async def updating_local_db(session_pool: AsyncSession):
         data = await get_data_in_jarvis(
             engine_obj=await get_async_engine(CONFIG_JAR_ASYNCPG),
             sql=user_data_sql_text
-        )
+        )  # todo !!! fetchall()
 
         # Наполнение внутренней БД проекта данными пользователей через ОРМ:
         # Предварительно, отсеиваются строки с пустыми значениями в хотя бы 1 колонке и разделяются на 2 составляющие ( \
@@ -147,9 +147,13 @@ async def updating_local_db(session_pool: AsyncSession):
                     # ! Запись в функцию только позиционными аргументами !!! Именованными - будет ошибка из-за *args
                 data_user = await get_data_in_jarvis(
                     await get_async_engine(CONFIG_JAR_ASYNCPG), user_data_sql_new, tg_list_str) # +
-                # print(f'{data_user}')
+                # Здесь на выходе только кортеж, больше никак.
+                # В идеале было бы выдать словарь и передать напрямую в ОРМ на добавление записей, но увы это проблебно.
+                print(f'Выборка полных данных для записи в  локал бд: {data_user}')
+
 
                 # Наполнение внутренней БД проекта данными пользователей через ОРМ:
+                # Фильтрация:
                 # Предварительно, отсеиваются строки с пустыми значениями в хотя бы 1 колонке и разделяются \
                 # на 2 составляющие (баги и норм данные):
                 bugs = await insert_data(data_user, session_pool)
