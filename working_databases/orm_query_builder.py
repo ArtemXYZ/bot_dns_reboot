@@ -137,7 +137,7 @@ async def null_filter(row_data):
     return row_data, bug_list
 
 
-async def insert_data(data, session_pool: AsyncSession): # todo - не доделано - пересмотреть Все.
+async def insert_data(data, session_pool: AsyncSession):
 
     """ Вставка данных о пользователях в локальную бд.
 
@@ -190,3 +190,21 @@ async def insert_data(data, session_pool: AsyncSession): # todo - не доде�
     #
     return bugs_tuple
 # -------------------------------------------------
+
+async def update_delet_local_db(search_id_tg, session_pool: AsyncSession):
+
+    """
+    На вход 1 строка. Функция для обновления записей в колонке удаленные во внутренней БД.
+    # where_columns_name: str, where_columns_value: any, columns_search: str,
+    """
+
+    # Открываем контекстный менеджер для сохранения данных.
+    async with session_pool() as pool:
+
+        query = update(Users).where(Users.id_tg == search_id_tg).values(is_deleted=True)
+        # В SQLAlchemy условие выборки должно быть записано без использования Python-оператора not.
+
+        await pool.execute(query)
+        # results = result_tmp.scalars()  #  # выдаст либо список либо пусой список. results_list_int
+
+    return print(f'Строка c id_tg: {search_id_tg} - обновлена! озиция значится удаленной.')
