@@ -19,7 +19,7 @@ import asyncio
 from aiogram import types, Router, F
 from aiogram.filters import CommandStart, Command, StateFilter, or_f
 from aiogram.client.default import DefaultBotProperties  # Обработка текста HTML разметкой
-# from aiogram.fsm.state import State, StatesGroup
+from aiogram.fsm.state import State
 from aiogram.fsm.context import FSMContext
 # -------------------------------- Локальные модули
 from handlers.text_message import swearing_list  # Список ругательств:
@@ -45,9 +45,6 @@ general_router.edited_message.filter(ChatTypeFilter(['private']))
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-
-
-
 # Вспомогательная функция проверки регистрации:
 async def check_registration(message: types.Message, state: FSMContext):  # , session_pool: AsyncSession
     """
@@ -74,18 +71,18 @@ async def check_registration(message: types.Message, state: FSMContext):  # , se
     # Если пользователь не удален (в штате), тогда False:
     if bool(check_is_deleted_value_in_jarvis) is False:
 
-        # @general_router.callback_query(StateFilter(None, StartUser.check_repeat), F.data.startswith('go_repeat'))
         # Выводим приветствие в зависимости от типа айдишника
         await message.answer(f'✅ <b>Доступ разрешен!</b>',
                              parse_mode='HTML',
                              reply_markup=get_callback_btns(
                                  btns={'Продолжить': 'go_next'})
-                             )  # прикрутить кнопку поддержки +)
+                             )
 
         # Чистим состояние от предыдущей итеррации:
         await state.clear()
         # Устанавливаем состояние для цикла проверки (Встает в ожидании нажатия кнопки):
         await state.set_state(StartUser.check_next)
+
 
     # Если есть в базе, но удален:
     elif bool(check_is_deleted_value_in_jarvis) is True:
@@ -120,11 +117,18 @@ async def check_registration(message: types.Message, state: FSMContext):  # , se
                 btns={'Оставить заявку': 'support'})
         )
 
+        # Чистим состояние от предыдущей итеррации:
+        await state.clear()
+        # Устанавливаем состояние для цикла проверки (Встает в ожидании нажатия кнопки):
+        await state.set_state(StartUser.support_rror)
+
+# -------------------
 
 # Ожидание следующего сообщения пользователя
 @general_router.callback_query(StateFilter(StartUser.check_repeat), F.data.startswith('go_repeat'))
 async def on_next(call: types.CallbackQuery, session_pool, state: FSMContext):
 
+    # #  todo !!!! Переработать
     #  todo Возможно сюда запихнуть еще раз обращение к базе данных и если зарегался то обновить,
     #  todo прервать цикл
 
@@ -132,6 +136,23 @@ async def on_next(call: types.CallbackQuery, session_pool, state: FSMContext):
     await updating_local_db(session_pool)  ## Возможно пересмотреть логику
     await check_registration(call.message, state)  # Запускаем проверку заново , session_pool
     await call.answer()  # Закрываем кнопку 'next' чтобы предотвратить повторные нажатия
+
+
+# @general_router.callback_query(StateFilter(StartUser.check_repeat), F.data.startswith('support_rror'))
+# async def on_next(call: types.CallbackQuery, session_pool, state: FSMContext):
+#
+#     # #  todo !!!! Переработать
+#     #  todo Возможно сюда запихнуть еще раз обращение к базе данных и если зарегался то обновить,
+#     #  todo прервать цикл
+#
+#     # Обновляем базу данных
+#     await updating_local_db(session_pool)  ## Возможно пересмотреть логику
+#     await check_registration(call.message, state)  # Запускаем проверку заново , session_pool
+#     await call.answer()
+
+
+
+
 
 # ------------------- конец
 
@@ -142,6 +163,10 @@ async def on_start_user(message: types.Message, state: FSMContext):  # , session
     #  todo удалять кнопки и все сообщение раньше, выводить приветствие!
 
     # await message.delete()  # Удаляем сообщение и кнопки?. todo !!!
+
+
+
+
 
 
 # 0. -------------------------- Очистка сообщений от ругательств для всех типов чартов:

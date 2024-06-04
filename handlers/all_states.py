@@ -16,6 +16,7 @@ class StartUser(StatesGroup):
     check_next = State()
     # check_support = State()
     check_repeat = State()
+    support_rror = State()
 
 
 # -------------------------------------------------- retail_router

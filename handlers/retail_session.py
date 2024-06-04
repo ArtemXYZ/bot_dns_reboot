@@ -44,15 +44,20 @@ retail_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilt
 # ----------------------------- 0. Первичное приветствие всех пользователей при старте.
 # После аутентификации нажимает кнопку продолжить...
 # @retail_router.message(StateFilter(StartUser.check_next), F.data.startswith('go_repeat') | F.data.startswith('go_next'))
-@retail_router.message(StateFilter(StartUser.check_next), F.data.startswith('go_next'))
-
+@retail_router.callback_query(StateFilter(StartUser.check_next), F.data.startswith('go_next')) # StartUser.check_next
 # Переделать в заменяемый текст
-async def hello_after_on_next(message: types.Message, state: FSMContext):
-    user = message.from_user.first_name  # Имя пользователя
-    await message.answer((hello_users_retail.format(user)),
-                         parse_mode='HTML')
+async def hello_after_on_next(callback: types.CallbackQuery, state: FSMContext):
 
-    await message.answer(f'Если хочешь, я кратко расскажу, как со мной работать, '
+    await asyncio.sleep(2)
+
+    user = callback.message.from_user.first_name  # Имя пользователя
+    await callback.message.edit_text((hello_users_retail.format(user)), parse_mode='HTML')
+
+    # await message.delete()  # Удаляет введенное сообщение пользователя (для чистоты чата) +
+    await asyncio.sleep(8)
+
+    # .message.edit_text
+    await callback.message.edit_text(f'Если хочешь, я кратко расскажу, как со мной работать, '
                          f'а после уже помогу в решении твоих вопросов, ну или '
                          f'можешь приступать самостоятельно!',
                          parse_mode='HTML',
@@ -365,7 +370,7 @@ async def get_request_message_users(message: types.Message, state: FSMContext, s
     # Очищаем данные, тк, на прямую удалить сообщение выше не получится - выходит ошибка
     # (скорее всего из-за удаления сообщения выше)
 
-    await asyncio.sleep(1)
+    await asyncio.sleep(5)
 
     # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
     # Через 2 секунды возвращаем исходное главное меню.
