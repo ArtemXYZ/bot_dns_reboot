@@ -19,7 +19,8 @@ import asyncio
 from aiogram import types, Router, F
 from aiogram.filters import CommandStart, Command, StateFilter, or_f
 from aiogram.client.default import DefaultBotProperties  # Обработка текста HTML разметкой
-
+# from aiogram.fsm.state import State, StatesGroup
+from aiogram.fsm.context import FSMContext
 # -------------------------------- Локальные модули
 from handlers.text_message import swearing_list  # Список ругательств:
 from filters.chats_filters import *
@@ -34,6 +35,7 @@ from working_databases.orm_query_builder import *
 from working_databases.configs import *
 from start_sleep_bot.def_start_sleep import *
 
+from handlers.all_states import *
 # Назначаем роутер для всех типов чартов:
 general_router = Router()
 
@@ -43,8 +45,11 @@ general_router.edited_message.filter(ChatTypeFilter(['private']))
 
 
 # ----------------------------------------------------------------------------------------------------------------------
+
+
+
 # Вспомогательная функция проверки регистрации:
-async def check_registration(message: types.Message):  # , session_pool: AsyncSession
+async def check_registration(message: types.Message, state: FSMContext):  # , session_pool: AsyncSession
     """
     Алгоритм:
     Каждое сообщение пользователя проходит проверку на доступ по tg_id ссылаясь во внутреннюю базу.
@@ -58,80 +63,85 @@ async def check_registration(message: types.Message):  # , session_pool: AsyncSe
     # Вытаскиваем id пользователя при старте:
     user_tg_id: int = message.from_user.id
 
-    while True:  # Цикличная проверка:
+    # Проверяем tg_id на серваке_DNS (если пользователь регился в авторизационном боте, то tg_id будет в базе.
+    # На выходе будет или булевое занчение или NULL !!!
+    check_is_deleted_value_in_jarvis = await get_data_in_jarvis_scalar(
+        await get_async_engine(CONFIG_JAR_ASYNCPG), is_deleted_value_for_one_id_tg, user_tg_id)
 
-        # Проверяем tg_id на серваке_DNS (если пользователь регился в авторизационном боте, то tg_id будет в базе.
-        # На выходе будет или булевое занчение или NULL !!!
-        check_is_deleted_value_in_jarvis = await get_data_in_jarvis_scalar(
-            await get_async_engine(CONFIG_JAR_ASYNCPG), is_deleted_value_for_one_id_tg, user_tg_id)
+    print(check_is_deleted_value_in_jarvis)
+    # ----------------------- Проверяем tg_id на удаление пользователя:
 
-        print(check_is_deleted_value_in_jarvis)
-        # ----------------------- Проверяем tg_id на удаление пользователя:
+    # Если пользователь не удален (в штате), тогда False:
+    if bool(check_is_deleted_value_in_jarvis) is False:
 
-        # Если пользователь не удален (в штате), тогда False:
-        if bool(check_is_deleted_value_in_jarvis) is False:
+        # @general_router.callback_query(StateFilter(None, StartUser.check_repeat), F.data.startswith('go_repeat'))
+        # Выводим приветствие в зависимости от типа айдишника
+        await message.answer(f'✅ <b>Доступ разрешен!</b>',
+                             parse_mode='HTML',
+                             reply_markup=get_callback_btns(
+                                 btns={'Продолжить': 'go_next'})
+                             )  # прикрутить кнопку поддержки +)
 
-            # Выводим приветствие в зависимости от типа айдишника
-            await message.answer(f'✅ <b>Доступ разрешен!</b>',
-                                 parse_mode='HTML',
-                                 reply_markup=get_callback_btns(
-                                     btns={'Продолжить': 'next'})
-                                 )  # прикрутить кнопку поддержки +)
-            # прикрутить стейты
+        # Чистим состояние от предыдущей итеррации:
+        await state.clear()
+        # Устанавливаем состояние для цикла проверки (Встает в ожидании нажатия кнопки):
+        await state.set_state(StartUser.check_next)
 
-            break
+    # Если есть в базе, но удален:
+    elif bool(check_is_deleted_value_in_jarvis) is True:
 
-        # Если есть в базе, но удален:
-        elif bool(check_is_deleted_value_in_jarvis) is True:
+        await message.answer(f'❌ <b> Доступ запрещен! Пользователь удален из системы!</b>',
+                             parse_mode='HTML')
+        # обратитесь в поддержку, если это ошибочно
 
-            await message.answer(f'❌ <b> Доступ запрещен! Пользователь удален из системы!</b>',
-                                 parse_mode='HTML')
-            # обратитесь в поддержку, если это ошибочно
+        # Чистим состояние от предыдущей итеррации:
+        await state.clear()
 
-            break  # нужен ли?
+    # Если нет в базе, отправляем регаться:
+    elif bool(check_is_deleted_value_in_jarvis) is None:
 
-        # Если нет в базе, отправляем регаться:
-        elif bool(check_is_deleted_value_in_jarvis) is None:
+        await message.answer(
+            # StateFilter(None),
+            f'❌ <b>Доступ закрыт!\n Пройдите аутентификацию в <a>@authorize_sv_bot</a></b>'
+            , parse_mode='HTML',
+            reply_markup=get_callback_btns(
+                btns={'Я прошел аутентификацию, продолжить!': 'go_repeat'}))
 
-            await message.answer(
-                f'❌ <b>Доступ закрыт!\n Пройдите аутентификацию в <a>@authorize_sv_bot</a></b>'
-                , parse_mode='HTML',
-                reply_markup=get_callback_btns(btns={'Я прошел аутентификацию, продолжить!': 'next'}))
+        # Чистим состояние от предыдущей итеррации:
+        await state.clear()
+        # Устанавливаем состояние для цикла проверки (Встает в ожидании нажатия кнопки):
+        await state.set_state(StartUser.check_repeat)
 
-            # Ожидание следующего сообщения пользователя
-            @general_router.callback_query(lambda call: call.data == 'next')
-            async def on_next(call: types.CallbackQuery, session_pool):
+    else:
+        # Отправляем регаться
+        await message.answer(
+            f'❌ <b>Ошибка в данных на сервере, обратитесь в службу поддержку!</b>'
+            , parse_mode='HTML', reply_markup=get_callback_btns(
+                btns={'Оставить заявку': 'support'})
+        )
 
-                # Обновляем базу данных
-                await updating_local_db(session_pool)
 
-                await check_registration(call.message)  # Запускаем проверку заново , session_pool
-                await call.answer()  # Закрываем кнопку 'next' чтобы предотвратить повторные нажатия
+# Ожидание следующего сообщения пользователя
+@general_router.callback_query(StateFilter(StartUser.check_repeat), F.data.startswith('go_repeat'))
+async def on_next(call: types.CallbackQuery, session_pool, state: FSMContext):
 
-            break  # Прерываем цикл, чтобы избежать бесконечного ожидания сообщений
+    #  todo Возможно сюда запихнуть еще раз обращение к базе данных и если зарегался то обновить,
+    #  todo прервать цикл
 
-        else:
-            # Отправляем регаться
-            await message.answer(
-                f'❌ <b>Ошибка в данных на сервере, обратитесь в службу поддержку!</b>'
-                , parse_mode='HTML', reply_markup=get_callback_btns(
-                    btns={'Оставить заявку': 'support'})
-            )  # прикрутить кнопку поддержки +
-
-            break
-
+    # Обновляем базу данных
+    await updating_local_db(session_pool)  ## Возможно пересмотреть логику
+    await check_registration(call.message, state)  # Запускаем проверку заново , session_pool
+    await call.answer()  # Закрываем кнопку 'next' чтобы предотвратить повторные нажатия
 
 # ------------------- конец
 
 
 @general_router.message(CommandStart())
-async def on_start_user(message: types.Message):  # , session_pool: AsyncSession
-    await check_registration(message)  # , session_pool
+async def on_start_user(message: types.Message, state: FSMContext):  # , session_pool: AsyncSession
+    await check_registration(message, state)  # , session_pool
     #  todo удалять кнопки и все сообщение раньше, выводить приветствие!
 
-    await message.delete()  # Удаляем сообщение и кнопки?. todo !!!
-
-    # await message.answer(f'✅ <b>Ошибка подключения к серверу!</b>', parse_mode='HTML')
+    # await message.delete()  # Удаляем сообщение и кнопки?. todo !!!
 
 
 # 0. -------------------------- Очистка сообщений от ругательств для всех типов чартов:
@@ -224,3 +234,107 @@ async def cleaner(message: types.Message):
 # * придумать механизм аутентификации если сотрудник удален.
 
 # Если tg_id - отсутствует - отправляем регаться
+
+# await message.answer(f'✅ <b>Ошибка подключения к серверу!</b>', parse_mode='HTML')
+
+# ----------------------------------------# ----------------------------------------# ----------------------------------
+# async def check_registration(message: types.Message):  # , session_pool: AsyncSession
+#     """
+#     Алгоритм:
+#     Каждое сообщение пользователя проходит проверку на доступ по tg_id ссылаясь во внутреннюю базу.
+#     Если такого tg_id не находится, то запрос осуществляется к удаленному хосту к таблице бота регистрации
+#     + смотрим на удаление сотрудника. Если сотрудник удален - None, True - если есть, и False, если отсутствует.
+#     Далее обновляем локальную базу данных.
+#     Таким образом избавляемся от лишних нагрузок (запрос через ОРМ в Локал БД более шустрый и удобный,
+#     а так же избавляемся от избыточных итераций.
+#     """
+#
+#     # Вытаскиваем id пользователя при старте:
+#     user_tg_id: int = message.from_user.id
+#
+#     while True:  # Цикличная проверка:
+#
+#         # Проверяем tg_id на серваке_DNS (если пользователь регился в авторизационном боте, то tg_id будет в базе.
+#         # На выходе будет или булевое занчение или NULL !!!
+#         check_is_deleted_value_in_jarvis = await get_data_in_jarvis_scalar(
+#             await get_async_engine(CONFIG_JAR_ASYNCPG), is_deleted_value_for_one_id_tg, user_tg_id)
+#
+#         print(check_is_deleted_value_in_jarvis)
+#         # ----------------------- Проверяем tg_id на удаление пользователя:
+#
+#         # Если пользователь не удален (в штате), тогда False:
+#         if bool(check_is_deleted_value_in_jarvis) is False:
+#
+#             # @general_router.callback_query(StateFilter(None, StartUser.check_repeat), F.data.startswith('go_repeat'))
+#             # Выводим приветствие в зависимости от типа айдишника
+#             await message.answer(f'✅ <b>Доступ разрешен!</b>',
+#                                  parse_mode='HTML',
+#                                  reply_markup=get_callback_btns(
+#                                      btns={'Продолжить': 'go_next'})
+#                                  )  # прикрутить кнопку поддержки +)
+#
+#             # Чистим состояние от предыдущей итеррации:
+#             await state.clear()
+#
+#             # Устанавливаем состояние для цикла проверки (Встает в ожидании нажатия кнопки):
+#             await state.set_state(StartUser.check_next)
+#
+#             break
+#
+#         # Если есть в базе, но удален:
+#         elif bool(check_is_deleted_value_in_jarvis) is True:
+#
+#             await message.answer(f'❌ <b> Доступ запрещен! Пользователь удален из системы!</b>',
+#                                  parse_mode='HTML')
+#             # обратитесь в поддержку, если это ошибочно
+#
+#             # Чистим состояние от предыдущей итеррации:
+#             await state.clear()
+#
+#             break  # нужен ли?
+#
+#         # Если нет в базе, отправляем регаться:
+#         elif bool(check_is_deleted_value_in_jarvis) is None:
+#
+#             await message.answer(
+#                 # StateFilter(None),
+#                 f'❌ <b>Доступ закрыт!\n Пройдите аутентификацию в <a>@authorize_sv_bot</a></b>'
+#                 , parse_mode='HTML',
+#                 reply_markup=get_callback_btns(
+#                     btns={'Я прошел аутентификацию, продолжить!': 'go_repeat'}))
+#
+#             # Чистим состояние от предыдущей итеррации:
+#             await state.clear()
+#
+#             # Устанавливаем состояние для цикла проверки (Встает в ожидании нажатия кнопки):
+#             await state.set_state(StartUser.check_repeat)
+#
+#             # Ожидание следующего сообщения пользователя
+#             @general_router.callback_query(
+#                 StateFilter(StartUser.check_repeat), F.data.startswith('go_repeat'))
+#
+#             async def on_next(call: types.CallbackQuery, session_pool):
+#
+#                 #  todo Возможно сюда запихнуть еще раз обращение к базе данных и если зарегался то обновить,
+#                 #  todo прервать цикл
+#
+#                 # Обновляем базу данных
+#                 await updating_local_db(session_pool)  ## Возможно пересмотреть логику
+#
+#                 await check_registration(call.message)  # Запускаем проверку заново , session_pool
+#                 await call.answer()  # Закрываем кнопку 'next' чтобы предотвратить повторные нажатия
+#
+#             break  # Прерываем цикл, чтобы избежать бесконечного ожидания сообщений
+#
+#         else:
+#             # Отправляем регаться
+#             await message.answer(
+#                 f'❌ <b>Ошибка в данных на сервере, обратитесь в службу поддержку!</b>'
+#                 , parse_mode='HTML', reply_markup=get_callback_btns(
+#                     btns={'Оставить заявку': 'support'})
+#             )  # прикрутить кнопку поддержки +
+#
+#             break
+#
+#
+# # ------------------- конец
