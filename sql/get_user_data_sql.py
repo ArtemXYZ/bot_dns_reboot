@@ -75,6 +75,28 @@ WHERE
 and     bot_table.tg is not null		
 """
 
+
+is_deleted_value_for_one_id_tg = """
+SELECT     
+           CASE
+				WHEN (user_data_bot.is_deleted = false or user_data_bot.is_deleted = '0') THEN  False  			
+				WHEN user_data_bot.is_deleted = True THEN  True		
+		       	ELSE NULL
+			END as is_deleted   
+FROM
+            inlet.staff_for_bot as bot_table
+INNER JOIN            
+            inlet.user_data_bot as user_data_bot
+ON
+            bot_table.code = user_data_bot.code 
+WHERE
+			
+		bot_table.tg = '{0}'
+"""
+
+
+
+
 #  ------------------------------------- не используется, архив.
 user_data_sql_text_old = """
 select 

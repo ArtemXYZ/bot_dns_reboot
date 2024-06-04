@@ -26,20 +26,23 @@ async def check_id_tg_in_users(id: int, session: AsyncSession) -> bool:
 
     """
     Проверяем данные о пользователе в локал БД.
-    Сравниваем telegram айдишник из сообщения в локальной базе данных
+    Ищем по telegram айдишнику из сообщения в локальной базе данных пользователя и выводим его статус
     """
 
-    query = select(Users).where(Users.id_tg == id)
+    # Создаем выражение CASE:
+    # (Если есть в базе (тогда удален или не удален) и если нет то None)
+    is_deleted_case  = case(
+        (Users.is_deleted == True, True),
+        (or_(Users.is_deleted == False, Users.is_deleted == 0), False)
+    ).label('is_deleted')
+
+    query = select(is_deleted_case).where(Users.id_tg == id)
     result_tmp = await session.execute(query)
-    result = result_tmp.scalar()
+    result = result_tmp.scalar_one_or_none() # .scalar_one_or_none() .scalar()
+    # print(result)
 
-    # Если во внутренней базе нет данных на нового пользователя:
-    if result is None:
-        result_bool: bool = False
-    else:
-        result_bool: bool  = True
+    return result
 
-    return result_bool
 
 async def get_id_tg_in_users(session_pool: AsyncSession) -> list:
 

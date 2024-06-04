@@ -181,17 +181,11 @@ async def startup_on(session_pool: AsyncSession):
     # 0. Создание Локал БД.
     await create_db()  # +
 
-    # --------------- tests
-
-    await updating_local_db(session_pool)  # todo
-
-    # --------------- tests
+    await updating_local_db(session_pool)  # todo работает, но функция обновления удаленных не тестилась. # +
 
     # включить проверку (при включении и периодически) если база есть
     # то проверить отличия,
     # если нет то ничего
-
-    # ------------------
 
     print('Бот запущен, все норм!')
 

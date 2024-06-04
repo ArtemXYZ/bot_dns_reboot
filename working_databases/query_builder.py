@@ -121,7 +121,44 @@ async def get_data_in_jarvis(engine_obj:AsyncEngine, sql: str, *args_format: tup
         # Ошибка извлечения данных.
 
 
+async def get_data_in_jarvis_scalar(engine_obj:AsyncEngine, sql: str, *args_format: tuple[int, str, float]):
 
+    """ Возвращает все данные с удаленного сервера о пользователе с учетом регистрации и значении об удалении.
+    НА выходе:  1 значение
+    """
+    try:
+        if args_format is None:
+            args_format = None
+        else:
+            args_format
+
+            if args_format:  # is not None
+                # Форматируем SQL запрос, если есть аргументы для форматирования
+                formatted_query = sql.format(*args_format)
+                # user_data_sql_text_old, user_data_sql_text
+            else:
+                formatted_query = sql
+
+            # Забираем данные:
+            async with engine_obj.connect() as conn:
+                # Извлекаем данные:
+                select_data = await conn.execute(text(formatted_query))
+
+                # Извлечение одного значения:
+                data = select_data.scalar()
+
+            await engine_obj.dispose()  # Закрытие соединения вручную. Важно! Если не закрыть соединение, будут ошибки!
+
+        return data
+
+    #  Если наступит ошибка в значениях:
+    except (ValueError, TypeError):
+        print(f'Не удалось выполнить sql запрос. Проверьте входные данные для: {args_format}')
+
+    #  Другие любые ошибки (скорее всего будут относиться к синтаксису):
+    except Exception as error:
+        print(f'Ошибка: {type(error).__name__}, сообщение: {str(error)}!')
+        # Ошибка извлечения данных.
 
 
 
