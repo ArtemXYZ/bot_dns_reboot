@@ -334,7 +334,7 @@ async def get_request_message_users(message: types.Message, state: FSMContext, s
     chat_id = data['chat_id']
     message_id = data['message_id']
 
-    # Удаляем конкретное сообщение. +- (может быть ошибка, если до этого ботт был выключен и история не очищена \
+    # Удаляем конкретное сообщение. +- (может быть ошибка, если до этого бот был выключен и история не очищена \
     # (протестить еще раз))
     await bot.delete_message(chat_id=chat_id, message_id=message_id)
 
@@ -347,6 +347,7 @@ async def get_request_message_users(message: types.Message, state: FSMContext, s
     new_data = await state.get_data()
     # print(f' До удаления:  {new_data}')
 
+
     # Удаляем ключи и их значения из словаря (они больше не нужны):
     del new_data['chat_id']  # temp_data  +
     del new_data['message_id'] # temp_data  +
@@ -355,6 +356,10 @@ async def get_request_message_users(message: types.Message, state: FSMContext, s
 
     # Запрос в БД на добавление обращения:
     await add_request_message(session, new_data)
+
+    # Рассылка задач на исполнителей:
+    # chat_id # Переменная будет содержать данные о чате
+
 
     # Очистка состояния пользователя:
     await state.clear()

@@ -103,11 +103,11 @@ dp.message.outer_middleware(TypeSessionMiddleware(session_pool=session_pool_LOCA
 # dp.include_router(admin_router)
 
 dp.include_router(retail_router)
-# dp.include_router(general_router)
+dp.include_router(general_router)
+dp.include_router(oait_router)
 
 
 
-# dp.include_router(oait_router)
 # dp.include_router(oait_manager_router)
 
 # -------------------------------------------------- Тело бота:
@@ -128,6 +128,7 @@ async def run_bot():
         await startup_on(session_pool=session_pool_LOCAL_DB)
 
     async def on_shutdown(bot):
+        # await dp.stop_polling()
         await shutdown_on()
 
     # ---------------------
@@ -146,11 +147,13 @@ async def run_bot():
     # BotCommandScopeAllPrivateChats - для приват чартов  # todo здесь переделать разобраться!
     # BotCommandScopeDefault - для всех чартов
 
-    await dp.start_polling(bot, skip_updates=True,
-                           allowed_updates=['message', 'edited_message', 'callback_query'])  # , interval=1
-    # todo allowed_updates=ALLOWED_UPDATES, - передаем туда список разрешенных
+    await dp.start_polling(bot, skip_updates=True, polling_timeout = 1, close_bot_session = True,
+                           allowed_updates=['message', 'edited_message', 'callback_query'])
+    # , interval=1, polling_timeout = 10 - Задержка в получении обновлений:
+    #  allowed_updates=ALLOWED_UPDATES, - передаем туда список разрешенных
     #  событий для бота с сервера
     # , interval=2 интервал запросов на обновление.
+
 
 
 # Запуск асинхронной функции run_bot:
