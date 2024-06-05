@@ -35,7 +35,11 @@ from working_databases.orm_query_builder import *
 from working_databases.configs import *
 from start_sleep_bot.def_start_sleep import *
 
+# from working_databases.async_engine import * # todo  возможен циклический импорт с orm_query_builder
+
+
 from handlers.all_states import *
+
 # Назначаем роутер для всех типов чартов:
 general_router = Router()
 
@@ -46,7 +50,8 @@ general_router.edited_message.filter(ChatTypeFilter(['private']))
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Вспомогательная функция проверки регистрации:
-async def check_registration(message: types.Message, state: FSMContext):  # , session_pool: AsyncSession
+async def check_registration(message: types.Message, state: FSMContext,
+                             session_pool: AsyncSession):  # , session_pool: AsyncSession
     """
     Алгоритм:
     Каждое сообщение пользователя проходит проверку на доступ по tg_id ссылаясь во внутреннюю базу.
@@ -57,8 +62,9 @@ async def check_registration(message: types.Message, state: FSMContext):  # , se
     а так же избавляемся от избыточных итераций.
     """
 
-    # Вытаскиваем id пользователя при старте:
+    # Вытаскиваем id и chat_id  пользователя при старте:
     user_tg_id: int = message.from_user.id
+    chat_id: int = message.chat.id  # Диалоговое окно куда в последующем будем рассылать обращения. Без него - никак
 
     # Проверяем tg_id на серваке_DNS (если пользователь регился в авторизационном боте, то tg_id будет в базе.
     # На выходе будет или булевое занчение или NULL !!!
@@ -70,6 +76,30 @@ async def check_registration(message: types.Message, state: FSMContext):  # , se
 
     # Если пользователь не удален (в штате), тогда False:
     if bool(check_is_deleted_value_in_jarvis) is False:
+
+# -------------- разработка
+        # Тогда делаем обновление базы данных
+        await updating_local_db(session_pool)  # todo  - сделать все таки по времени на 23.00 отдельный модуль
+
+        # Далее, при любом раскладе если прошла верхняя проверка и обновление локальной базы, то \
+        # данные о пользователе уже имеются гарантироанно (за исключением косячниых данных с пустотами !!!)
+
+        # По этому, сначала проверяем наличие пользователя в БД (делаем запрос по user_tg_id во внутреннюю базу):
+        # Здесь можно не делать проверку на статус удаленного, тк. это делается на уровне выше в условии ветвления.
+        result = get_id_tg_in_users(user_tg_id)
+
+        if result is None:
+            # Обработка косячниых данных с пустотами или вывод сообщения.
+            print(f'Данные о пользователе имеют пропуски значений в базе данных, их обработка не возможна. '
+                  f'Обратитесь к администратору.')
+            ...
+        else:
+            # если есть, то апдейт:
+            update_chat_id_local_db(search_id_tg=user_tg_id, update_chat_id=chat_id, session_pool=session_pool)
+
+
+
+        # -------------- разработка
 
         # Выводим приветствие в зависимости от типа айдишника
         await message.answer(f'✅ <b>Доступ разрешен!</b>',
@@ -89,7 +119,7 @@ async def check_registration(message: types.Message, state: FSMContext):  # , se
 
         await message.answer(f'❌ <b> Доступ запрещен! Пользователь удален из системы!</b>',
                              parse_mode='HTML')
-        # обратитесь в поддержку, если это ошибочно
+        # todo обратитесь в поддержку, если это ошибочно ?
 
         # Чистим состояние от предыдущей итеррации:
         await state.clear()
@@ -122,51 +152,28 @@ async def check_registration(message: types.Message, state: FSMContext):  # , se
         # Устанавливаем состояние для цикла проверки (Встает в ожидании нажатия кнопки):
         await state.set_state(StartUser.support_rror)
 
+
 # -------------------
 
 # Ожидание следующего сообщения пользователя
 @general_router.callback_query(StateFilter(StartUser.check_repeat), F.data.startswith('go_repeat'))
 async def on_next(call: types.CallbackQuery, session_pool, state: FSMContext):
-
-    # #  todo !!!! Переработать
-    #  todo Возможно сюда запихнуть еще раз обращение к базе данных и если зарегался то обновить,
-    #  todo прервать цикл
-
     # Обновляем базу данных
-    await updating_local_db(session_pool)  ## Возможно пересмотреть логику
-    await check_registration(call.message, state)  # Запускаем проверку заново , session_pool
+    # await updating_local_db(session_pool)
+    await check_registration(call.message, state, session_pool)  # Запускаем проверку заново , session_pool
     await call.answer()  # Закрываем кнопку 'next' чтобы предотвратить повторные нажатия
-
-
-# @general_router.callback_query(StateFilter(StartUser.check_repeat), F.data.startswith('support_rror'))
-# async def on_next(call: types.CallbackQuery, session_pool, state: FSMContext):
-#
-#     # #  todo !!!! Переработать
-#     #  todo Возможно сюда запихнуть еще раз обращение к базе данных и если зарегался то обновить,
-#     #  todo прервать цикл
-#
-#     # Обновляем базу данных
-#     await updating_local_db(session_pool)  ## Возможно пересмотреть логику
-#     await check_registration(call.message, state)  # Запускаем проверку заново , session_pool
-#     await call.answer()
-
-
-
 
 
 # ------------------- конец
 
 
 @general_router.message(CommandStart())
-async def on_start_user(message: types.Message, state: FSMContext):  # , session_pool: AsyncSession
-    await check_registration(message, state)  # , session_pool
+async def on_start_user(message: types.Message, state: FSMContext,
+                        session_pool: AsyncSession):  # , session_pool: AsyncSession
+    await check_registration(message, state, session_pool)  # , session_pool
     #  todo удалять кнопки и все сообщение раньше, выводить приветствие!
 
     # await message.delete()  # Удаляем сообщение и кнопки?. todo !!!
-
-
-
-
 
 
 # 0. -------------------------- Очистка сообщений от ругательств для всех типов чартов:
@@ -225,7 +232,7 @@ async def cleaner(message: types.Message):
 #
 #
 #
-#              #todo !!! проверка в косячных (создать отдельную таблицу?)
+#              # !!! проверка в косячных (создать отдельную таблицу?)
 #
 #         else:
 # Запрос на сравнение во внутреннюю базу (bool):
@@ -340,8 +347,8 @@ async def cleaner(message: types.Message):
 #
 #             async def on_next(call: types.CallbackQuery, session_pool):
 #
-#                 #  todo Возможно сюда запихнуть еще раз обращение к базе данных и если зарегался то обновить,
-#                 #  todo прервать цикл
+#                 #   Возможно сюда запихнуть еще раз обращение к базе данных и если зарегался то обновить,
+#                 #   прервать цикл
 #
 #                 # Обновляем базу данных
 #                 await updating_local_db(session_pool)  ## Возможно пересмотреть логику
@@ -363,3 +370,16 @@ async def cleaner(message: types.Message):
 #
 #
 # # ------------------- конец
+
+
+# @general_router.callback_query(StateFilter(StartUser.check_repeat), F.data.startswith('support_rror'))
+# async def on_next(call: types.CallbackQuery, session_pool, state: FSMContext):
+#
+#     # #  !!!! Переработать
+#     #   Возможно сюда запихнуть еще раз обращение к базе данных и если зарегался то обновить,
+#     #   прервать цикл
+#
+#     # Обновляем базу данных
+#     await updating_local_db(session_pool)  ## Возможно пересмотреть логику
+#     await check_registration(call.message, state)  # Запускаем проверку заново , session_pool
+#     await call.answer()

@@ -21,6 +21,40 @@ from sql.get_user_data_sql import *
 
 
 # ----------------------------------------------------------------------------------------------------------------------
+async def update_chat_id_local_db(search_id_tg: int, update_chat_id: int, session_pool: AsyncSession):
+
+    """
+    На вход 1 строка. Функция для обновления записей в колонке chat_id во внутренней БД.
+
+    """
+
+    # Открываем контекстный менеджер для сохранения данных.
+    async with session_pool() as pool:
+
+        query = update(Users).where(Users.id_tg == search_id_tg).values(chat_id=update_chat_id)
+        # В SQLAlchemy условие выборки должно быть записано без использования Python-оператора not.
+
+        await pool.execute(query)
+        # results = result_tmp.scalars()  #  # выдаст либо список либо пусой список. results_list_int
+
+    return print(f'Данные пользователя: id_tg: {search_id_tg}, chat_id  {update_chat_id} - обновлены!')
+
+
+
+async def get_id_tg_in_users(id: int, session: AsyncSession) -> bool:
+
+    """
+    Проверяем данные о пользователе в локал БД.
+    Ищем по telegram айдишнику из сообщения в локальной базе данных пользователя и сравниваем
+    Если есть то на выход айди, нет то None
+    """
+
+    query = select(Users.id_tg).where(Users.id_tg == id)
+    result_tmp = await session.execute(query)
+    result = result_tmp.scalar_one_or_none() # получение одного результата или None
+
+    return result
+
 
 async def check_id_tg_in_users(id: int, session: AsyncSession) -> bool:
 
