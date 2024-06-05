@@ -30,19 +30,30 @@ from working_databases.events import *
 oait_router = Router()
 
 # фильтрует (пропускает) только личные сообщения и только определенных пользователей:
-oait_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['retail']))
-# oait_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
+oait_router.message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
+oait_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Приветствие для ОАИТ
-@oait_router.message(StateFilter(None), F.text == 'next')
-async def hello_after_on_next(message: types.Message):
-    user = message.from_user.first_name  # Имя пользователя
-    await message.answer((hello_users_oait.format(user)),
-                         parse_mode='HTML')
+# @oait_router.message(StateFilter(None), F.text == 'next')
+# async def hello_after_on_next(message: types.Message):
+#     user = message.from_user.first_name  # Имя пользователя
+#     await message.answer((hello_users_oait.format(user)),
+#                          parse_mode='HTML')
+
+
+
+async def send_request_text_for_users(bot: Bot):
+    await bot.send_message(chat_id=CHAT_ID, text=MESSAGE_TEXT)
 
 
 @oait_router.message(StateFilter(None))
-async def send_message(record):
-    message_text = f'Новая запись в Requests: {record.name}'
+
+#
+# async def get_event():
+#
+#     event = await after_insert_requests()
+#     message_text = f'Новая запись в Requests: {event}'
+#
+#     await message.answer(message_text)

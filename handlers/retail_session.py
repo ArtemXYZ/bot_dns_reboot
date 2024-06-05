@@ -12,8 +12,8 @@ from aiogram import types, Router, F
 from aiogram.filters import CommandStart, Command, StateFilter, or_f
 from aiogram.client.default import DefaultBotProperties  # Обработка текста HTML разметкой
 
-from aiogram.fsm.state import State, StatesGroup
-from aiogram.fsm.context import FSMContext
+# from aiogram.fsm.state import State, StatesGroup
+# from aiogram.fsm.context import FSMContext
 # -------------------------------- Локальные модули
 from handlers.text_message import *  # Список ругательств:
 from filters.chats_filters import *
@@ -28,7 +28,7 @@ from menu.button_generator import get_keyboard
 from working_databases.orm_query_builder import *
 from handlers.data_preparation import *
 
-
+from handlers.all_states import *
 # ----------------------------------------------------------------------------------------------------------------------
 # Назначаем роутер для чата под розницу:
 retail_router = Router()
@@ -40,57 +40,24 @@ retail_router = Router()
 
 retail_router.message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait', 'boss']))  # retail oait
 retail_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait', 'boss']))
-
-
-# ----------------------------------------------------------------------------------------------------------------------
-# ---------------------------------- Код ниже для машины состояний (FSM)
-class AddRequests(StatesGroup):
-    """Шаги состояний для обращений"""
-    request_message = State()
-    # documents = State()
-
-
-#
-# texts = {
-#     'AddRequests:request_message': 'Введите текст обращения заново:'
-#     # + ЕЩЕ
-# }
-
-class Instructor(StatesGroup):
-    """Шаги состояний для кнопок инструктаж и приступить к работе:"""
-    # Шаги состояний:
-    instruct_or_gowork = State()
-
-
-class SetCategory(StatesGroup):
-    """
-    Шаги выбора категории.
-    Выбираем сначала родительскую категорию - содержит в себе подкатегории, после подкатегорию.
-    """
-
-    main_category = State()
-    sab_category = State()
-    # SetCategory.main_category  SetCategory.sab_category
-
-    # sab_category_problem_analytics = State()
-    # main_category_problem_formats = State()
-    # main_category_problem_trade_turnover = State()
-
-
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------- 0. Первичное приветствие всех пользователей при старте.
-# @retail_router.callback_query(callback.data == 'next')   # После аутентификации нажимает кнопку продолжить...
-# async def hello_after_on_next(callback: types.CallbackQuery): # todo потом переделать на келбек квери
-@retail_router.message(StateFilter(None), F.text == 'next')  # todo потом переделать на келбек квери
-async def hello_after_on_next(message: types.Message, state: FSMContext):
-    user = message.from_user.first_name  # Имя пользователя
-    await message.answer((hello_users_retail.format(user)),
-                         parse_mode='HTML')
+# После аутентификации нажимает кнопку продолжить...
+# @retail_router.message(StateFilter(StartUser.check_next), F.data.startswith('go_repeat') | F.data.startswith('go_next'))
+@retail_router.callback_query(StateFilter(StartUser.check_next), F.data.startswith('go_next')) # StartUser.check_next
+# Переделать в заменяемый текст
+async def hello_after_on_next(callback: types.CallbackQuery, state: FSMContext):
 
-    # await asyncio.sleep(5) !!! тут не верно отрабатывает
-    # await message.delete()
+    await asyncio.sleep(2)
 
-    await message.answer(f'Если хочешь, я кратко расскажу, как со мной работать, '
+    user = callback.message.from_user.first_name  # Имя пользователя
+    await callback.message.edit_text((hello_users_retail.format(user)), parse_mode='HTML')
+
+    # await message.delete()  # Удаляет введенное сообщение пользователя (для чистоты чата) +
+    await asyncio.sleep(8)
+
+    # .message.edit_text
+    await callback.message.edit_text(f'Если хочешь, я кратко расскажу, как со мной работать, '
                          f'а после уже помогу в решении твоих вопросов, ну или '
                          f'можешь приступать самостоятельно!',
                          parse_mode='HTML',
@@ -100,6 +67,9 @@ async def hello_after_on_next(message: types.Message, state: FSMContext):
                                    },
                              sizes=(1, 1)
                          ))
+    # Чистим состояние:
+    await state.clear()
+
     # Встает в ожидании нажатия кнопки
     await state.set_state(Instructor.instruct_or_gowork)
 
@@ -364,7 +334,7 @@ async def get_request_message_users(message: types.Message, state: FSMContext, s
     chat_id = data['chat_id']
     message_id = data['message_id']
 
-    # Удаляем конкретное сообщение. +- (может быть ошибка, если до этого ботт был выключен и история не очищена \
+    # Удаляем конкретное сообщение. +- (может быть ошибка, если до этого бот был выключен и история не очищена \
     # (протестить еще раз))
     await bot.delete_message(chat_id=chat_id, message_id=message_id)
 
@@ -377,6 +347,7 @@ async def get_request_message_users(message: types.Message, state: FSMContext, s
     new_data = await state.get_data()
     # print(f' До удаления:  {new_data}')
 
+
     # Удаляем ключи и их значения из словаря (они больше не нужны):
     del new_data['chat_id']  # temp_data  +
     del new_data['message_id'] # temp_data  +
@@ -385,6 +356,10 @@ async def get_request_message_users(message: types.Message, state: FSMContext, s
 
     # Запрос в БД на добавление обращения:
     await add_request_message(session, new_data)
+
+    # Рассылка задач на исполнителей:
+    # chat_id # Переменная будет содержать данные о чате
+
 
     # Очистка состояния пользователя:
     await state.clear()
@@ -400,7 +375,7 @@ async def get_request_message_users(message: types.Message, state: FSMContext, s
     # Очищаем данные, тк, на прямую удалить сообщение выше не получится - выходит ошибка
     # (скорее всего из-за удаления сообщения выше)
 
-    await asyncio.sleep(1)
+    await asyncio.sleep(5)
 
     # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
     # Через 2 секунды возвращаем исходное главное меню.
@@ -414,11 +389,6 @@ async def get_request_message_users(message: types.Message, state: FSMContext, s
                                                'ЗАПРОСИТЬ СТАТУС ЗАЯВКИ': 'go_status_request'
                                                },
                                          sizes=(2, 2, 1)))
-
-
-
-
-
 
 
     # await message.edit_text(f'Терминал:',

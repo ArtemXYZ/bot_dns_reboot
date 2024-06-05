@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from aiogram import types
 
 # -------------------------------- Локальные модули
-from sql.get_user_data_sql import *
+# from sql.get_user_data_sql import *
 from working_databases.configs import *
 # from working_databases.async_engine import *
 # from working_databases.local_db_mockup import *
@@ -59,7 +59,15 @@ async def async_select(tb_name: str, columns_search: str,
 
     return fin
 # ---------------------------------------
-async def get_user_data(engine_obj:AsyncEngine, *args_format: tuple[int, str, float]):
+
+
+
+
+
+
+
+
+async def get_data_in_jarvis(engine_obj:AsyncEngine, sql: str, *args_format: tuple[int, str, float]):
 
     """ Возвращает все данные с удаленного сервера о пользователях через сырой запрос
     НА выходе:  # Список всех данных:
@@ -76,10 +84,10 @@ async def get_user_data(engine_obj:AsyncEngine, *args_format: tuple[int, str, fl
 
             if args_format:  # is not None
                 # Форматируем SQL запрос, если есть аргументы для форматирования
-                formatted_query = user_data_sql_text.format(*args_format) # todo sql - заменить после дагов!!!
+                formatted_query = sql.format(*args_format)
                 # user_data_sql_text_old, user_data_sql_text
             else:
-                formatted_query = user_data_sql_text # todo sql
+                formatted_query = sql
 
             # Забираем данные:
             async with engine_obj.connect() as conn:
@@ -87,7 +95,9 @@ async def get_user_data(engine_obj:AsyncEngine, *args_format: tuple[int, str, fl
                 select_data = await conn.execute(text(formatted_query))
 
                 # Список всех данных:
-                data = select_data.fetchall()
+                data = select_data.fetchall() # todo выдает конченый формат с которым много мароки, \
+                # todo но других вариантов нет - это единственный метод.
+
                 # Имена колонок:
                 # columns = select_data.keys() - не нукжны!
 
@@ -95,6 +105,9 @@ async def get_user_data(engine_obj:AsyncEngine, *args_format: tuple[int, str, fl
 
         # for r in data:
         #     print(f'{r}')
+
+        # Преобразование данных в список значений
+        # return [row[0] for row in data]  - пока не переделываю, тк уже выстроена логики обработки в связанных функциях
 
         return data  #, columns tuple(
 
@@ -106,6 +119,47 @@ async def get_user_data(engine_obj:AsyncEngine, *args_format: tuple[int, str, fl
     except Exception as error:
         print(f'Ошибка: {type(error).__name__}, сообщение: {str(error)}!')
         # Ошибка извлечения данных.
+
+
+async def get_data_in_jarvis_scalar(engine_obj:AsyncEngine, sql: str, *args_format: tuple[int, str, float]):
+
+    """ Возвращает все данные с удаленного сервера о пользователе с учетом регистрации и значении об удалении.
+    НА выходе:  1 значение
+    """
+    try:
+        if args_format is None:
+            args_format = None
+        else:
+            args_format
+
+            if args_format:  # is not None
+                # Форматируем SQL запрос, если есть аргументы для форматирования
+                formatted_query = sql.format(*args_format)
+                # user_data_sql_text_old, user_data_sql_text
+            else:
+                formatted_query = sql
+
+            # Забираем данные:
+            async with engine_obj.connect() as conn:
+                # Извлекаем данные:
+                select_data = await conn.execute(text(formatted_query))
+
+                # Извлечение одного значения:
+                data = select_data.scalar()
+
+            await engine_obj.dispose()  # Закрытие соединения вручную. Важно! Если не закрыть соединение, будут ошибки!
+
+        return data
+
+    #  Если наступит ошибка в значениях:
+    except (ValueError, TypeError):
+        print(f'Не удалось выполнить sql запрос. Проверьте входные данные для: {args_format}')
+
+    #  Другие любые ошибки (скорее всего будут относиться к синтаксису):
+    except Exception as error:
+        print(f'Ошибка: {type(error).__name__}, сообщение: {str(error)}!')
+        # Ошибка извлечения данных.
+
 
 
 

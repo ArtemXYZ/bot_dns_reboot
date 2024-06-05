@@ -6,7 +6,8 @@
 # ---------------------------------- Импорт стандартных библиотек Пайтона
 # ---------------------------------- Импорт сторонних библиотек
 import asyncio
-from sqlalchemy import select, String, Table, update, delete, text
+from sqlalchemy import select, String, Table, update, delete, text, or_
+
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from sqlalchemy.ext.asyncio import AsyncSession
 from aiogram import types
@@ -21,12 +22,58 @@ from sql.get_user_data_sql import *
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-async def check_id_tg_in_users(session: AsyncSession, id: int):
-    # + добавить логику (обработчик ошибок), если такого нет в базе
-    """Сравниваем айдишник из сообщения в локальной базе данных"""
-    query = select(Users).where(Users.id_tg == id)
-    result = await session.execute(query)
-    return result.scalar()
+async def check_id_tg_in_users(id: int, session: AsyncSession) -> bool:
+
+    """
+    Проверяем данные о пользователе в локал БД.
+    Ищем по telegram айдишнику из сообщения в локальной базе данных пользователя и выводим его статус
+    """
+
+    # Создаем выражение CASE:
+    # (Если есть в базе (тогда удален или не удален) и если нет то None)
+    is_deleted_case  = case(
+        (Users.is_deleted == True, True),
+        (or_(Users.is_deleted == False, Users.is_deleted == 0), False)
+    ).label('is_deleted')
+
+    query = select(is_deleted_case).where(Users.id_tg == id)
+    result_tmp = await session.execute(query)
+    result = result_tmp.scalar_one_or_none() # .scalar_one_or_none() .scalar()
+    # print(result)
+
+    return result
+
+
+async def get_id_tg_in_users(session_pool: AsyncSession) -> list:
+
+    """
+    Забираем выборку id_tg из локал БД. Только действующие сотрудники.
+    Далее сравниваем с id_tg с выборкой из внешней базы данных.
+    """
+
+    # Открываем контекстный менеджер для сохранения данных.
+    async with session_pool() as pool:
+
+        # Только действующие сотрудники:
+        # Либо ноль либо фелсе:
+        query = select(Users.id_tg).where(or_(Users.is_deleted == False, Users.is_deleted == 0))
+        # В SQLAlchemy условие выборки должно быть записано без использования Python-оператора not.
+
+        result_tmp = await pool.execute(query)
+        results = result_tmp.scalars().all()  #
+
+    # Преобразование всех значений в целые числа:
+    results_list_int = [int(result) for result in results]
+
+    # выдаст либо список либо пусой список.
+    return results_list_int
+
+
+
+
+
+
+
 
 
 async def add_request_message(session: AsyncSession, data: dict):  # , get_tg_id: int , message: types.Message, - упразднено.
@@ -76,24 +123,24 @@ async def null_filter(row_data):
     """
 
     # insert_row_tuple = []
-    bug_tuple = []
+    bug_list = []
 
     # Перебираем строки данных по элементам кортежа:
     for next_column_row in row_data:
-        # Перебираем строку по элементам:
+        # Перебираем строку по элементам (Если значение в колонке для строки равно None):
         if next_column_row is None:
             # print(f'Эта строка с косяком: {row_data}')
-            bug_tuple.append(row_data)
-            row_data = None
+            bug_list.append(row_data) # Сохраняем строкис косяками в отдельный список.
+            row_data = None  # Устанавливаем для строки значение None (далее для фильтрации)
             break  # завершение цикла, переход к следующему.
 
-        # insert_row_tuple.append(row_data)
-    print(f'Здесь только чистые строки: {row_data}')
-    # print(bug_tuple)
-    return row_data, bug_tuple
+        # insert_row_tuple.append(row_data)  # Сохраняем строки без пропусков в отдельный список. не надо (для 1 строки)
+        # print(f'Только строки без пропусков: {row_data}')
+    # print(f'Результат работы фильтра значений для строки: {row_data}') # перенос на уровень выше для правильной работы
+    return row_data, bug_list
 
 
-async def insert_data(data, session_pool: AsyncSession): # todo - не доделано - пересмотреть Все.
+async def insert_data(data, session_pool: AsyncSession):
 
     """ Вставка данных о пользователях в локальную бд.
 
@@ -113,13 +160,12 @@ async def insert_data(data, session_pool: AsyncSession): # todo - не доде�
 
         # Перебираем данные по строчно:
         for row_data in data:
-
-            # на выходе 2 картежа с багами и отфильтрованный от NULL
-            # todo  bug_row - что с ними ? - делать продумать позже
+            # на вход строка, на выходе 2 картежа с багами и отфильтрованный (NULL - для багов, и нормальное)
             insert_row_tuple, bug_row = await null_filter(row_data)
+            print(f'Результат работы фильтра значений для строки: {insert_row_tuple}')
 
             if insert_row_tuple is None:
-                bugs_tuple.append(bug_row) # Копим косяки в кортеж.!!
+                bugs_tuple.append(bug_row) # Копим косяки в кортеж.!! # todo  bug_row - что с ними ? - делать продумать позже
             else:
                 # Жесткая типизация данных:
                 insert_obj = Users(
@@ -140,10 +186,28 @@ async def insert_data(data, session_pool: AsyncSession): # todo - не доде�
                         admin_status =bool(insert_row_tuple[14])
                     )
                 pool.add(insert_obj)
-
+    #
         await pool.commit()
     print('Данные удачно мигрировали в локальную базу данных!')
-    print(f'Косяки в данных для этих строк: {bugs_tuple}')
-
+    print(f'Эти строки содержат пропуски и по этому не были допущены к записи в базу данных: {bugs_tuple}')
+    #
     return bugs_tuple
 # -------------------------------------------------
+
+async def update_delet_local_db(search_id_tg, session_pool: AsyncSession):
+
+    """
+    На вход 1 строка. Функция для обновления записей в колонке удаленные во внутренней БД.
+    # where_columns_name: str, where_columns_value: any, columns_search: str,
+    """
+
+    # Открываем контекстный менеджер для сохранения данных.
+    async with session_pool() as pool:
+
+        query = update(Users).where(Users.id_tg == search_id_tg).values(is_deleted=True)
+        # В SQLAlchemy условие выборки должно быть записано без использования Python-оператора not.
+
+        await pool.execute(query)
+        # results = result_tmp.scalars()  #  # выдаст либо список либо пусой список. results_list_int
+
+    return print(f'Строка c id_tg: {search_id_tg} - обновлена! озиция значится удаленной.')
