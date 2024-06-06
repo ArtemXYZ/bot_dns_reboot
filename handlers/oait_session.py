@@ -23,7 +23,7 @@ from menu.button_generator import get_keyboard
 
 from working_databases.query_builder import *
 from working_databases.events import *
-
+from handlers.all_states import *
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Назначаем роутер для всех типов чартов:
@@ -42,13 +42,12 @@ oait_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter
 #     await message.answer((hello_users_oait.format(user)),
 #                          parse_mode='HTML')
 
-
-
+@oait_router.message(StateFilter(StartUser.check_next), F.data.startswith('go_next'))
 async def send_request_text_for_users(bot: Bot):
-    await bot.send_message(chat_id=CHAT_ID, text=MESSAGE_TEXT)
+    await bot.send_message(chat_id=, text='Новая запись в Requests:')
 
 
-@oait_router.message(StateFilter(None))
+
 
 #
 # async def get_event():

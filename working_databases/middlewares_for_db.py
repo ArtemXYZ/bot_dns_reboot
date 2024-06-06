@@ -14,6 +14,7 @@ from aiogram.types import Message, TelegramObject
 
 from aiogram import types, Bot
 
+# from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from working_databases.local_db_mockup import *
@@ -24,7 +25,7 @@ from aiogram.filters import Filter
 
 # ----------------------------------------------------------------------------------------------------------------------
 class DataBaseSession(BaseMiddleware):
-    def __init__(self, session_pool: async_sessionmaker):
+    def __init__(self, session_pool: async_sessionmaker):  #
         self.session_pool = session_pool
 
     async def __call__(
