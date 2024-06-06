@@ -114,7 +114,7 @@ class DatabaseTriggerMiddleware(BaseMiddleware):
         target_requests = self.target_requests
         data['target_requests'] = target_requests
         return await handler(event, data)
-
+        # аа
         # async def get_target_requests():
         #     target_requests = await after_insert_requests()
         #     data['target_requests'] = target_requests
