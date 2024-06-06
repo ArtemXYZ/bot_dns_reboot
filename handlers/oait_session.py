@@ -30,8 +30,8 @@ from handlers.all_states import *
 oait_router = Router()
 
 # фильтрует (пропускает) только личные сообщения и только определенных пользователей:
-oait_router.message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
-oait_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
+# oait_router.message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
+# oait_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
 
 
 # ----------------------------------------------------------------------------------------------------------------------

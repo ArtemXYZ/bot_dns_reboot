@@ -158,6 +158,7 @@ async def check_registration(message: types.Message, state: FSMContext,
 # Ожидание следующего сообщения пользователя
 @general_router.callback_query(StateFilter(StartUser.check_repeat), F.data.startswith('go_repeat'))
 async def on_next(call: types.CallbackQuery, state: FSMContext):
+    await call.answer()  # Закрываем кнопку 'next' чтобы предотвратить повторные нажатия
 
     # Обновляем базу данных
     # await updating_local_db(session_pool)
@@ -165,13 +166,13 @@ async def on_next(call: types.CallbackQuery, state: FSMContext):
     # todo !!! - не получается передать параметр , session_pool - ошибка.
     # todo !!! call.message - будет ошибка скорее всего, тк ожидается message
 
-    await call.answer()  # Закрываем кнопку 'next' чтобы предотвратить повторные нажатия
+
 
 
 # ------------------- конец
 
 
-@general_router.message(CommandStart())
+@general_router.message(StateFilter(None), CommandStart())
 async def on_start_user(message: types.Message, state: FSMContext):  # , session_pool: AsyncSession
 
     await check_registration(message, state, session_pool=session_pool_LOCAL_DB)  # , session_pool
