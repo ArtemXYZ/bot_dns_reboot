@@ -37,7 +37,7 @@ class Users(Base):
     # index_add: Mapped[int] = mapped_column(autoincrement=True) # порядковый номер добавления обратившегося сотрудника.
     # телеграмм id
     id_tg: Mapped[int] = mapped_column(primary_key=True, autoincrement=False, nullable=False, unique=True)  # Pk  index=True,
-    chat_id: Mapped[int] = mapped_column(nullable=True, unique=True)  # server_default=0
+    # chat_id: Mapped[int] = mapped_column(nullable=True, unique=True)  # server_default=0
 
     # # id сотрудника в 1С и первичный ключ в этой таблице.
     code: Mapped[str] = mapped_column(String(50), unique=True)

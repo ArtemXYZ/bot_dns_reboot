@@ -44,14 +44,14 @@ from handlers.all_states import *
 general_router = Router()
 
 # фильтрует (пропускает) только личные сообщения и только определенных пользователей:
-general_router.edited_message.filter(ChatTypeFilter(['private']))
+general_router.message.filter(ChatTypeFilter(['private']))
 general_router.edited_message.filter(ChatTypeFilter(['private']))
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Вспомогательная функция проверки регистрации:
 async def check_registration(message: types.Message, state: FSMContext,
-                             session_pool: AsyncSession):  # , session_pool: AsyncSession
+                             session_pool: AsyncSession):  # , session_pool: AsyncSession async_sessionmaker
     """
     Алгоритм:
     Каждое сообщение пользователя проходит проверку на доступ по tg_id ссылаясь во внутреннюю базу.
@@ -64,7 +64,7 @@ async def check_registration(message: types.Message, state: FSMContext,
 
     # Вытаскиваем id и chat_id  пользователя при старте:
     user_tg_id: int = message.from_user.id
-    chat_id: int = message.chat.id  # Диалоговое окно куда в последующем будем рассылать обращения. Без него - никак
+    # chat_id: int = message.chat.id  # Диалоговое окно куда в последующем будем рассылать обращения. Без него - никак
 
     # Проверяем tg_id на серваке_DNS (если пользователь регился в авторизационном боте, то tg_id будет в базе.
     # На выходе будет или булевое занчение или NULL !!!
@@ -86,16 +86,16 @@ async def check_registration(message: types.Message, state: FSMContext,
 
         # По этому, сначала проверяем наличие пользователя в БД (делаем запрос по user_tg_id во внутреннюю базу):
         # Здесь можно не делать проверку на статус удаленного, тк. это делается на уровне выше в условии ветвления.
-        result = get_id_tg_in_users(user_tg_id)
-
-        if result is None:
-            # Обработка косячниых данных с пустотами или вывод сообщения.
-            print(f'Данные о пользователе имеют пропуски значений в базе данных, их обработка не возможна. '
-                  f'Обратитесь к администратору.')
-            ...
-        else:
-            # если есть, то апдейт:
-            update_chat_id_local_db(search_id_tg=user_tg_id, update_chat_id=chat_id, session_pool=session_pool)
+        # result = get_id_tg_in_users(user_tg_id)
+        #
+        # if result is None:
+        #     # Обработка косячниых данных с пустотами или вывод сообщения.
+        #     print(f'Данные о пользователе имеют пропуски значений в базе данных, их обработка не возможна. '
+        #           f'Обратитесь к администратору.')
+        #     ...
+        # else:
+        #     # если есть, то апдейт:
+        #     update_chat_id_local_db(search_id_tg=user_tg_id, update_chat_id=chat_id, session_pool=session_pool)
 
 
 
@@ -157,23 +157,27 @@ async def check_registration(message: types.Message, state: FSMContext,
 
 # Ожидание следующего сообщения пользователя
 @general_router.callback_query(StateFilter(StartUser.check_repeat), F.data.startswith('go_repeat'))
-async def on_next(call: types.CallbackQuery, session_pool, state: FSMContext):
+async def on_next(call: types.CallbackQuery, state: FSMContext):
+    await call.answer()  # Закрываем кнопку 'next' чтобы предотвратить повторные нажатия
+
     # Обновляем базу данных
     # await updating_local_db(session_pool)
-    await check_registration(call.message, state, session_pool)  # Запускаем проверку заново , session_pool
-    await call.answer()  # Закрываем кнопку 'next' чтобы предотвратить повторные нажатия
+    await check_registration(call.message, state, session_pool=session_pool_LOCAL_DB)  # Запускаем проверку заново
+    # todo !!! - не получается передать параметр , session_pool - ошибка.
+    # todo !!! call.message - будет ошибка скорее всего, тк ожидается message
+
+
 
 
 # ------------------- конец
 
 
-@general_router.message(CommandStart())
-async def on_start_user(message: types.Message, state: FSMContext,
-                        session_pool: AsyncSession):  # , session_pool: AsyncSession
-    await check_registration(message, state, session_pool)  # , session_pool
-    #  todo удалять кнопки и все сообщение раньше, выводить приветствие!
+@general_router.message(StateFilter(None), CommandStart())
+async def on_start_user(message: types.Message, state: FSMContext):  # , session_pool: AsyncSession
 
-    # await message.delete()  # Удаляем сообщение и кнопки?. todo !!!
+    await check_registration(message, state, session_pool=session_pool_LOCAL_DB)  # , session_pool
+
+    # await message.delete()  # Удаляем сообщение и кнопки?.
 
 
 # 0. -------------------------- Очистка сообщений от ругательств для всех типов чартов:

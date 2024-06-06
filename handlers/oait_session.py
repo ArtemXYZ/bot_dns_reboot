@@ -23,15 +23,15 @@ from menu.button_generator import get_keyboard
 
 from working_databases.query_builder import *
 from working_databases.events import *
-
+from handlers.all_states import *
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Назначаем роутер для всех типов чартов:
 oait_router = Router()
 
 # фильтрует (пропускает) только личные сообщения и только определенных пользователей:
-oait_router.message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
-oait_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
+# oait_router.message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
+# oait_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -42,13 +42,13 @@ oait_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter
 #     await message.answer((hello_users_oait.format(user)),
 #                          parse_mode='HTML')
 
+@oait_router.callback_query(StateFilter(StartUser.check_next), F.data.startswith('go_next'))
+async def send_request_text_for_users(callback_query: types.CallbackQuery, state: FSMContext, session):
+    bot = callback_query.bot
+    await bot.send_message(chat_id=1034809823, text='Новая запись в Requests:')
 
 
-async def send_request_text_for_users(bot: Bot):
-    await bot.send_message(chat_id=CHAT_ID, text=MESSAGE_TEXT)
 
-
-@oait_router.message(StateFilter(None))
 
 #
 # async def get_event():
