@@ -26,21 +26,60 @@ ORM SQLAlchemy, а не непосредственно на уровне баз�
 # -------------------------------- Стандартные модули
 # import asyncio
 # -------------------------------- Сторонние библиотеки
+import asyncio
 from sqlalchemy import event
 # -------------------------------- Локальные модули
 from working_databases.local_db_mockup import *
 from handlers.oait_session import *
 from sqlalchemy.ext.asyncio import AsyncSession
-# ----------------------------------------------------------------------------------------------------------------------
 
+# Создаем глобальную асинхронную очередь
+event_queue = asyncio.Queue()
+# ----------------------------------------------------------------------------------------------------------------------
 # Обработчик событий на добавление записей в бд для requests:
 @event.listens_for(Requests, 'after_insert')
-async def after_insert_requests(mapper, connection: AsyncSession, target):
+# Здесь `target` - это объект модели `Obs`, который был вставлен
+def after_insert_requests(mapper, connection: AsyncSession, target:Requests):
+    """
+        # requests_history.request_message
+        # await send_message(target.request_message)
+        """
+    # Добавляем задачу в асинхронную очередь
+    asyncio.get_event_loop().call_soon_threadsafe(event_queue.put_nowait, target)
+
+    # Асинхронный обработчик для выполнения задач из очереди
+async def process_event_queue():
+    while True:
+        target = await event_queue.get()
+        await handle_after_insert(target)
+
+
 
     # target - это экземпляр модели MyModel, который был добавлен в базу данных
+    # ссылка на экземпляр объекта, который был только что вставлен в базу
     return await target # скорее всего целиком всю строку будет передавать.
 
 
-    # requests_history.request_message
-    # await send_message(target.request_message)
 
+
+
+# # Обработчик событий на добавление записей в бд для requests:
+# @event.listens_for(Requests, 'after_insert')
+# # Здесь `target` - это объект модели `Obs`, который был вставлен
+# async def after_insert_requests(mapper, connection: AsyncSession, target:Requests):
+#
+#     """
+#     # requests_history.request_message
+#     # await send_message(target.request_message)
+#     """
+#
+#     # target - это экземпляр модели MyModel, который был добавлен в базу данных
+#     # ссылка на экземпляр объекта, который был только что вставлен в базу
+#     return await target # скорее всего целиком всю строку будет передавать.
+
+
+
+# -------------------- хлам
+# async def get_target_requests()-> Requests:
+#     target =
+#     return await after_insert_requests()

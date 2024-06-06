@@ -18,7 +18,7 @@ from aiogram import types, Bot
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from working_databases.local_db_mockup import *
-
+from working_databases.events import *
 # session_users_list:str = None
 from aiogram.filters import Filter
 
@@ -37,32 +37,6 @@ class DataBaseSession(BaseMiddleware):
         async with self.session_pool() as session:
             data['session'] = session  # Передаем в словарь переменную, которая будет доступна в хендлерах.
             return await handler(event, data)
-
-
-# -------------------------------------------- Фильтры из id БД ------------
-# class UsersRetailSession(BaseMiddleware):
-#     """Для фильтрации розницы"""
-#
-#     def __init__(self, session_pool: sessionmaker) -> None:
-#         super().__init__()
-#         self.session_pool = session_pool
-#         self.admin_ids = set()
-#
-#     async def get_retail_list(self) -> set:
-#         """Получает список id_tg всей розницы из базы данных."""
-#
-#         async with self.session_pool() as session:
-#             result = await session.execute(select(Users.id_tg))
-#             admin_ids = {row for row in result.scalars().all()}
-#         self.admin_ids = admin_ids
-#
-#         async def on_pre_process_update(self, update: types.Update, data: dict):
-#             """Загружает список админов перед обработкой обновления."""
-#             await self.get_admins_list()
-#             data['admin_ids'] = self.admin_ids
-
-
-#   тесты      ---------------------------
 
 class TypeSessionMiddleware(BaseMiddleware):
     """
@@ -117,6 +91,63 @@ class TypeSessionMiddleware(BaseMiddleware):
             print(f'Наш тип сесcии: {bot.get_type_session}')
             # return bot.retail_session_users_list
             return await handler(event, data)
+
+class DatabaseTriggerMiddleware(BaseMiddleware):
+    """
+    Прослушивание событий в базе данных (отслеживанием срабатывания триггеров).
+    """
+
+    def __init__(self) -> Any:
+        self.target_requests = None
+
+
+        # self.target_discussion: Discussion = session_pool
+
+    async def __call__(
+            self,
+            handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
+            event: Message,
+            data: Dict[str, Any]
+    ) -> Any:
+
+        self.target_requests = await after_insert_requests()
+        target_requests = self.target_requests
+        data['target_requests'] = target_requests
+        return await handler(event, data)
+
+        # async def get_target_requests():
+        #     target_requests = await after_insert_requests()
+        #     data['target_requests'] = target_requests
+        # return await handler(event, data)
+
+
+
+        # async with self.session_pool() as session_trigger:
+        #     # Логика прослушивания событий в базе данных и отслеживания триггеров
+        #     await self.process_triggers(session_trigger)
+
+        # @classmethod
+
+        # target_requests = self.target_requests
+
+
+        #         if target_requests is None:
+        #             target_requests = 0
+        #         else:
+        #             target_requests
+
+
+
+
+
+
+
+
+        return await handler(event, data)
+
+
+
+
 
 #  -------------------------------------------- тесты/ Архив  ---------------------------
 # class GetDataEvent(Filter):
@@ -209,3 +240,28 @@ class TypeSessionMiddleware(BaseMiddleware):
 #
 #             # Если тип сессии из базы (разрешенный) совпадает со значением в фильтре:
 #             return get_session_types == next_type
+
+# -------------------------------------------- Фильтры из id БД ------------
+# class UsersRetailSession(BaseMiddleware):
+#     """Для фильтрации розницы"""
+#
+#     def __init__(self, session_pool: sessionmaker) -> None:
+#         super().__init__()
+#         self.session_pool = session_pool
+#         self.admin_ids = set()
+#
+#     async def get_retail_list(self) -> set:
+#         """Получает список id_tg всей розницы из базы данных."""
+#
+#         async with self.session_pool() as session:
+#             result = await session.execute(select(Users.id_tg))
+#             admin_ids = {row for row in result.scalars().all()}
+#         self.admin_ids = admin_ids
+#
+#         async def on_pre_process_update(self, update: types.Update, data: dict):
+#             """Загружает список админов перед обработкой обновления."""
+#             await self.get_admins_list()
+#             data['admin_ids'] = self.admin_ids
+
+
+#   тесты      ---------------------------

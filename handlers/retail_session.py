@@ -347,12 +347,10 @@ async def get_request_message_users(message: types.Message, state: FSMContext, s
     new_data = await state.get_data()
     # print(f' До удаления:  {new_data}')
 
-
     # Удаляем ключи и их значения из словаря (они больше не нужны):
     del new_data['chat_id']  # temp_data  +
     del new_data['message_id'] # temp_data  +
-
-    print(f' После удаления:  {new_data}')  # - Работает +
+    # print(f' После удаления:  {new_data}')  # - Работает +
 
     # Запрос в БД на добавление обращения:
     await add_request_message(session, new_data)

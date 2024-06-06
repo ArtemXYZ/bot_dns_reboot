@@ -96,6 +96,12 @@ dp = Dispatcher()
 # Будет работать до фильтров !!! На все типы обновлений (событий).
 dp.message.outer_middleware(TypeSessionMiddleware(session_pool=session_pool_LOCAL_DB))
 
+# Работает после всех фильтров (делает: слушает базу данных, срабатывает на триггер добавления нового обращения):
+dp.message.middleware(DatabaseTriggerMiddleware())
+
+
+
+
 # Назначаем роутеры:
 # dp.include_routers(general_router, admin_router, oait_manager_router, oait_router, retail_router) #
 
@@ -103,7 +109,7 @@ dp.message.outer_middleware(TypeSessionMiddleware(session_pool=session_pool_LOCA
 # dp.include_router(admin_router)
 
 dp.include_router(oait_router)
-# dp.include_router(retail_router)
+dp.include_router(retail_router)
 dp.include_router(general_router)
 
 
