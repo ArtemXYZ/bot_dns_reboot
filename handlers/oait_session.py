@@ -42,9 +42,10 @@ oait_router = Router()
 #     await message.answer((hello_users_oait.format(user)),
 #                          parse_mode='HTML')
 
-@oait_router.message(StateFilter(StartUser.check_next), F.data.startswith('go_next'))
-async def send_request_text_for_users(bot: Bot):
-    await bot.send_message(chat_id=, text='Новая запись в Requests:')
+@oait_router.callback_query(StateFilter(StartUser.check_next), F.data.startswith('go_next'))
+async def send_request_text_for_users(callback_query: types.CallbackQuery, state: FSMContext, session):
+    bot = callback_query.bot
+    await bot.send_message(chat_id=1034809823, text='Новая запись в Requests:')
 
 
 

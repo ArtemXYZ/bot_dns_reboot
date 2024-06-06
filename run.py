@@ -102,9 +102,10 @@ dp.message.outer_middleware(TypeSessionMiddleware(session_pool=session_pool_LOCA
 #  Распределение роутеров - порядок записи имеет значение. не трогать! (3й урок)
 # dp.include_router(admin_router)
 
-dp.include_router(retail_router)
+dp.include_router(oait_router)
+# dp.include_router(retail_router)
 dp.include_router(general_router)
-# dp.include_router(oait_router)
+
 
 
 
