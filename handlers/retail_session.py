@@ -353,8 +353,8 @@ async def get_request_message_users(message: types.Message, state: FSMContext, s
     # print(f' После удаления:  {new_data}')  # - Работает +
 
     # Запрос в БД на добавление обращения:
-    await add_request_message(session, new_data)
-
+    refresh_data = await add_request_message(session, new_data)
+    print(f'refresh_data = {refresh_data}')
     # ================================== тест - неудался, потом удалить.
         # логика:
         # очищаем состояние

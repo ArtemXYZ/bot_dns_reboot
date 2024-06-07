@@ -125,6 +125,13 @@ async def add_request_message(session: AsyncSession, data: dict):  # , get_tg_id
 
     session.add(request_data_set)
     await session.commit()
+
+    # Обновляем объект, чтобы получить все значения, включая автоинкременты и прочее.
+    new = await session.refresh(request_data_set)
+
+    # Возвращаем обновленный объект
+    return new
+
     # check_id = check_id_tg_in_users(session, id_tg)
 
     # # 1. select in db id_tg (проверка есть ли такой или нет):
