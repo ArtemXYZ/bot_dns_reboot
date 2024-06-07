@@ -7,6 +7,7 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # ---------------------------------- Импорт стандартных библиотек Пайтона
 # ---------------------------------- Импорт сторонних библиотек
+import asyncio
 from typing import Any, Awaitable, Callable, Dict
 from sqlalchemy import select, update, delete
 from aiogram import BaseMiddleware
@@ -18,7 +19,8 @@ from aiogram import types, Bot
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from working_databases.local_db_mockup import *
-from working_databases.events import *
+# from working_databases.events import *
+from sqlalchemy import event
 # session_users_list:str = None
 from aiogram.filters import Filter
 
@@ -92,58 +94,89 @@ class TypeSessionMiddleware(BaseMiddleware):
             # return bot.retail_session_users_list
             return await handler(event, data)
 
+# class DatabaseTriggerMiddleware(BaseMiddleware): пока что не работает
+#     """
+#     Прослушивание событий в базе данных (отслеживание срабатывания триггеров).
+#     """
+#
+#     def __init__(self) -> Any:
+#         self.target_requests = None
+#
+#     async def __call__(
+#             self,
+#             handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
+#             event: Message,
+#             data: Dict[str, Any]
+#     ) -> Any:
+#
+#         self.target_requests = await after_insert_requests()
+#         target_requests = self.target_requests
+#         data['target_requests'] = target_requests
+#         return await handler(event, data)
+
+# class DatabaseTriggerMiddleware(BaseMiddleware):
+    # """
+    # Прослушивание событий в базе данных (отслеживание срабатывания триггеров).
+    # """
+    #
+    # def __init__(self) -> None:
+    #     self.target_requests = None
+    #
+    # async def after_insert_requests(self):
+    #     @event.listens_for(Requests, 'after_insert', async_=True)
+    #     async def receive_after_insert(mapper, connection: AsyncSession, target: Requests):
+    #         self.target_requests = target.request_message
+    #         print(f'Пришли данные в миделварь  для оаит: {self.target_requests}')
+    #
+    # async def __call__(
+    #         self,
+    #         handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
+    #         event: Message,
+    #         data: Dict[str, Any]
+    # ) -> Any:
+    #     await self.after_insert_requests()  # Вызываем вашу функцию прослушивания событий
+    #     target_requests = self.target_requests
+    #     data['target_requests'] = target_requests
+    #     return await handler(event, data)
+
 class DatabaseTriggerMiddleware(BaseMiddleware):
     """
-    Прослушивание событий в базе данных (отслеживанием срабатывания триггеров).
+    Middleware для прослушивания событий в базе данных (отслеживание срабатывания триггеров).
     """
 
-    def __init__(self) -> Any:
+    def __init__(self) -> None:
         self.target_requests = None
+        self.loop = asyncio.get_event_loop()
+        self.after_insert_requests()
 
+    def after_insert_requests(self):
+        @event.listens_for(Requests, 'after_insert')
+        def receive_after_insert(mapper, connection, target):
+            # Запускаем асинхронную задачу
+            self.loop.create_task(self.process_after_insert(target))
 
-        # self.target_discussion: Discussion = session_pool
+    async def process_after_insert(self, target: Requests):
+        # Асинхронная обработка вставленных данных
+        self.target_requests = target.request_message
+        print(f'Пришли данные в middleware для обработки: {self.target_requests}')
 
     async def __call__(
-            self,
-            handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
-            event: Message,
-            data: Dict[str, Any]
+        self,
+        handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
+        event: Message,
+        data: Dict[str, Any]
     ) -> Any:
-
-        self.target_requests = await after_insert_requests()
-        target_requests = self.target_requests
-        data['target_requests'] = target_requests
+        # Ждем обработки событий
+        while not self.target_requests:
+            await asyncio.sleep(0.1)  # Ожидаем, пока target_requests не будет установлено
+        data['target_requests'] = self.target_requests
         return await handler(event, data)
-        # аа
-        # async def get_target_requests():
-        #     target_requests = await after_insert_requests()
-        #     data['target_requests'] = target_requests
-        # return await handler(event, data)
-
-
-
-        # async with self.session_pool() as session_trigger:
-        #     # Логика прослушивания событий в базе данных и отслеживания триггеров
-        #     await self.process_triggers(session_trigger)
-
-        # @classmethod
-
-        # target_requests = self.target_requests
-
-
-        #         if target_requests is None:
-        #             target_requests = 0
-        #         else:
-        #             target_requests
 
 
 
 
 
 
-
-
-        return await handler(event, data)
 
 
 
@@ -265,3 +298,25 @@ class DatabaseTriggerMiddleware(BaseMiddleware):
 
 
 #   тесты      ---------------------------
+
+        # аа
+        # async def get_target_requests():
+        #     target_requests = await after_insert_requests()
+        #     data['target_requests'] = target_requests
+        # return await handler(event, data)
+
+
+
+        # async with self.session_pool() as session_trigger:
+        #     # Логика прослушивания событий в базе данных и отслеживания триггеров
+        #     await self.process_triggers(session_trigger)
+
+        # @classmethod
+
+        # target_requests = self.target_requests
+
+
+        #         if target_requests is None:
+        #             target_requests = 0
+        #         else:
+        #             target_requests

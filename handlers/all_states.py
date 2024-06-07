@@ -24,6 +24,7 @@ class AddRequests(StatesGroup):
     """Шаги состояний для обращений"""
     request_message = State()
     # documents = State()
+    transit_request_message = State()
 
 
 #

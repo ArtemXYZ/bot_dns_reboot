@@ -33,31 +33,88 @@ from working_databases.local_db_mockup import *
 from handlers.oait_session import *
 from sqlalchemy.ext.asyncio import AsyncSession
 
+
 # Создаем глобальную асинхронную очередь
-event_queue = asyncio.Queue()
+
 # ----------------------------------------------------------------------------------------------------------------------
 # Обработчик событий на добавление записей в бд для requests:
-@event.listens_for(Requests, 'after_insert')
-# Здесь `target` - это объект модели `Obs`, который был вставлен
-def after_insert_requests(mapper, connection: AsyncSession, target:Requests):
-    """
-        # requests_history.request_message
-        # await send_message(target.request_message)
-        """
-    # Добавляем задачу в асинхронную очередь
-    asyncio.get_event_loop().call_soon_threadsafe(event_queue.put_nowait, target)
 
-    # Асинхронный обработчик для выполнения задач из очереди
-async def process_event_queue():
-    while True:
-        target = await event_queue.get()
-        await handle_after_insert(target)
+# Функция-обработчик для событий after_insert
+# def listen_to_changes():
 
 
 
-    # target - это экземпляр модели MyModel, который был добавлен в базу данных
-    # ссылка на экземпляр объекта, который был только что вставлен в базу
-    return await target # скорее всего целиком всю строку будет передавать.
+async def after_insert_requests():
+    # target_requests = []
+    @event.listens_for(Requests, 'after_insert', async_=True)
+    async def receive_after_insert(mapper, connection : AsyncSession,  target:Requests):
+        # target_requests.append(target.request_message)
+        target_requests = target  # .request_message
+        return await target_requests
+
+# await after_insert_requests()
+
+# # Добавляем задачу в асинхронную очередь
+    # def listen_to_changes(mapper, connection: AsyncSession, target:Requests):
+    #
+    #     # Регистрируем обработчик для событий
+    #     event.listen(connection, 'after_insert', listen_to_changes, propagate=True)
+    #
+    #     # Запускаем бесконечный цикл, чтобы приложение продолжало работать
+    #     while True:
+    #         await asyncio.sleep(1)  # Проверяем изменения каждую секунду
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# # Обработчик событий на добавление записей в бд для requests:
+# @event.listens_for(Requests, 'after_insert')# todo - не работает . нет асинхронки для прослушки базы на триггеры. нужно лепить через асинкайо.
+# # Здесь `target` - это объект модели `Obs`, который был вставлен
+# def after_insert_requests(mapper, connection: AsyncSession, target:Requests):
+#     """
+#         # requests_history.request_message
+#         # await send_message(target.request_message)
+#         """
+#     # Добавляем задачу в асинхронную очередь
+#     asyncio.get_event_loop().call_soon_threadsafe(event_queue.put_nowait, target)
+#
+#     # Асинхронный обработчик для выполнения задач из очереди
+# async def process_event_queue():
+#     while True:
+#         target = await event_queue.get()
+#         await handle_after_insert(target)
+#
+#
+#
+#     # target - это экземпляр модели MyModel, который был добавлен в базу данных
+#     # ссылка на экземпляр объекта, который был только что вставлен в базу
+#     return await target # скорее всего целиком всю строку будет передавать.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

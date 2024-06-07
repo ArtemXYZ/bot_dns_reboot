@@ -42,13 +42,30 @@ oait_router = Router()
 #     await message.answer((hello_users_oait.format(user)),
 #                          parse_mode='HTML')
 
-@oait_router.message() # StateFilter(StartUser.check_next), F.data.startswith('go_next')
-async def send_request_text_for_users(callback_query: types.CallbackQuery, state: FSMContext, session, target_requests):
-        sdgsd = target_requests.request_message
-        bot = callback_query.bot
-        await bot.send_message(chat_id=0, text=f'Новая запись в Requests: {sdgsd}')
 
 
+
+
+
+
+# ------------------------------  тест - неудался, потом удалить
+# @oait_router.message(StateFilter(AddRequests.request_message), F.text) # , F.data - НЕ РАБОТАЕТ F.text - РАБОТАЕТ + без F.text
+# # Сообщение приходит
+# async def send_request_text_for_users(message: types.Message, state: FSMContext, session): # callback_query: types.CallbackQuery
+#
+#         transit_message_data = await state.get_data()
+#         print(f'Пришли данные в оаит: {transit_message_data}')
+#
+#         transit_message = transit_message_data.get('request_message')
+#
+#         # bot = callback_query.bot
+#         bot = message.bot
+#         await bot.send_message(chat_id=826087669, text=f'Новая запись в Requests: {transit_message_data}')
+#         print(f'Новая запись в Requests: {transit_message_data}')
+
+
+
+# ---------------------------
 #  if target_requests == 0:
 #         ...
 #     else:
@@ -60,3 +77,10 @@ async def send_request_text_for_users(callback_query: types.CallbackQuery, state
 #     message_text = f'Новая запись в Requests: {event}'
 #
 #     await message.answer(message_text)
+
+# ------------ работает но не вариант
+# # @oait_router.message() # StateFilter(StartUser.check_next), F.data.startswith('go_next')
+# async def send_request_text_for_users(callback_query: types.CallbackQuery, state: FSMContext, session, target_requests):
+#         sdgsd = target_requests.request_message
+#         bot = callback_query.bot
+#         await bot.send_message(chat_id=0, text=f'Новая запись в Requests: {sdgsd}')
