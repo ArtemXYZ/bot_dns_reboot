@@ -139,38 +139,38 @@ class TypeSessionMiddleware(BaseMiddleware):
     #     data['target_requests'] = target_requests
     #     return await handler(event, data)
 
-class DatabaseTriggerMiddleware(BaseMiddleware):
-    """
-    Middleware для прослушивания событий в базе данных (отслеживание срабатывания триггеров).
-    """
-
-    def __init__(self) -> None:
-        self.target_requests = None
-        self.loop = asyncio.get_event_loop()
-        self.after_insert_requests()
-
-    def after_insert_requests(self):
-        @event.listens_for(Requests, 'after_insert')
-        def receive_after_insert(mapper, connection, target):
-            # Запускаем асинхронную задачу
-            self.loop.create_task(self.process_after_insert(target))
-
-    async def process_after_insert(self, target: Requests):
-        # Асинхронная обработка вставленных данных
-        self.target_requests = target.request_message
-        print(f'Пришли данные в middleware для обработки: {self.target_requests}')
-
-    async def __call__(
-        self,
-        handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
-        event: Message,
-        data: Dict[str, Any]
-    ) -> Any:
-        # Ждем обработки событий
-        while not self.target_requests:
-            await asyncio.sleep(0.1)  # Ожидаем, пока target_requests не будет установлено
-        data['target_requests'] = self.target_requests
-        return await handler(event, data)
+# class DatabaseTriggerMiddleware(BaseMiddleware): - пока что не работаент при тесте сбой раборты в др роутерах.
+#     """
+#     Middleware для прослушивания событий в базе данных (отслеживание срабатывания триггеров).
+#     """
+#
+#     def __init__(self) -> None:
+#         self.target_requests = None
+#         self.loop = asyncio.get_event_loop()
+#         self.after_insert_requests()
+#
+#     def after_insert_requests(self):
+#         @event.listens_for(Requests, 'after_insert')
+#         def receive_after_insert(mapper, connection, target):
+#             # Запускаем асинхронную задачу
+#             self.loop.create_task(self.process_after_insert(target))
+#
+#     async def process_after_insert(self, target: Requests):
+#         # Асинхронная обработка вставленных данных
+#         self.target_requests = target.request_message
+#         print(f'Пришли данные в middleware для обработки: {self.target_requests}')
+#
+#     async def __call__(
+#         self,
+#         handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
+#         event: Message,
+#         data: Dict[str, Any]
+#     ) -> Any:
+#         # Ждем обработки событий
+#         while not self.target_requests:
+#             await asyncio.sleep(0.1)  # Ожидаем, пока target_requests не будет установлено
+#         data['target_requests'] = self.target_requests
+#         return await handler(event, data)
 
 
 

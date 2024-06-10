@@ -127,11 +127,15 @@ async def add_request_message(session: AsyncSession, data: dict):  # , get_tg_id
     await session.commit()
 
     # Обновляем объект, чтобы получить все значения, включая автоинкременты и прочее.
-    new = await session.refresh(request_data_set)
-
+    await session.refresh(request_data_set)
+    print(f'refresh_data = {request_data_set.request_message}')  # todo ссылаемся на колонку, вся строка не вызовется
     # Возвращаем обновленный объект
-    return new
+    # return new
 
+
+
+
+    # -------------------------
     # check_id = check_id_tg_in_users(session, id_tg)
 
     # # 1. select in db id_tg (проверка есть ли такой или нет):

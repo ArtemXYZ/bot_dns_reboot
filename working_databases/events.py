@@ -44,13 +44,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 
-async def after_insert_requests():
-    # target_requests = []
-    @event.listens_for(Requests, 'after_insert', async_=True)
-    async def receive_after_insert(mapper, connection : AsyncSession,  target:Requests):
-        # target_requests.append(target.request_message)
-        target_requests = target  # .request_message
-        return await target_requests
+# async def after_insert_requests(): - нельзя использовать
+#     # target_requests = []
+#     @event.listens_for(Requests, 'after_insert', async_=True)
+#     async def receive_after_insert(mapper, connection : AsyncSession,  target:Requests):
+#         # target_requests.append(target.request_message)
+#         target_requests = target  # .request_message
+#         return await target_requests
 
 # await after_insert_requests()
 
