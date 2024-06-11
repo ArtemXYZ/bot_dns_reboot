@@ -48,6 +48,19 @@ oait_router = Router()
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 # ------------------------------  тест - неудался, потом удалить
 # @oait_router.message(StateFilter(AddRequests.request_message), F.text) # , F.data - НЕ РАБОТАЕТ F.text - РАБОТАЕТ + без F.text
 # # Сообщение приходит
@@ -58,7 +71,7 @@ oait_router = Router()
 #
 #         transit_message = transit_message_data.get('request_message')
 #
-#         # bot = callback_query.bot
+        # bot = callback_query.bot
 #         bot = message.bot
 #         await bot.send_message(chat_id=826087669, text=f'Новая запись в Requests: {transit_message_data}')
 #         print(f'Новая запись в Requests: {transit_message_data}')

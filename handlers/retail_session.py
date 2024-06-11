@@ -11,6 +11,8 @@ from typing import Dict
 from aiogram import types, Router, F
 from aiogram.filters import CommandStart, Command, StateFilter, or_f
 from aiogram.client.default import DefaultBotProperties  # Обработка текста HTML разметкой
+from aiogram.types import ContentType
+
 
 # from aiogram.fsm.state import State, StatesGroup
 # from aiogram.fsm.context import FSMContext
@@ -29,6 +31,7 @@ from working_databases.orm_query_builder import *
 from handlers.data_preparation import *
 
 from handlers.all_states import *
+
 # ----------------------------------------------------------------------------------------------------------------------
 # Назначаем роутер для чата под розницу:
 retail_router = Router()
@@ -38,16 +41,18 @@ retail_router = Router()
 #  ( “private”, “group”, “supergroup”, “channel”)
 # 2-й фильтр: по типу юзеров (тип сессии).
 
-retail_router.message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait', 'boss']))  # retail oait
+retail_router.message.filter(ChatTypeFilter(['private']),
+                             TypeSessionFilter(allowed_types=['oait', 'boss']))  # retail oait
 retail_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait', 'boss']))
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------- 0. Первичное приветствие всех пользователей при старте.
 # После аутентификации нажимает кнопку продолжить...
 # @retail_router.message(StateFilter(StartUser.check_next), F.data.startswith('go_repeat') | F.data.startswith('go_next'))
-@retail_router.callback_query(StateFilter(StartUser.check_next), F.data.startswith('go_next')) # StartUser.check_next
+@retail_router.callback_query(StateFilter(StartUser.check_next), F.data.startswith('go_next'))  # StartUser.check_next
 # Переделать в заменяемый текст
 async def hello_after_on_next(callback: types.CallbackQuery, state: FSMContext):
-
     await asyncio.sleep(2)
 
     user = callback.message.from_user.first_name  # Имя пользователя
@@ -58,15 +63,15 @@ async def hello_after_on_next(callback: types.CallbackQuery, state: FSMContext):
 
     # .message.edit_text
     await callback.message.edit_text(f'Если хочешь, я кратко расскажу, как со мной работать, '
-                         f'а после уже помогу в решении твоих вопросов, ну или '
-                         f'можешь приступать самостоятельно!',
-                         parse_mode='HTML',
-                         reply_markup=get_callback_btns(
-                             btns={'▶️ КРАТКИЙ ИНСТРУКТАЖ': 'instruction',
-                                   '⏩ ПРИСТУПИТЬ К РАБОТЕ': 'go_work'
-                                   },
-                             sizes=(1, 1)
-                         ))
+                                     f'а после уже помогу в решении твоих вопросов, ну или '
+                                     f'можешь приступать самостоятельно!',
+                                     parse_mode='HTML',
+                                     reply_markup=get_callback_btns(
+                                         btns={'▶️ КРАТКИЙ ИНСТРУКТАЖ': 'instruction',
+                                               '⏩ ПРИСТУПИТЬ К РАБОТЕ': 'go_work'
+                                               },
+                                         sizes=(1, 1)
+                                     ))
     # Чистим состояние:
     await state.clear()
 
@@ -293,91 +298,127 @@ async def get_problem_trade_turnover_state(callback: types.CallbackQuery, state:
     selected_subcategory = callback.data
     # print(selected_subcategory)
 
-    # Интерпретация келбек ключей,  генерации данных для БД:
+    # Интерпретация келбек ключей, генерации данных для БД:
     write_to_base = generator_category_data(selected_subcategory)
 
-    # Вытаскиваем данные:
-    # get_category = await state.get_data()
+    # Заменяем клаву: message_menu =
+    message_menu = await callback.message.edit_text(f'Введите текст обращения ',
+                                                    reply_markup=get_callback_btns(
 
-    # print(f'get_category_data = {get_category_data}')
+                                                        btns={'⬅️ НАЗАД': 'problem_inline_back',
+                                                              '⏹ ОТМЕНА': 'problem_cancel'},
+                                                        sizes=(2,)))
 
-    # Заменяем клаву:
-    await callback.message.edit_text(f'Введите текст обращения ', reply_markup=get_callback_btns(  # todo: по \
-        # todo:  {get_category} - доработать , так , что бы выволдило категорию обращения.
+    # Для того, что бы после ввода пользователем текста ссобщения можно было изменить кнопки:
+    edit_chat_id = message_menu.chat.id
+    edit_message_id = message_menu.message_id
 
-        btns={'⬅️ НАЗАД': 'problem_inline_back',
-              '⏹ ОТМЕНА': 'problem_cancel'},
-        sizes=(2,)))
-
-    # Вытаскиваем идентификеатор сообщения (до того, как обнулим состояние):
-    chat_id = callback.message.chat.id   # chat_id_before_entering_text
-    message_id = callback.message.message_id  # message_id_before_entering_text
-
+    # Очищаем состояние, встаем в ожидание ввода текста пользователем:
     await state.clear()
     await state.set_state(AddRequests.request_message)
 
-    # Перекидываем в стейт дату наши подготовленные данные для отправки сообщения
-    await state.update_data(write_to_base)
-    await state.update_data(chat_id = chat_id, message_id = message_id)
+    # Перекидываем в стейт-дату наши подготовленные данные для дальнейшего редактирования сообщения:
+    await state.update_data(write_to_base, edit_chat_id=edit_chat_id, edit_message_id=edit_message_id)
+
 
 # ----------------------- callback на ввод сообщения: # await callback.message.delete()  # удалит кнопки
 # Становимся в состояние ожидания ввода
-# Пользователь ввел текст
-
-@retail_router.message(StateFilter(AddRequests.request_message), F.text)  #from aiogram import Bot
 # Если ввел текст обращения (AddRequests.request_message, F.text):
-async def get_request_message_users(message: types.Message, state: FSMContext, session: AsyncSession, bot: Bot):
+@retail_router.message(StateFilter(AddRequests.request_message), F.text)
+async def get_request_message_users(message: types.Message,
+                                    state: FSMContext, session: AsyncSession, bot: Bot):
+    # , bot: Bot callback: types.CallbackQuery,
 
-    # ---------------------------- удаляем инлайновые кнопки (при вводе сообщения):
-    # Формируем полученные данные из другого стейта (chat_id, message_id):
-    data = await state.get_data()
-    chat_id = data['chat_id']
-    message_id = data['message_id']
+    await message.delete()  # Удаляет введенное сообщение пользователя (для чистоты чата) +
 
-    # Удаляем конкретное сообщение. +- (может быть ошибка, если до этого бот был выключен и история не очищена \
-    # (протестить еще раз))
-    await bot.delete_message(chat_id=chat_id, message_id=message_id)
-
-    await message.delete() # Удаляет введенное сообщение пользователя (для чистоты чата) +
-
+    # Получаем данные из предыдущего стейта:
+    data_write_to_base = await state.get_data()
+    # Получаем идентификаторы сообщения, для редактирования:
+    edit_chat_id_new = data_write_to_base.get('edit_chat_id')
+    edit_message_id_new = data_write_to_base.get('edit_message_id')
     # Передам словарь с данными (ключ = request_message, к нему присваиваем данные message.text), после апдейтим +
     await state.update_data(request_message=message.text, tg_id=message.from_user.id)
 
-    # Забираем обновленные данные:
-    new_data = await state.get_data()
-    # print(f' До удаления:  {new_data}')
+    # ответить прикрепите документы attach_doc_menu message_menu
+    await bot.edit_message_text(chat_id=edit_chat_id_new,
+                                message_id=edit_message_id_new,
+                                text=f'<b>Ваше обращение:</b>\n'
+                                     f'<em>{message.text}</em>\n'
+                                     f'<b>Категория:</b>\n'
+                                     f'<em>{data_write_to_base['name_category']}</em>\n'
+                                     f'<b>Подкатегория:</b>\n'
+                                     f'<em>{data_write_to_base['name_subcategory']}</em>',
+                                reply_markup=get_callback_btns(
+                                    btns={'📨 ОТПРАВИТЬ ЗАЯВКУ': 'skip_and_send',
+                                          '📂 ПРИКРЕПИТЬ ФАЙЛЫ': 'attach_doc'},
+                                    sizes=(1, 1))
+                                )
+    # todo: по  todo:  {get_category} - доработать , так , что бы выволдило категорию обращения +- .
 
-    # Удаляем ключи и их значения из словаря (они больше не нужны):
-    del new_data['chat_id']  # temp_data  +
-    del new_data['message_id'] # temp_data  +
-    # print(f' После удаления:  {new_data}')  # - Работает +
+    # Получаем обновленные данные:
+    data_request_message = await state.get_data()
+    # Очищаем состояние, встаем в ожидание ввода текста пользователем:
+    await state.clear()
+    await state.set_state(AddRequests.send_message_or_add_doc)
+    # Передаем данные в следующее состояние по сценарию:
+    await state.update_data(data_request_message)
+
+
+# Пользователь нажимает ОТПРАВИТЬ ЗАЯВКУ.
+@retail_router.callback_query(StateFilter(AddRequests.send_message_or_add_doc), F.data.startswith('skip_and_send'))
+async def skip_and_send_message_users(callback: types.CallbackQuery,
+                                      state: FSMContext, session: AsyncSession, bot: Bot):  #message: types.Message,
+
+    # Получаем данные из предыдущего стейта:
+    back_data_tmp = await state.get_data()
+
+    # Передадим на изменение в следущее сообщение:
+    edit_chat_id_final = back_data_tmp['edit_chat_id']
+    edit_message_id_final = back_data_tmp['edit_message_id']
+
+    # удаляем их для корректной передачи на запись в бд.
+    del back_data_tmp['edit_chat_id']
+    # edit_chat_id_new = data_write_to_base.get('edit_chat_id')
+    print(f'data_request_message_to_send    -   {data_request_message_to_send} !!!')
+    del back_data_tmp['edit_message_id']
+
+    # обновляем изменения
+    await state.update_data(back_data_tmp)
+    # Значение для колонки в обращениях, что нет документов (data_request_message['doc_status'] = False)
+    await state.update_data(doc_status=False)
+
 
     # Запрос в БД на добавление обращения:
-    refresh_data = await add_request_message(session, new_data) # todo вытаскиваем обновленные данные
-    # print(f'refresh_data = {refresh_data}')
-    # ================================== тест - неудался, потом удалить.
-        # логика:
-        # очищаем состояние
-        # встаем в новое состояние (ловим это состояние в оаит и в других ветках). что бы не мешать с состоянием выше.
-        # забираем данные,
-        # очищаем состояние
-    # await state.clear()
-    # await state.set_state(AddRequests.transit_request_message)
+    data_request_message_to_send = await state.get_data()
 
-    # await state.update_data(new_data)
-    # print(f'Пердача данных из ритейл : {new_data}')
-    #     # Рассылка задач на исполнителей:
-    # ================================== тест - неудался, потом удалить.
+    print(f'data_request_message_to_send    -   {data_request_message_to_send} !!!')
+    # Вытаскиваем данные из базы после записи (обновленные всю строку полностью) и отправляем ее в другие стейты:
+    # refresh_data = await add_request_message(session, data_request_message_to_send)  # todo !
+
+    bot = callback.bot
+    # bot = message.bot
+    await bot.send_message(chat_id=826087669,
+                           text=f'Новая запись в Requests: {data_request_message_to_send}' #  ЗАМЕНИТЬ НА refresh_data
+                           , reply_markup=get_callback_btns(
+            btns={'📨 ЗАБРАТЬ ЗАЯВКУ': '12121',  # todo !
+                  '📂 ПЕРЕДАТЬ ЗАЯВКУ': '1231234'},  # todo !
+            sizes=(1, 1))
+                           )
+
+    print(f'Новая запись в Requests: {data_request_message_to_send}')
 
     # Очистка состояния пользователя:
-    await state.clear()  # - работало.
+    await state.clear()  #
 
-    sent_message = await message.answer(f'<b>Обращение зарегистрировано, ожидайте ответа!</b> \n'
-                         f'Как только обращение будет взято в работу, я направлю уведомление.'
-                         f'\n'
-                         f'<em><b>Ваше обращение:</b> {new_data.get("request_message")}</em>'
-                         )
-    # del new_data
+    message_final = await bot.edit_message_text(chat_id=edit_chat_id_final,
+                                message_id=edit_message_id_final,
+                                text=f'<b>Обращение зарегистрировано, ожидайте ответа!</b> \n'
+                                 f'Как только обращение будет взято в работу, я направлю уведомление.'
+                                 f'\n'
+                                 # f'<em><b>Ваше обращение:</b> {new_data.get("request_message")}</em>'
+                                 )
+
+
 
     # -------------------------- Удаляем введенное сообщение выше 👆:
     # Очищаем данные, тк, на прямую удалить сообщение выше не получится - выходит ошибка
@@ -388,52 +429,154 @@ async def get_request_message_users(message: types.Message, state: FSMContext, s
     # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
     # Через 2 секунды возвращаем исходное главное меню.
 
-    await sent_message.edit_text(f'Терминал:',
-                                     reply_markup=get_callback_btns(
-                                         btns={'СОЗДАТЬ ЗАЯВКУ': 'go_create_request',
-                                               'ПЕРЕЙТИ В ЧАТ': 'go_chat_user',
-                                               'ИЗМЕНИТЬ ЗАЯВКУ': 'go_chenge_request',
-                                               'УДАЛИТЬ ЗАЯВКУ': 'go_delete_request',
-                                               'ЗАПРОСИТЬ СТАТУС ЗАЯВКИ': 'go_status_request'
-                                               },
-                                         sizes=(2, 2, 1)))
+    await message_final.edit_text(f'Терминал:',
+                                 reply_markup=get_callback_btns(
+                                     btns={'СОЗДАТЬ ЗАЯВКУ': 'go_create_request',
+                                           'ПЕРЕЙТИ В ЧАТ': 'go_chat_user',
+                                           'ИЗМЕНИТЬ ЗАЯВКУ': 'go_chenge_request',
+                                           'УДАЛИТЬ ЗАЯВКУ': 'go_delete_request',
+                                           'ЗАПРОСИТЬ СТАТУС ЗАЯВКИ': 'go_status_request'
+                                           },
+                                     sizes=(2, 2, 1)))
 
 
-    # await message.edit_text(f'Терминал:',
-    #                                  reply_markup=get_callback_btns(
-    #                                      btns={'СОЗДАТЬ ЗАЯВКУ': 'go_create_request',
-    #                                            'ПЕРЕЙТИ В ЧАТ': 'go_chat_user',
-    #                                            'ИЗМЕНИТЬ ЗАЯВКУ': 'go_chenge_request',
-    #                                            'УДАЛИТЬ ЗАЯВКУ': 'go_delete_request',
-    #                                            'ЗАПРОСИТЬ СТАТУС ЗАЯВКИ': 'go_status_request'
-    #                                            },
-    #                                      sizes=(2, 2, 1)))
+# Если пользователь отправил любой (условно) тип документа:
+# @dp.message_handler(StateFilter(AddRequests.documents),
+#                     content_types=[ContentType.DOCUMENT,
+#                                    ContentType.PHOTO,
+#                                    ContentType.VIDEO,
+#                                    ContentType.AUDIO,
+#                                    ContentType.VOICE,
+#                                    ContentType.VIDEO_NOTE,
+#                                    ContentType.MEDIA_GROUP
+#                                    ])
+# async def get_request_all_doc_users(message: types.Message, state: FSMContext, session: AsyncSession):  # , bot: Bot
 
+# """
+# Принимаем все виды документов от пользователя (сохраняем каждый под собственным айди в отделной таблице
+# (под документы есть 2 таблицы для заявок и для обсуждения заявок)
+# """
 
+# Забираем обновленные данные из предыдущего состоячния:
+# message_text_data = await state.get_data()
 
+# if message.document:
+#     file_id = message.document.file_id
+#     file_name = message.document.file_name
+#     file_type = 'document'
+# elif message.photo:
+#     file_id = message.photo[-1].file_id  # Получить наибольшее по размеру фото
+#     file_name = f"{file_id}.jpg"
+#     file_type = 'photo'
+# elif message.video:
+#     file_id = message.video.file_id
+#     file_name = message.video.file_name or f"{file_id}.mp4"
+#     file_type = 'video'
+# elif message.audio:
+#     file_id = message.audio.file_id
+#     file_name = message.audio.file_name or f"{file_id}.mp3"
+#     file_type = 'audio'
+# elif message.voice:
+#     file_id = message.voice.file_id
+#     file_name = f"{file_id}.ogg"
+#     file_type = 'voice'
+# elif message.video_note:
+#     file_id = message.video_note.file_id
+#     file_name = f"{file_id}.mp4"
+#     file_type = 'video_note'
+# else:
+#     return  # Неподдерживаемый тип сообщения
+#
+# # Получить информацию о файле
+# file_info = await bot.get_file(file_id)
+# file_path = file_info.file_path
+#
+# # Скачать файл как бинарные данные
+# file_content = await download_file(file_path)
+#
+# if file_content:
+#     # Сохранить информацию о документе в базе данных
+#     db = SessionLocal()
+#     new_document = Document(file_id=file_id, file_name=file_name, file_content=file_content)
+#     db.add(new_document)
+#     db.commit()
+#     db.refresh(new_document)
+#     db.close()
 
-    # await bot.edit_message_text(chat_id=message.chat.id,
-    #                             message_id=message.message_id,
-    #                             text=f'Терминал:',
-    #                                  reply_markup=get_callback_btns(
-    #                                      btns={'СОЗДАТЬ ЗАЯВКУ': 'go_create_request',
-    #                                            'ПЕРЕЙТИ В ЧАТ': 'go_chat_user',
-    #                                            'ИЗМЕНИТЬ ЗАЯВКУ': 'go_chenge_request',
-    #                                            'УДАЛИТЬ ЗАЯВКУ': 'go_delete_request',
-    #                                            'ЗАПРОСИТЬ СТАТУС ЗАЯВКИ': 'go_status_request'
-    #                                            },
-    #                                      sizes=(2, 2, 1)))
+#     переделать функцию, убедиться, что возвращается бинарнрый тип данных и сохраняется в базы данных.
 
+# Запрос в БД на добавление обращения:
+# refresh_data = await add_request_message(session, new_data)  # todo вытаскиваем обновленные данные
+# print(f'refresh_data = {refresh_data}')
+# ================================== тест - неудался, потом удалить.
+# логика:
+# очищаем состояние
+# встаем в новое состояние (ловим это состояние в оаит и в других ветках). что бы не мешать с состоянием выше.
+# забираем данные,
+# очищаем состояние
+# await state.clear()
+# await state.set_state(AddRequests.transit_request_message)
 
+# await state.update_data(new_data)
+# print(f'Пердача данных из ритейл : {new_data}')
+#     # Рассылка задач на исполнителей:
+# ================================== тест - неудался, потом удалить.
 
+# # Очистка состояния пользователя:
+# await state.clear()  # - работало.
+#
+# sent_message = await message.answer(f'<b>Обращение зарегистрировано, ожидайте ответа!</b> \n'
+#                                     f'Как только обращение будет взято в работу, я направлю уведомление.'
+#                                     f'\n'
+#                                     f'<em><b>Ваше обращение:</b> {new_data.get("request_message")}</em>'
+#                                     )
+# # del new_data
+#
+# # -------------------------- Удаляем введенное сообщение выше 👆:
+# # Очищаем данные, тк, на прямую удалить сообщение выше не получится - выходит ошибка
+# # (скорее всего из-за удаления сообщения выше)
+#
+# await asyncio.sleep(5)
+#
+# # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
+# # Через 2 секунды возвращаем исходное главное меню.
+#
+# await sent_message.edit_text(f'Терминал:',
+#                              reply_markup=get_callback_btns(
+#                                  btns={'СОЗДАТЬ ЗАЯВКУ': 'go_create_request',
+#                                        'ПЕРЕЙТИ В ЧАТ': 'go_chat_user',
+#                                        'ИЗМЕНИТЬ ЗАЯВКУ': 'go_chenge_request',
+#                                        'УДАЛИТЬ ЗАЯВКУ': 'go_delete_request',
+#                                        'ЗАПРОСИТЬ СТАТУС ЗАЯВКИ': 'go_status_request'
+#                                        },
+#                                  sizes=(2, 2, 1)))
 
+# await message.edit_text(f'Терминал:',
+#                                  reply_markup=get_callback_btns(
+#                                      btns={'СОЗДАТЬ ЗАЯВКУ': 'go_create_request',
+#                                            'ПЕРЕЙТИ В ЧАТ': 'go_chat_user',
+#                                            'ИЗМЕНИТЬ ЗАЯВКУ': 'go_chenge_request',
+#                                            'УДАЛИТЬ ЗАЯВКУ': 'go_delete_request',
+#                                            'ЗАПРОСИТЬ СТАТУС ЗАЯВКИ': 'go_status_request'
+#                                            },
+#                                      sizes=(2, 2, 1)))
+
+# await bot.edit_message_text(chat_id=message.chat.id,
+#                             message_id=message.message_id,
+#                             text=f'Терминал:',
+#                                  reply_markup=get_callback_btns(
+#                                      btns={'СОЗДАТЬ ЗАЯВКУ': 'go_create_request',
+#                                            'ПЕРЕЙТИ В ЧАТ': 'go_chat_user',
+#                                            'ИЗМЕНИТЬ ЗАЯВКУ': 'go_chenge_request',
+#                                            'УДАЛИТЬ ЗАЯВКУ': 'go_delete_request',
+#                                            'ЗАПРОСИТЬ СТАТУС ЗАЯВКИ': 'go_status_request'
+#                                            },
+#                                      sizes=(2, 2, 1)))
 
 
 # -- Если понадобятся кнопки, то делаем через новый обработчик:
 # @retail_router.message(StateFilter(AddRequests.request_message), F.text)
 # async def change_request_message_users(message: types.Message, state: FSMContext):
-
-
 
 
 # -------------- 1.2. Ветка при отмене заявки:
@@ -618,3 +761,21 @@ async def get_chat_with_worker(message: types.Message):
 #     placeholder='Выберите действие',
 #     sizes=(2,)  # кнопок в ряду, по порядку 1й ряд и тд. 2, 1
 # )
+
+# =----------
+# Вытаскиваем идентификеатор сообщения (до того, как обнулим состояние):
+# chat_id = callback.message.chat.id   # chat_id_before_entering_text
+# message_id = callback.message.message_id  # message_id_before_entering_text
+
+#     # ---------------------------- удаляем инлайновые кнопки (при вводе сообщения):
+#     # Формируем полученные данные из другого стейта (chat_id, message_id):
+#     data = await state.get_data()
+#     chat_id = data['chat_id']
+#     message_id = data['message_id']
+#
+#     # Удаляем конкретное сообщение. +- (может быть ошибка, если до этого бот был выключен и история не очищена \
+#     # (протестить еще раз))
+#     await bot.delete_message(chat_id=chat_id, message_id=message_id) # todo: надо будет исправить \
+#     # todo: удаление на переименование иначе будут лезть ошибки у пользователя
+#
+#     await message.delete() # Удаляет введенное сообщение пользователя (для чистоты чата) +

@@ -23,9 +23,9 @@ class StartUser(StatesGroup):
 class AddRequests(StatesGroup):
     """Шаги состояний для обращений"""
     request_message = State()
-    # documents = State()
+    documents = State()
     transit_request_message = State()
-
+    send_message_or_add_doc = State()
 
 #
 # texts = {

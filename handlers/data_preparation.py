@@ -128,3 +128,17 @@ def generator_category_data(selected_subcategory: str) -> dict:
             # print(write_to_base)
 
     return write_to_base
+
+#
+# async def download_file(file_path: str):
+#     # Формируем URL для скачивания файла с сервера Telegram
+#     download_url = f'https://api.telegram.org/file/bot{API_TOKEN}/{file_path}'
+#
+#     async with aiohttp.ClientSession() as session:
+#         # Выполняем HTTP GET запрос для скачивания файла
+#         async with session.get(download_url) as resp:
+#             if resp.status == 200:
+#                 # Возвращаем бинарное содержимое файла
+#                 return await resp.read()
+#             else:
+#                 return None
