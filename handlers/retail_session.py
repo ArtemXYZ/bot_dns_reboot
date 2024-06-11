@@ -385,7 +385,7 @@ async def skip_and_send_message_users(callback: types.CallbackQuery,
 
     await state.clear()
 
-    # обновляем изменения !!
+    # обновляем изменения
     await state.update_data(back_data_tmp)
     # Значение для колонки в обращениях, что нет документов (data_request_message['doc_status'] = False)
     await state.update_data(doc_status=False)
@@ -394,25 +394,31 @@ async def skip_and_send_message_users(callback: types.CallbackQuery,
     data_request_message_to_send = await state.get_data()
 
     # Вытаскиваем данные из базы после записи (обновленные всю строку полностью) и отправляем ее в другие стейты:
-    # Забираю только айди 9что бы идентифицировать задачу:
-    refresh_data = await add_request_message(session, data_request_message_to_send)  # todo !
+    # Забираю только айди что бы идентифицировать задачу:
+    refresh_data = await add_request_message(session, data_request_message_to_send)
     print(f'refresh_data = {refresh_data}')
-
 
     bot = callback.bot
     # bot = message.bot
     await bot.send_message(chat_id=1372644288,
-                           text=f'Новая запись в Requests: {data_request_message_to_send}' #  ЗАМЕНИТЬ НА refresh_data
+                           text=f'Новая задача, id: {refresh_data}' #  ЗАМЕНИТЬ НА refresh_data
                            , reply_markup=get_callback_btns(
-            btns={'📨 ЗАБРАТЬ ЗАЯВКУ': '12121',  # todo !
-                  '📂 ПЕРЕДАТЬ ЗАЯВКУ': '1231234'},  # todo !
+            btns={'📨 ЗАБРАТЬ ЗАЯВКУ': 'pick_up_request',
+                  '📂 ПЕРЕДАТЬ ЗАЯВКУ': 'transfer__request'},
             sizes=(1, 1))
                            )
 
-    print(f'Новая запись в Requests: {data_request_message_to_send}')
+    # print(f'Новая запись в Requests: {data_request_message_to_send}')
 
     # Очистка состояния пользователя:
     await state.clear()  #
+
+    # копируем данные в сотсояние
+    # await state.set_state(AddRequests.transit_request_message_id)
+    # # Передаем данные в следующее состояние по сценарию:
+    # await state.update_data(refresh_data)
+
+
 
     message_final = await bot.edit_message_text(chat_id=edit_chat_id_final,
                                 message_id=edit_message_id_final,

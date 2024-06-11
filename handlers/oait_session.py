@@ -30,8 +30,8 @@ from handlers.all_states import *
 oait_router = Router()
 
 # фильтрует (пропускает) только личные сообщения и только определенных пользователей:
-# oait_router.message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
-# oait_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
+oait_router.message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
+oait_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -45,8 +45,12 @@ oait_router = Router()
 
 
 
+@oait_router.callback_query(StateFilter(AddRequests.transit_request_message_id), F.data.startswith('pick_up_request'))
+async def pick_up_request(callback: types.CallbackQuery,
+                                      state: FSMContext, session: AsyncSession):  #message: types.Message, , bot: Bot
 
-
+    # Запрос в БД на добавление обращения:
+    get_refresh_data = await state.get_data()
 
 
 
