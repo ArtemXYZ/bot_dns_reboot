@@ -333,6 +333,8 @@ async def get_request_message_users(message: types.Message,
 
     # Получаем данные из предыдущего стейта:
     data_write_to_base = await state.get_data()
+    # print(f'data_write_to_base    -   {data_write_to_base} !!!')
+
     # Получаем идентификаторы сообщения, для редактирования:
     edit_chat_id_new = data_write_to_base.get('edit_chat_id')
     edit_message_id_new = data_write_to_base.get('edit_message_id')
@@ -379,25 +381,27 @@ async def skip_and_send_message_users(callback: types.CallbackQuery,
     # удаляем их для корректной передачи на запись в бд.
     del back_data_tmp['edit_chat_id']
     # edit_chat_id_new = data_write_to_base.get('edit_chat_id')
-    print(f'data_request_message_to_send    -   {data_request_message_to_send} !!!')
     del back_data_tmp['edit_message_id']
 
-    # обновляем изменения
+    await state.clear()
+
+    # обновляем изменения !!
     await state.update_data(back_data_tmp)
     # Значение для колонки в обращениях, что нет документов (data_request_message['doc_status'] = False)
     await state.update_data(doc_status=False)
 
-
     # Запрос в БД на добавление обращения:
     data_request_message_to_send = await state.get_data()
 
-    print(f'data_request_message_to_send    -   {data_request_message_to_send} !!!')
     # Вытаскиваем данные из базы после записи (обновленные всю строку полностью) и отправляем ее в другие стейты:
-    # refresh_data = await add_request_message(session, data_request_message_to_send)  # todo !
+    # Забираю только айди 9что бы идентифицировать задачу:
+    refresh_data = await add_request_message(session, data_request_message_to_send)  # todo !
+    print(f'refresh_data = {refresh_data}')
+
 
     bot = callback.bot
     # bot = message.bot
-    await bot.send_message(chat_id=826087669,
+    await bot.send_message(chat_id=1372644288,
                            text=f'Новая запись в Requests: {data_request_message_to_send}' #  ЗАМЕНИТЬ НА refresh_data
                            , reply_markup=get_callback_btns(
             btns={'📨 ЗАБРАТЬ ЗАЯВКУ': '12121',  # todo !

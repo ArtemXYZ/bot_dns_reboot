@@ -90,7 +90,7 @@ class Requests(Base):
     #  Текст обращения (problem)
     request_message: Mapped[str] = mapped_column(Text(), nullable=True)
     # Прикрепленные документы любого типа:
-    doc_status: Mapped[bytes] = mapped_column(nullable=False) # Вложены ли документы.
+    doc_status: Mapped[bool] = mapped_column(nullable=False) # Вложены ли документы.
 
     #  ---------------------------- Идентификаторы
     # Категория обращения "Главная" (в какой отдел распределять)
@@ -135,7 +135,7 @@ class Discussion(Base):
     #  Текст обращения (problem)
     request_message: Mapped[str] = mapped_column(Text())
     # Прикрепленные документы любого типа:
-    doc_status: Mapped[bytes] = mapped_column(nullable=False)  # Вложены ли документы.
+    doc_status: Mapped[bool] = mapped_column(nullable=False)  # Вложены ли документы.
 
     # Отношение "многие ко одному" Discussion c Requests
     many_discussion_to_one_requests: Mapped['Requests'] = relationship("Requests",
