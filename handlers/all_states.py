@@ -26,6 +26,7 @@ class AddRequests(StatesGroup):
     documents = State()
     send_message_or_add_doc = State()
     transit_request_message_id = State()
+    take_request_message = State()
 
 #
 # texts = {

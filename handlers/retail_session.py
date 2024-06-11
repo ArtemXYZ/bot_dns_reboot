@@ -366,67 +366,112 @@ async def get_request_message_users(message: types.Message,
     await state.update_data(data_request_message)
 
 
-# Пользователь нажимает ОТПРАВИТЬ ЗАЯВКУ.
+# Пользователь нажимает ОТПРАВИТЬ ЗАЯВКУ. #  ------------------------- тест
 @retail_router.callback_query(StateFilter(AddRequests.send_message_or_add_doc), F.data.startswith('skip_and_send'))
-async def skip_and_send_message_users(callback: types.CallbackQuery,
-                                      state: FSMContext, session: AsyncSession, bot: Bot):  #message: types.Message,
+async def skip_and_send_message_users_(callback: types.CallbackQuery,
+                                      state: FSMContext, session: AsyncSession): # , bot: Bot
+    await callback.answer()
 
     # Получаем данные из предыдущего стейта:
-    back_data_tmp = await state.get_data()
+    # back_data_tmp = await state.get_data()
 
-    # Передадим на изменение в следущее сообщение:
-    edit_chat_id_final = back_data_tmp['edit_chat_id']
-    edit_message_id_final = back_data_tmp['edit_message_id']
 
-    # удаляем их для корректной передачи на запись в бд.
-    del back_data_tmp['edit_chat_id']
-    # edit_chat_id_new = data_write_to_base.get('edit_chat_id')
-    del back_data_tmp['edit_message_id']
+    message_final =  await callback.message.edit_text(
+                                    text=f'<b>Обращение зарегистрировано, ожидайте ответа!</b> \n'
+                                     f'Как только обращение будет взято в работу, я направлю уведомление.'
+                                     f'\n'
+                                     # f'<em><b>Ваше обращение:</b> {new_data.get("request_message")}</em>'
+                                     )
 
-    await state.clear()
-
-    # обновляем изменения
-    await state.update_data(back_data_tmp)
-    # Значение для колонки в обращениях, что нет документов (data_request_message['doc_status'] = False)
-    await state.update_data(doc_status=False)
-
-    # Запрос в БД на добавление обращения:
-    data_request_message_to_send = await state.get_data()
-
-    # Вытаскиваем данные из базы после записи (обновленные всю строку полностью) и отправляем ее в другие стейты:
-    # Забираю только айди что бы идентифицировать задачу:
-    refresh_data = await add_request_message(session, data_request_message_to_send)
-    print(f'refresh_data = {refresh_data}')
-
-    bot = callback.bot
-    # bot = message.bot
-    await bot.send_message(chat_id=1372644288,
-                           text=f'Новая задача, id: {refresh_data}' #  ЗАМЕНИТЬ НА refresh_data
-                           , reply_markup=get_callback_btns(
-            btns={'📨 ЗАБРАТЬ ЗАЯВКУ': 'pick_up_request',
-                  '📂 ПЕРЕДАТЬ ЗАЯВКУ': 'transfer__request'},
-            sizes=(1, 1))
-                           )
-
-    # print(f'Новая запись в Requests: {data_request_message_to_send}')
 
     # Очистка состояния пользователя:
-    await state.clear()  #
-
-    # копируем данные в сотсояние
-    # await state.set_state(AddRequests.transit_request_message_id)
-    # # Передаем данные в следующее состояние по сценарию:
-    # await state.update_data(refresh_data)
+    # await state.clear()
+    await state.set_state(None)
 
 
 
-    message_final = await bot.edit_message_text(chat_id=edit_chat_id_final,
-                                message_id=edit_message_id_final,
-                                text=f'<b>Обращение зарегистрировано, ожидайте ответа!</b> \n'
-                                 f'Как только обращение будет взято в работу, я направлю уведомление.'
-                                 f'\n'
-                                 # f'<em><b>Ваше обращение:</b> {new_data.get("request_message")}</em>'
-                                 )
+    await asyncio.sleep(5)
+    await message_final.edit_text(f'Терминал:',
+                                     reply_markup=get_callback_btns(
+                                         btns={'СОЗДАТЬ ЗАЯВКУ': 'go_create_request',
+                                               'ПЕРЕЙТИ В ЧАТ': 'go_chat_user',
+                                               'ИЗМЕНИТЬ ЗАЯВКУ': 'go_chenge_request',
+                                               'УДАЛИТЬ ЗАЯВКУ': 'go_delete_request',
+                                               'ЗАПРОСИТЬ СТАТУС ЗАЯВКИ': 'go_status_request'
+                                               },
+                                         sizes=(2, 2, 1)))
+
+
+
+
+
+
+
+
+
+# Пользователь нажимает ОТПРАВИТЬ ЗАЯВКУ. #  ------------------------- работало
+# @retail_router.callback_query(StateFilter(AddRequests.send_message_or_add_doc), F.data.startswith('skip_and_send'))
+# async def skip_and_send_message_users(callback: types.CallbackQuery,
+#                                       state: FSMContext, session: AsyncSession, bot: Bot):  #message: types.Message,
+#
+#     # Получаем данные из предыдущего стейта:
+#     back_data_tmp = await state.get_data()
+# #
+# #     # Передадим на изменение в следущее сообщение:
+#     edit_chat_id_final = back_data_tmp['edit_chat_id']
+#     edit_message_id_final = back_data_tmp['edit_message_id']
+#
+#     # удаляем их для корректной передачи на запись в бд.
+#     del back_data_tmp['edit_chat_id']
+#     # edit_chat_id_new = data_write_to_base.get('edit_chat_id')
+#     del back_data_tmp['edit_message_id']
+#
+#     await state.clear()
+#
+#     # обновляем изменения
+#     await state.update_data(back_data_tmp)
+#     # Значение для колонки в обращениях, что нет документов (data_request_message['doc_status'] = False)
+#     await state.update_data(doc_status=False)
+#
+#     # Запрос в БД на добавление обращения:
+#     data_request_message_to_send = await state.get_data()
+#
+#     # Вытаскиваем данные из базы после записи (обновленные всю строку полностью) и отправляем ее в другие стейты:
+#     # Забираю только айди что бы идентифицировать задачу:
+#     refresh_data = await add_request_message(session, data_request_message_to_send)
+#     print(f'refresh_data = {refresh_data}')
+#
+#     bot = callback.bot
+#     # bot = message.bot
+#     await bot.send_message(chat_id=1372644288,
+#                            text=f'Новая задача, id: {refresh_data}' #  ЗАМЕНИТЬ НА refresh_data
+#                            , reply_markup=get_callback_btns(
+#             btns={'📨 ЗАБРАТЬ ЗАЯВКУ': 'pick_up_request',
+#                   '📂 ПЕРЕДАТЬ ЗАЯВКУ': 'transfer_request'},
+#             sizes=(1, 1))
+#                            )
+#
+#     # print(f'Новая запись в Requests: {data_request_message_to_send}')
+#
+#     # Очистка состояния пользователя:
+#     await state.clear()  #
+#
+#     # копируем данные в сотсояние
+#     # await state.set_state(AddRequests.transit_request_message_id)
+#     # # Передаем данные в следующее состояние по сценарию:
+#     # await state.update_data(refresh_data)
+
+
+    # НЕ УСПЕВАЕТ ПОКАЗАТЬСЯ, ЗДЕСЬ ОТДЕЛЬНЫЙ ОБРАБОТЧИК НУЖЕН
+
+
+    # message_final = await bot.edit_message_text(chat_id=edit_chat_id_final,
+    #                             message_id=edit_message_id_final,
+    #                             text=f'<b>Обращение зарегистрировано, ожидайте ответа!</b> \n'
+    #                              f'Как только обращение будет взято в работу, я направлю уведомление.'
+    #                              f'\n'
+    #                              # f'<em><b>Ваше обращение:</b> {new_data.get("request_message")}</em>'
+    #                              )
 
 
 
@@ -434,20 +479,33 @@ async def skip_and_send_message_users(callback: types.CallbackQuery,
     # Очищаем данные, тк, на прямую удалить сообщение выше не получится - выходит ошибка
     # (скорее всего из-за удаления сообщения выше)
 
-    await asyncio.sleep(5)
+    # await asyncio.sleep(5)
+    #
+    # # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
+    # # Через 2 секунды возвращаем исходное главное меню.
+    #
+    # await message_final.edit_text(f'Терминал:',
+    #                              reply_markup=get_callback_btns(
+    #                                  btns={'СОЗДАТЬ ЗАЯВКУ': 'go_create_request',
+    #                                        'ПЕРЕЙТИ В ЧАТ': 'go_chat_user',
+    #                                        'ИЗМЕНИТЬ ЗАЯВКУ': 'go_chenge_request',
+    #                                        'УДАЛИТЬ ЗАЯВКУ': 'go_delete_request',
+    #                                        'ЗАПРОСИТЬ СТАТУС ЗАЯВКИ': 'go_status_request'
+    #                                        },
+    #                                  sizes=(2, 2, 1)))
+#  ------------------------- работало
 
-    # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
-    # Через 2 секунды возвращаем исходное главное меню.
 
-    await message_final.edit_text(f'Терминал:',
-                                 reply_markup=get_callback_btns(
-                                     btns={'СОЗДАТЬ ЗАЯВКУ': 'go_create_request',
-                                           'ПЕРЕЙТИ В ЧАТ': 'go_chat_user',
-                                           'ИЗМЕНИТЬ ЗАЯВКУ': 'go_chenge_request',
-                                           'УДАЛИТЬ ЗАЯВКУ': 'go_delete_request',
-                                           'ЗАПРОСИТЬ СТАТУС ЗАЯВКИ': 'go_status_request'
-                                           },
-                                     sizes=(2, 2, 1)))
+
+
+
+
+
+
+
+
+
+
 
 
 # Если пользователь отправил любой (условно) тип документа:
