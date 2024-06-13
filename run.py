@@ -108,13 +108,9 @@ dp.message.outer_middleware(TypeSessionMiddleware(session_pool=session_pool_LOCA
 #  Распределение роутеров - порядок записи имеет значение. не трогать! (3й урок)
 # dp.include_router(admin_router)
 
-# dp.include_router(oait_router)
-# dp.include_router(retail_router)
-# dp.include_router(general_router)
-
-dp.include_router(general_router)
-dp.include_router(retail_router)
 dp.include_router(oait_router)
+dp.include_router(retail_router)
+dp.include_router(general_router)
 # если несколько обработчиков могут обрабатывать один и тот же callback data,
 # они будут вызваны в том порядке, в котором они были зарегистрированы в диспетчере.
 

@@ -22,7 +22,6 @@ from sql.get_user_data_sql import *
 
 # ----------------------------------------------------------------------------------------------------------------------
 async def update_chat_id_local_db(search_id_tg: int, update_chat_id: int, session_pool: AsyncSession):
-
     """
     На вход 1 строка. Функция для обновления записей в колонке chat_id во внутренней БД.
 
@@ -30,7 +29,6 @@ async def update_chat_id_local_db(search_id_tg: int, update_chat_id: int, sessio
 
     # Открываем контекстный менеджер для сохранения данных.
     async with session_pool() as pool:
-
         query = update(Users).where(Users.id_tg == search_id_tg).values(chat_id=update_chat_id)
         # В SQLAlchemy условие выборки должно быть записано без использования Python-оператора not.
 
@@ -40,9 +38,7 @@ async def update_chat_id_local_db(search_id_tg: int, update_chat_id: int, sessio
     return print(f'Данные пользователя: id_tg: {search_id_tg}, chat_id  {update_chat_id} - обновлены!')
 
 
-
 async def get_id_tg_in_users(id: int, session: AsyncSession) -> bool:
-
     """
     Проверяем данные о пользователе в локал БД.
     Ищем по telegram айдишнику из сообщения в локальной базе данных пользователя и сравниваем
@@ -51,13 +47,12 @@ async def get_id_tg_in_users(id: int, session: AsyncSession) -> bool:
 
     query = select(Users.id_tg).where(Users.id_tg == id)
     result_tmp = await session.execute(query)
-    result = result_tmp.scalar_one_or_none() # получение одного результата или None
+    result = result_tmp.scalar_one_or_none()  # получение одного результата или None
 
     return result
 
 
 async def check_id_tg_in_users(id: int, session: AsyncSession) -> bool:
-
     """
     Проверяем данные о пользователе в локал БД.
     Ищем по telegram айдишнику из сообщения в локальной базе данных пользователя и выводим его статус
@@ -65,21 +60,20 @@ async def check_id_tg_in_users(id: int, session: AsyncSession) -> bool:
 
     # Создаем выражение CASE:
     # (Если есть в базе (тогда удален или не удален) и если нет то None)
-    is_deleted_case  = case(
+    is_deleted_case = case(
         (Users.is_deleted == True, True),
         (or_(Users.is_deleted == False, Users.is_deleted == 0), False)
     ).label('is_deleted')
 
     query = select(is_deleted_case).where(Users.id_tg == id)
     result_tmp = await session.execute(query)
-    result = result_tmp.scalar_one_or_none() # .scalar_one_or_none() .scalar()
+    result = result_tmp.scalar_one_or_none()  # .scalar_one_or_none() .scalar()
     # print(result)
 
     return result
 
 
 async def get_id_tg_in_users(session_pool: AsyncSession) -> list:
-
     """
     Забираем выборку id_tg из локал БД. Только действующие сотрудники.
     Далее сравниваем с id_tg с выборкой из внешней базы данных.
@@ -87,7 +81,6 @@ async def get_id_tg_in_users(session_pool: AsyncSession) -> list:
 
     # Открываем контекстный менеджер для сохранения данных.
     async with session_pool() as pool:
-
         # Только действующие сотрудники:
         # Либо ноль либо фелсе:
         query = select(Users.id_tg).where(or_(Users.is_deleted == False, Users.is_deleted == 0))
@@ -103,14 +96,8 @@ async def get_id_tg_in_users(session_pool: AsyncSession) -> list:
     return results_list_int
 
 
-
-
-
-
-
-
-
-async def add_request_message(session: AsyncSession, data: dict):  # , get_tg_id: int , message: types.Message, - упразднено.
+async def add_request_message(session: AsyncSession,
+                              data: dict):  # , get_tg_id: int , message: types.Message, - упразднено.
     """
     Запрос в БД на добавление обращения:
     session=await get_async_sessionmaker(CONFIG_LOCAL_DB)
@@ -122,19 +109,32 @@ async def add_request_message(session: AsyncSession, data: dict):  # , get_tg_id
 
     request_data_set = Requests(**data)
 
-
     session.add(request_data_set)
     await session.commit()
 
-    # Обновляем объект, чтобы получить все значения, включая автоинкременты и прочее.
+    # Обновляем объект, чтобы получить все значения, включая автоинкременты и прочее- работает(изменил логику, не наджо)
     await session.refresh(request_data_set)
     request_message_id = request_data_set.id
-    # print(f'request_message_id = {request_message_id}')  # todo ссылаемся на колонку, вся строка не вызовется
+    # print(f'request_message_id = {request_message_id}')  # ссылаемся на колонку, вся строка не вызовется
 
-    # Возвращаем обновленный объект
+    # Возвращаем обновленный объект - работает
     return request_message_id
 
 
+async def update_notification_id(search_request_id: int, update_notification_id: int, session_pool: AsyncSession):
+    """
+    На вход 2 начения (где обновить - айди обращения, значение для обновления.
+    """
+    query = update(Requests).where(Requests.id == search_request_id).values(
+                notification_id=update_notification_id)
+    await session_pool.execute(query)
+    # results = result_tmp.scalars()  #  # выдаст либо список либо пусой список. results_list_int
+    await session_pool.commit()
+    return print(f'notification_id - аписан в базу : {update_notification_id}')
+
+
+    #
+    #
 
 
     # -------------------------
@@ -177,7 +177,7 @@ async def null_filter(row_data):
         # Перебираем строку по элементам (Если значение в колонке для строки равно None):
         if next_column_row is None:
             # print(f'Эта строка с косяком: {row_data}')
-            bug_list.append(row_data) # Сохраняем строкис косяками в отдельный список.
+            bug_list.append(row_data)  # Сохраняем строкис косяками в отдельный список.
             row_data = None  # Устанавливаем для строки значение None (далее для фильтрации)
             break  # завершение цикла, переход к следующему.
 
@@ -188,7 +188,6 @@ async def null_filter(row_data):
 
 
 async def insert_data(data, session_pool: AsyncSession):
-
     """ Вставка данных о пользователях в локальную бд.
 
     Вложенная функция для insert_data. Осуществляет проверку данных перед вставкой
@@ -212,37 +211,39 @@ async def insert_data(data, session_pool: AsyncSession):
             print(f'Результат работы фильтра значений для строки: {insert_row_tuple}')
 
             if insert_row_tuple is None:
-                bugs_tuple.append(bug_row) # Копим косяки в кортеж.!! # todo  bug_row - что с ними ? - делать продумать позже
+                bugs_tuple.append(
+                    bug_row)  # Копим косяки в кортеж.!! # todo  bug_row - что с ними ? - делать продумать позже
             else:
                 # Жесткая типизация данных:
                 insert_obj = Users(
-                        id_tg=int(insert_row_tuple[0]),
-                        code=str(insert_row_tuple[1]),
-                        session_type=str(insert_row_tuple[2]),
-                        full_name=str(insert_row_tuple[3]),
-                        post_id=int(insert_row_tuple[4]),
-                        post_name=str(insert_row_tuple[5]),
-                        branch_id=int(insert_row_tuple[6]),
-                        branch_name=str(insert_row_tuple[7]),
-                        rrs_name=str(insert_row_tuple[8]),
-                        division_name=str(insert_row_tuple[9]),
-                        user_mail=str(insert_row_tuple[10]),
-                        is_deleted=bool(insert_row_tuple[11]),
-                        employee_status=bool(insert_row_tuple[12]),
-                        holiday_status = bool(insert_row_tuple[13]),
-                        admin_status =bool(insert_row_tuple[14])
-                    )
+                    id_tg=int(insert_row_tuple[0]),
+                    code=str(insert_row_tuple[1]),
+                    session_type=str(insert_row_tuple[2]),
+                    full_name=str(insert_row_tuple[3]),
+                    post_id=int(insert_row_tuple[4]),
+                    post_name=str(insert_row_tuple[5]),
+                    branch_id=int(insert_row_tuple[6]),
+                    branch_name=str(insert_row_tuple[7]),
+                    rrs_name=str(insert_row_tuple[8]),
+                    division_name=str(insert_row_tuple[9]),
+                    user_mail=str(insert_row_tuple[10]),
+                    is_deleted=bool(insert_row_tuple[11]),
+                    employee_status=bool(insert_row_tuple[12]),
+                    holiday_status=bool(insert_row_tuple[13]),
+                    admin_status=bool(insert_row_tuple[14])
+                )
                 pool.add(insert_obj)
-    #
+        #
         await pool.commit()
     print('Данные удачно мигрировали в локальную базу данных!')
     print(f'Эти строки содержат пропуски и по этому не были допущены к записи в базу данных: {bugs_tuple}')
     #
     return bugs_tuple
+
+
 # -------------------------------------------------
 
 async def update_delet_local_db(search_id_tg, session_pool: AsyncSession):
-
     """
     На вход 1 строка. Функция для обновления записей в колонке удаленные во внутренней БД.
     # where_columns_name: str, where_columns_value: any, columns_search: str,
@@ -250,7 +251,6 @@ async def update_delet_local_db(search_id_tg, session_pool: AsyncSession):
 
     # Открываем контекстный менеджер для сохранения данных.
     async with session_pool() as pool:
-
         query = update(Users).where(Users.id_tg == search_id_tg).values(is_deleted=True)
         # В SQLAlchemy условие выборки должно быть записано без использования Python-оператора not.
 

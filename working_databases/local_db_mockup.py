@@ -105,6 +105,11 @@ class Requests(Base):
     # В работе ли заявка: "at_work" , "complete" - статус запроса (insert, in_work, done или complete (, onupdate='insert') )
     request_status: Mapped[str] = mapped_column(String(150), server_default='insert')
 
+    notification_id: Mapped[int] = mapped_column(nullable=False, index=True, server_default='0')
+
+
+
+
     # Отношение "многие ко одному" Requests с Users
     many_requests_to_many_users: Mapped['Users'] = relationship("Users", back_populates="one_user_to_many_requests")
 
