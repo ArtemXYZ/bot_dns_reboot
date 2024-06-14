@@ -13,7 +13,7 @@ from filters.chats_filters import *
 
 # from menu import keyboard_menu  # Кнопки меню - клавиатура внизу
 
-# from OLD.events import *
+from working_databases.orm_query_builder import *
 from handlers.all_states import *
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -34,10 +34,9 @@ oait_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter
 #                          parse_mode='HTML')
 
 
-
 @oait_router.callback_query(StateFilter(None), F.data.startswith('pick_up_request'))
 async def pick_up_request(callback: types.CallbackQuery,
-                                      state: FSMContext, session: AsyncSession):  #message: types.Message, , bot: Bot
+                          state: FSMContext, session: AsyncSession, bot: Bot):  # message: types.Message,
 
     await callback.answer()
 
@@ -48,20 +47,47 @@ async def pick_up_request(callback: types.CallbackQuery,
     # Вытаскиваем message_id отправлденного уведомления:
     get_notification_id = callback.message.message_id
     print(f'get_notification_id = {get_notification_id}')
+    get_user_id_callback = callback.from_user.id
 
-    # Сравниваем в базе значение  notification_id при нажатии кнопкми (идентифицируеми кто нажал)
-    await check_notification_id_in_history_distribution(get_notification_id)
+    # Сравниваем в базе значение  notification_id при нажатии кнопками (идентифицируем кто нажал), узнаем айди задачи
+    request_id = await check_notification_id_in_history_distribution(get_notification_id, session)
+    # Вернет один результат или ничего.
 
+    if request_id is None:
+        # todo  !!Доработать
+        print(f'Ошибка поиска уведомления о поступившем обращении) {request_id}')
 
-    # Сначала меняем у всех сообщение, что бы остальные не успели нажать кнопку (или придумать механизм для такого)
-    # потом апдейтим ответственного в бд.
+    else:
+        # Сначала меняем у всех сообщение, что бы остальные не успели нажать кнопку (или придумать механизм для такого)
+        # todo
 
-    # Алгоритм:
-    #
+        bot = callback.bot # todo ?
 
+        # Получаем список id работников кому было разослано уведомление: get_notification_id_and_employees_id_tuples
+        id_tuples = await get_notification_id_and_employees_id_tuples(request_id, session)
 
+        # Перебираем всех и в зависимости от логики ...
+        for row in id_tuples:
 
+            notification_employees_id, notification_id = row  # for_chat_id, message_id
 
+            # Если tg_id из рассылки равен tg_id юзера нажимающего кнопку, то изменяем сообщения у остальных.
+            if  notification_employees_id == get_user_id_callback:  # for_chat_id
+
+                # Апдейтим ответственного в бд.
+                await update_responsible_person_id(request_id, get_user_id_callback, session)
+
+                # await callback.message.edit_text(
+                await bot.edit_message_text(chat_id=get_user_id_callback, message_id=notification_id,
+                    text=f'Обращение принято в работу! Вы назначены ответственным о данной задаче (№_{request_id}).')
+                # Если tg_id из рассылки не равен tg_id юзера нажимающего кнопку, то изменяем его сообщение.
+            else:
+
+                employee_name = await get_full_name_employee(get_user_id_callback, session)
+
+                await bot.edit_message_text(
+                    chat_id=notification_employees_id, message_id=notification_id,
+                    text=f'Ответственным по задаче №_{request_id} назначен {employee_name}')
 
 # ----------------------------------- тестовый вариант  - не работал
 #
@@ -125,8 +151,6 @@ async def pick_up_request(callback: types.CallbackQuery,
 # ----------------------------------- тестовый вариант  - не работал
 
 
-
-
 # ------------------------------  тест - неудался, потом удалить
 # @oait_router.message(StateFilter(AddRequests.request_message), F.text) # , F.data - НЕ РАБОТАЕТ F.text - РАБОТАЕТ + без F.text
 # # Сообщение приходит
@@ -137,11 +161,10 @@ async def pick_up_request(callback: types.CallbackQuery,
 #
 #         transit_message = transit_message_data.get('request_message')
 #
-        # bot = callback_query.bot
+# bot = callback_query.bot
 #         bot = message.bot
 #         await bot.send_message(chat_id=826087669, text=f'Новая запись в Requests: {transit_message_data}')
 #         print(f'Новая запись в Requests: {transit_message_data}')
-
 
 
 # ---------------------------

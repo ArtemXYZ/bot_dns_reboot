@@ -97,7 +97,7 @@ async def get_id_tg_in_users(session_pool: AsyncSession) -> list:
 
 
 async def add_request_message(session: AsyncSession,
-                              data: dict):  # , get_tg_id: int , message: types.Message, - упразднено.
+                              data: dict):  # , get_tg_id: int , message: types.Message, - упразднено. +
     """
     Запрос в БД на добавление обращения:
     session=await get_async_sessionmaker(CONFIG_LOCAL_DB)
@@ -134,7 +134,7 @@ async def add_request_message(session: AsyncSession,
 #     return print(f'id уведоления о поступившей задаче - записано в базу : {update_notification_id}')
 
 
-# Если сообщение не отправлено (заблокировали бота, удалились)
+# Если сообщение не отправлено (заблокировали бота, удалились) +
 async def add_row_sending_error(
         add_notification_employees_id_error: int, add_reques_id: int, session_pool: AsyncSession):
     """
@@ -143,18 +143,16 @@ async def add_row_sending_error(
     """
 
     data_set = HistoryDistributionRequests(
-            notification_employees_id=add_notification_employees_id_error,
-            notification_id=0,
-            reques_id=add_reques_id,
-            sending_error=True
-        )
+        notification_employees_id=add_notification_employees_id_error,
+        notification_id=0,
+        reques_id=add_reques_id,
+        sending_error=True
+    )
     session_pool.add(data_set)
     await session_pool.commit()
 
 
-
-
-# измененная функция update_notification_id  - работает
+# измененная функция update_notification_id  - работает +
 async def add_row_in_history_distribution(add_notification_employees_id: int, add_notification_id: int,
                                           add_reques_id: int, session_pool: AsyncSession):
     """
@@ -176,15 +174,65 @@ async def add_row_in_history_distribution(add_notification_employees_id: int, ad
 
 
 # В oait_router, после доставки оповчещения, работник нажимает на кнопку ЗАБРАТЬ ЗАЯВКУ
-async def check_notification_id_in_history_distribution(add_notification_employees_id: int, add_notification_id: int,
-                                          add_reques_id: int, session_pool: AsyncSession):
+async def check_notification_id_in_history_distribution(get_notification_id: int, session_pool: AsyncSession):
     """
     Сравниваем в базе значение  notification_id при нажатии кнопкми (идентифицируеми кто нажал)
     """
 
+    query = select(HistoryDistributionRequests.reques_id).where(
+        HistoryDistributionRequests.notification_id == get_notification_id)
+    result_tmp = await session_pool.execute(query)
+    result = result_tmp.scalar_one_or_none()  # один результат или ничего.
+    # .scalar_one_or_none() .scalar()
+
+    return result
 
 
-#
+async def update_responsible_person_id(
+        search_request_id: int, update_responsible_person_id: int, session_pool: AsyncSession):
+    """
+    На вход 2 начения (где обновить - айди обращения, значение для обновления - ответственный за  задачу).
+    """
+    query = update(Requests).where(Requests.id == search_request_id).values(
+                responsible_person_id=update_responsible_person_id)
+    await session_pool.execute(query)
+    # results = result_tmp.scalars()  #  # выдаст либо список либо пусой список. results_list_int
+    await session_pool.commit()
+    return print(f' Ответственный {update_responsible_person_id} по задаче №_{search_request_id} записан в Requests.')
+
+
+
+async def get_notification_id_and_employees_id_tuples(search_request_id: int, session_pool: AsyncSession):
+    """
+    Выборка данных по колонке notification_id на основе входящего search_request_id
+    """
+
+    query = select(HistoryDistributionRequests.notification_employees_id,
+                   HistoryDistributionRequests.notification_id).where(
+        HistoryDistributionRequests.reques_id == search_request_id)
+    result_tmp = await session_pool.execute(query)
+    result_tuples = result_tmp.all() # возвращает список кортежей
+    # .scalar_one_or_none()  # один результат или ничего. .scalar()
+
+    return result_tuples
+
+
+async def get_full_name_employee(get_tg_id: int, session_pool: AsyncSession):
+    """
+    Сравниваем в базе значение  notification_id при нажатии кнопкми (идентифицируеми кто нажал)
+    """
+
+    # employee_name_tmp = session.execute(select(Users.full_name).where(Users.id_tg == get_tg_id)
+    # employee_name = employee_name_tmp.scalar_one_or_none()
+
+    query = select(Users.full_name).where(Users.id_tg == get_tg_id)
+    result_tmp = await session_pool.execute(query)
+    result = result_tmp.scalar_one_or_none()  # один результат или ничего.
+    # .scalar_one_or_none() .scalar()
+
+    return result
+
+
 
 
 # -------------------------
