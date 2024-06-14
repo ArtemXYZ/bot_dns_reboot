@@ -129,6 +129,16 @@ def generator_category_data(selected_subcategory: str) -> dict:
 
     return write_to_base
 
+
+
+
+
+
+
+
+
+
+
 #
 # async def download_file(file_path: str):
 #     # Формируем URL для скачивания файла с сервера Telegram

@@ -13,6 +13,7 @@ from aiogram.filters import CommandStart, Command, StateFilter, or_f
 from aiogram.client.default import DefaultBotProperties  # Обработка текста HTML разметкой
 from aiogram.types import ContentType
 
+from aiogram.exceptions import TelegramBadRequest # except
 
 # from aiogram.fsm.state import State, StatesGroup
 # from aiogram.fsm.context import FSMContext
@@ -366,18 +367,15 @@ async def get_request_message_users(message: types.Message,
     await state.update_data(data_request_message)
 
 
-
-
-
 # Пользователь нажимает ОТПРАВИТЬ ЗАЯВКУ. #  ------------------------- работает +
 @retail_router.callback_query(StateFilter(AddRequests.send_message_or_add_doc), F.data.startswith('skip_and_send'))
 async def skip_and_send_message_users(callback: types.CallbackQuery,
-                                      state: FSMContext, session: AsyncSession, bot: Bot):  #message: types.Message,
+                                      state: FSMContext, session: AsyncSession, bot: Bot):  # message: types.Message,
 
     # Получаем данные из предыдущего стейта:
     back_data_tmp = await state.get_data()
-#
-#     # Передадим на изменение в следущее сообщение:
+    #
+    #     # Передадим на изменение в следущее сообщение:
     edit_chat_id_final = back_data_tmp['edit_chat_id']
     edit_message_id_final = back_data_tmp['edit_message_id']
 
@@ -398,27 +396,75 @@ async def skip_and_send_message_users(callback: types.CallbackQuery,
 
     # Вытаскиваем данные из базы после записи (обновленные всю строку полностью) и отправляем ее в другие стейты:
     # Забираю только айди что бы идентифицировать задачу:
-    refresh_request_message_id = await add_request_message(session, data_request_message_to_send) #
-    print(f'refresh_request_message_id = {refresh_request_message_id}')
+    refresh_request_message_id = await add_request_message(session, data_request_message_to_send)  #
+    print(f'Айди обращения = {refresh_request_message_id}')
+
+    # ---------------------------------- рассылка поступившей задачи
+    # Получаем tg_id написавшего юзера:
+    # notification_employees_id = data_request_message_to_send['tg_id']
 
     bot = callback.bot
-    # bot = message.bot
-    notification_id = await bot.send_message(chat_id=500520383,
-                           text=f'Новая задача, id: {data_request_message_to_send}' #  ЗАМЕНИТЬ НА refresh_data
-                           , reply_markup=get_callback_btns(
-            btns={'📨 ЗАБРАТЬ ЗАЯВКУ': 'pick_up_request',
-                  '📂 ПЕРЕДАТЬ ЗАЯВКУ': 'transfer_request'},
-            sizes=(1, 1))
-                           )
 
-    # print(f'Новая запись в Requests: {data_request_message_to_send}')
+    # Получаем список id работников на рассылку:
+    # mailing_list = generator_mailing_list(data_request_message_to_send)
+    # mailing_list = [141407179, 143453792,  163904370,  1206297168, 1372644288]
+    mailing_list = [500520383, 1372644288]
 
-    # Получаем ID отправленного сообщения
-    id = notification_id.message_id
-    print(f'ID отправленного сообщения: {id}')
+    for send in mailing_list:
+        # Если пользователь удалил бота, мы не можем ему отправить уведомление о задаче, \
+        # пропускаем ошибку, цикл продолжается:
 
+        notification_employees_id = send
+        try:
+            notification_id = await bot.send_message(
+                chat_id=send,
+                text=f'Поступило новое обращение: {data_request_message_to_send['request_message']}'
+                , reply_markup=get_callback_btns(
+                    btns={'📨 ЗАБРАТЬ ЗАЯВКУ': 'pick_up_request',
+                          '📂 ПЕРЕДАТЬ ЗАЯВКУ': 'transfer_request'},
+                    sizes=(1, 1))
+            )
+
+            # Получаем ID отправленного сообщения
+            id_notification = notification_id.message_id
+            print(f'ID отправленного сообщения: {id_notification}')
+
+            # Инсертим данные в таблицу HistoryDistributionRequests:
+            await add_row_in_history_distribution(
+                notification_employees_id, id_notification, refresh_request_message_id, session)
+
+
+        # Пропускаем текущую итерацию и продолжаем со следующей
+        except TelegramBadRequest as e:
+            print(f"Ошибка при отправке сообщения для chat_id {send}: {e}")
+
+            # созрантять чат айди, кому не отправили
+            await add_row_sending_error(notification_employees_id, refresh_request_message_id, session)
+
+            # Отправляем админу айди и другие (возможно полные) данные по юзеру, которому не доставлено оповещение.
+            # get_admin = asdfg # todo сделать выборку админов (в чат или группу? в группу проще, \
+            # # todo если не в группу, то сделать цикл
+            #
+            # await bot.send_message(chat_id=get_admin,
+            #     text=f'Уведомление по обращению №_{refresh_request_message_id},'
+            #          f' tg_id: {data_request_message_to_send['tg_id']}, '
+            #          f'не было доставлено работнику: {notification_employees_id}')
+
+
+
+
+
+
+
+
+
+
+    # ------------ работало, не нужно в связи с выявленными особенностями убрали
     # Апдейтим id в базу данных:
-    await update_notification_id(refresh_request_message_id, id, session)
+    # await update_notification_id(refresh_request_message_id, id_notification, session)
+    # ------------ работало, не нужно в связи с выявленными особенностями
+
+    # ------------------------- рассылка поступившей задачи
 
     # Очистка состояния пользователя:
     await state.clear()  #
@@ -428,13 +474,14 @@ async def skip_and_send_message_users(callback: types.CallbackQuery,
     # # Передаем данные в следующее состояние по сценарию:
     # await state.update_data(refresh_data)
 
-    message_final = await bot.edit_message_text(chat_id=edit_chat_id_final,
-                                message_id=edit_message_id_final,
-                                text=f'<b>Обращение зарегистрировано, ожидайте ответа!</b> \n'
-                                 f'Как только обращение будет взято в работу, я направлю уведомление.'
-                                 f'\n'
-                                 # f'<em><b>Ваше обращение:</b> {new_data.get("request_message")}</em>'
-                                 )
+    message_final = await bot.edit_message_text(
+        chat_id=edit_chat_id_final,
+        message_id=edit_message_id_final,
+        text=f'<b>Обращение зарегистрировано, ожидайте ответа!</b> \n'
+             f'Как только обращение будет взято в работу, я направлю уведомление.'
+             f'\n'
+        # f'<em><b>Ваше обращение:</b> {new_data.get("request_message")}</em>'
+    )
 
     # -------------------------- Удаляем введенное сообщение выше 👆:
     # Очищаем данные, тк, на прямую удалить сообщение выше не получится - выходит ошибка
@@ -446,22 +493,17 @@ async def skip_and_send_message_users(callback: types.CallbackQuery,
     # Через 2 секунды возвращаем исходное главное меню.
 
     await message_final.edit_text(f'Терминал:',
-                                 reply_markup=get_callback_btns(
-                                     btns={'СОЗДАТЬ ЗАЯВКУ': 'go_create_request',
-                                           'ПЕРЕЙТИ В ЧАТ': 'go_chat_user',
-                                           'ИЗМЕНИТЬ ЗАЯВКУ': 'go_chenge_request',
-                                           'УДАЛИТЬ ЗАЯВКУ': 'go_delete_request',
-                                           'ЗАПРОСИТЬ СТАТУС ЗАЯВКИ': 'go_status_request'
-                                           },
-                                     sizes=(2, 2, 1)))
+                                  reply_markup=get_callback_btns(
+                                      btns={'СОЗДАТЬ ЗАЯВКУ': 'go_create_request',
+                                            'ПЕРЕЙТИ В ЧАТ': 'go_chat_user',
+                                            'ИЗМЕНИТЬ ЗАЯВКУ': 'go_chenge_request',
+                                            'УДАЛИТЬ ЗАЯВКУ': 'go_delete_request',
+                                            'ЗАПРОСИТЬ СТАТУС ЗАЯВКИ': 'go_status_request'
+                                            },
+                                      sizes=(2, 2, 1)))
+
+
 #  ------------------------- работает +
-
-
-
-
-
-
-
 
 
 # ----------------------------------- тестовый вариант  - не работал
@@ -502,14 +544,6 @@ async def skip_and_send_message_users(callback: types.CallbackQuery,
 #                                          sizes=(2, 2, 1)))
 #
 # ----------------------------------- тестовый вариант  - не работал
-
-
-
-
-
-
-
-
 
 
 # Если пользователь отправил любой (условно) тип документа:

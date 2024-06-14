@@ -24,14 +24,14 @@ ORM SQLAlchemy, а не непосредственно на уровне баз�
 """
 
 # -------------------------------- Стандартные модули
+# # import asyncio
+# # -------------------------------- Сторонние библиотеки
 # import asyncio
-# -------------------------------- Сторонние библиотеки
-import asyncio
-from sqlalchemy import event
-# -------------------------------- Локальные модули
-from working_databases.local_db_mockup import *
-from handlers.oait_session import *
-from sqlalchemy.ext.asyncio import AsyncSession
+# from sqlalchemy import event
+# # -------------------------------- Локальные модули
+# from working_databases.local_db_mockup import *
+# from handlers.oait_session import *
+# from sqlalchemy.ext.asyncio import AsyncSession
 
 
 # Создаем глобальную асинхронную очередь

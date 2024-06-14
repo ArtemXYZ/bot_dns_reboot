@@ -121,36 +121,86 @@ async def add_request_message(session: AsyncSession,
     return request_message_id
 
 
-async def update_notification_id(search_request_id: int, update_notification_id: int, session_pool: AsyncSession):
+# работало, но изменилась логика, измененно - РАБОТАЕТ.
+# async def update_notification_id(search_request_id: int, update_notification_id: int, session_pool: AsyncSession):
+#     """
+#     На вход 2 начения (где обновить - айди обращения, значение для обновления.
+#     """
+#     query = update(Requests).where(Requests.id == search_request_id).values(
+#                 notification_id=update_notification_id)
+#     await session_pool.execute(query)
+#     # results = result_tmp.scalars()  #  # выдаст либо список либо пусой список. results_list_int
+#     await session_pool.commit()
+#     return print(f'id уведоления о поступившей задаче - записано в базу : {update_notification_id}')
+
+
+# Если сообщение не отправлено (заблокировали бота, удалились)
+async def add_row_sending_error(
+        add_notification_employees_id_error: int, add_reques_id: int, session_pool: AsyncSession):
     """
-    На вход 2 начения (где обновить - айди обращения, значение для обновления.
+    Если сообщение не отправлено (заблокировали бота, удалились), то апдейтим таблитцу HistoryDistributionRequests
+    по колонке  sending_error (bool)
     """
-    query = update(Requests).where(Requests.id == search_request_id).values(
-                notification_id=update_notification_id)
-    await session_pool.execute(query)
-    # results = result_tmp.scalars()  #  # выдаст либо список либо пусой список. results_list_int
+
+    data_set = HistoryDistributionRequests(
+            notification_employees_id=add_notification_employees_id_error,
+            notification_id=0,
+            reques_id=add_reques_id,
+            sending_error=True
+        )
+    session_pool.add(data_set)
     await session_pool.commit()
-    return print(f'notification_id - аписан в базу : {update_notification_id}')
 
 
-    #
-    #
 
 
-    # -------------------------
-    # check_id = check_id_tg_in_users(session, id_tg)
+# измененная функция update_notification_id  - работает
+async def add_row_in_history_distribution(add_notification_employees_id: int, add_notification_id: int,
+                                          add_reques_id: int, session_pool: AsyncSession):
+    """
+    На вход 3 начения (где обновить - айди обращения, значение для обновления. tg_id обратившегося пользователя)
+    notification_employees_id: телеграмм id работника, которому направлено уведомление
+    notification_id: id уведомления (рассылка поступившей задачи) сотруднику (id сообщения)
+    reques_id: id обращения в таблице Requests
+    """
 
-    # # 1. select in db id_tg (проверка есть ли такой или нет):
-    # if check_id is not None:
-    #
-    #     # 2. ---- если есть, то добавляем в базу
-    #     #  Формируем запрос:
-    #     session.add(request_data_set)
-    #     # Сохраняем и закрываем соединение:
-    #     await session.commit()
-    # else:
-    #     pass
-    #     # отправить обновить базу данных
+    data_set = HistoryDistributionRequests(
+        notification_employees_id=add_notification_employees_id,
+        notification_id=add_notification_id,
+        reques_id=add_reques_id
+        # , sending_error = False  server_default
+    )
+    session_pool.add(data_set)
+    await session_pool.commit()
+    # return print(f'notification_id - аписан в базу : {update_notification_id}')
+
+
+# В oait_router, после доставки оповчещения, работник нажимает на кнопку ЗАБРАТЬ ЗАЯВКУ
+async def check_notification_id_in_history_distribution(add_notification_employees_id: int, add_notification_id: int,
+                                          add_reques_id: int, session_pool: AsyncSession):
+    """
+    Сравниваем в базе значение  notification_id при нажатии кнопкми (идентифицируеми кто нажал)
+    """
+
+
+
+#
+
+
+# -------------------------
+# check_id = check_id_tg_in_users(session, id_tg)
+
+# # 1. select in db id_tg (проверка есть ли такой или нет):
+# if check_id is not None:
+#
+#     # 2. ---- если есть, то добавляем в базу
+#     #  Формируем запрос:
+#     session.add(request_data_set)
+#     # Сохраняем и закрываем соединение:
+#     await session.commit()
+# else:
+#     pass
+#     # отправить обновить базу данных
 
 
 # ----------------------------------------------- Поиск косяков в данных

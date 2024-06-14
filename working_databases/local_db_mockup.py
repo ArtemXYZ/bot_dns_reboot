@@ -10,7 +10,8 @@
 
 # -------------------------------- Стандартные модули
 # -------------------------------- Сторонние библиотеки
-from sqlalchemy import DateTime, Float, String, Integer, Text, Boolean, func, ForeignKey, LargeBinary
+from sqlalchemy import DateTime, Float, String, Integer, Text, Boolean, func, ForeignKey, LargeBinary  #, PickleType
+# JSON
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from typing import List
 
@@ -34,8 +35,7 @@ class Users(Base):
     """
     __tablename__ = 'user_data'
 
-    # index_add: Mapped[int] = mapped_column(autoincrement=True) # порядковый номер добавления обратившегося сотрудника.
-    # телеграмм id
+    # телеграмм id сотрудника
     id_tg: Mapped[int] = mapped_column(primary_key=True, autoincrement=False, nullable=False,
                                        unique=True)  # Pk  index=True,
     # chat_id: Mapped[int] = mapped_column(nullable=True, unique=True)  # server_default=0
@@ -66,9 +66,13 @@ class Users(Base):
     holiday_status: Mapped[bool] = mapped_column(nullable=False)  # Если в отпуске, то тру.
     admin_status: Mapped[bool] = mapped_column(nullable=False, server_default='False')  # Если админ, то тру.
 
-    #
+    ## --------------------------- Связи один ко многим
     # Отношение "один ко многим" Users с Request
     one_user_to_many_requests: Mapped[list['Requests']] = relationship(back_populates='many_requests_to_many_users')
+
+    # Отношение "один ко многим" Users с HistoryDistributionRequests
+    one_user_to_many_histories: Mapped[list['HistoryDistributionRequests']] = relationship(
+        "HistoryDistributionRequests", back_populates='many_histories_to_one_user')
 
     # -------------------------------------- Ограничение полей:
     # __table_args__ = (ForeignKeyConstraint(['tg_id'],['Users.post_id']))
@@ -90,7 +94,7 @@ class Requests(Base):
     #  Текст обращения (problem)
     request_message: Mapped[str] = mapped_column(Text(), nullable=True)
     # Прикрепленные документы любого типа:
-    doc_status: Mapped[bool] = mapped_column(nullable=False) # Вложены ли документы.
+    doc_status: Mapped[bool] = mapped_column(nullable=False)  # Вложены ли документы.
 
     #  ---------------------------- Идентификаторы
     # Категория обращения "Главная" (в какой отдел распределять)
@@ -105,13 +109,13 @@ class Requests(Base):
     # В работе ли заявка: "at_work" , "complete" - статус запроса (insert, in_work, done или complete (, onupdate='insert') )
     request_status: Mapped[str] = mapped_column(String(150), server_default='insert')
 
-    notification_id: Mapped[int] = mapped_column(nullable=False, index=True, server_default='0')
+    # notification_id: Mapped[int] = mapped_column(nullable=False, index=True, server_default='0') - упразднено!
+    # JSON PickleType - ельзя применять с Mapped, по этому сосздадим отдельную табличку.
 
-
-
-
+    # --------------------------- Связи один ко многим
     # Отношение "многие ко одному" Requests с Users
-    many_requests_to_many_users: Mapped['Users'] = relationship("Users", back_populates="one_user_to_many_requests")
+    many_requests_to_many_users: Mapped['Users'] = relationship(
+        "Users", back_populates="one_user_to_many_requests")
 
     # Отношение "один ко многим"  Request c Discussion
     one_requests_to_many_discussion: Mapped[list['Discussion']] = relationship(
@@ -122,8 +126,43 @@ class Requests(Base):
 
     # back_populates - В двунаправленной связи доступ к связанным объектам может быть осуществлен из обоих концов связи.
 
+    # Отношение "один ко многим" Requests с HistoryDistributionRequests
+    one_request_to_many_histories: Mapped[list['HistoryDistributionRequests']] = relationship(
+        "HistoryDistributionRequests", back_populates="many_histories_to_one_request")
+
     # Ограничение полей:
     # __table_args__ = (ForeignKeyConstraint(['tg_id'],['RetailUsers.id_tg']))
+
+
+
+class HistoryDistributionRequests(Base):
+    __tablename__ = 'history_distribution_new_requests'
+
+    # id history_distribution
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+
+    # телеграмм id работника, которому направлено уведомление
+    notification_employees_id: Mapped[int] = mapped_column(ForeignKey('user_data.id_tg'), nullable=False,
+                                                           index=True, unique=False)  # (tg_id)
+
+    # id уведомления (рассылка поступившей задачи) сотруднику (id сообщения):
+    notification_id: Mapped[int] = mapped_column(nullable=False, index=True, unique=True)  # , server_default='0'
+
+    # id обращения в таблице Requests
+    reques_id: Mapped[int] = mapped_column(ForeignKey('requests_history.id'), nullable=False,
+                                           index=True, unique=False)
+
+    # ошибка отправки уведомления True - шибка, False - отправлено без проблем.
+    sending_error: Mapped[bool] = mapped_column(nullable=False,  server_default='False')
+
+    # --------------------------- Связи один ко многим
+    # Отношение "многие ко одному" HistoryDistributionRequests с Requests
+    many_histories_to_one_request: Mapped['Requests'] = relationship("Requests",
+                                                                     back_populates="one_request_to_many_histories")
+
+    # Отношение "многие ко одному" HistoryDistributionRequests с Users
+    many_histories_to_one_user: Mapped['Users'] = relationship(
+        "Users", back_populates="one_user_to_many_histories")
 
 
 # История обсуждения задач заказчика и исполнителя:

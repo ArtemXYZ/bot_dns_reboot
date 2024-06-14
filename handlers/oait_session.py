@@ -3,26 +3,17 @@
 """
 
 # -------------------------------- Стандартные модули
-import asyncio
 # -------------------------------- Сторонние библиотеки
-from aiogram import types, Router, F
-from aiogram.filters import CommandStart, Command, StateFilter, or_f
-from aiogram.client.default import DefaultBotProperties  # Обработка текста HTML разметкой
-from aiogram.fsm.state import State, StatesGroup
-from aiogram.fsm.context import FSMContext
+from aiogram import F, Router
+from aiogram.filters import StateFilter
 # -------------------------------- Локальные модули
-from handlers.text_message import *  # Список ругательств:
 from filters.chats_filters import *
 
 # from aiogram.utils.formatting import as_list, as_marked_section, Bold, Italic
 
 # from menu import keyboard_menu  # Кнопки меню - клавиатура внизу
-from menu import inline_menu  # Кнопки встроенного меню - для сообщений
 
-from menu.button_generator import get_keyboard
-
-from working_databases.query_builder import *
-from working_databases.events import *
+# from OLD.events import *
 from handlers.all_states import *
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -59,8 +50,14 @@ async def pick_up_request(callback: types.CallbackQuery,
     print(f'get_notification_id = {get_notification_id}')
 
     # Сравниваем в базе значение  notification_id при нажатии кнопкми (идентифицируеми кто нажал)
-    # запрос в базу данных
+    await check_notification_id_in_history_distribution(get_notification_id)
 
+
+    # Сначала меняем у всех сообщение, что бы остальные не успели нажать кнопку (или придумать механизм для такого)
+    # потом апдейтим ответственного в бд.
+
+    # Алгоритм:
+    #
 
 
 
