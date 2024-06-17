@@ -187,6 +187,18 @@ async def check_notification_id_in_history_distribution(get_notification_id: int
 
     return result
 
+async def get_tg_id_in_requests_history(request_id: int, session_pool: AsyncSession):
+    """
+     Ищем втора обращения (в базе значение tg_id по request_id в requests_history)
+    """
+
+    query = select(Requests.tg_id).where(Requests.id == request_id)
+    result_tmp = await session_pool.execute(query)
+    result = result_tmp.scalar_one_or_none()  # один результат или ничего.
+
+    return result
+
+
 
 async def update_responsible_person_id(
         search_request_id: int, update_responsible_person_id: int, session_pool: AsyncSession):
@@ -194,12 +206,11 @@ async def update_responsible_person_id(
     На вход 2 начения (где обновить - айди обращения, значение для обновления - ответственный за  задачу).
     """
     query = update(Requests).where(Requests.id == search_request_id).values(
-                responsible_person_id=update_responsible_person_id)
+        responsible_person_id=update_responsible_person_id, request_status='in_work')
     await session_pool.execute(query)
     # results = result_tmp.scalars()  #  # выдаст либо список либо пусой список. results_list_int
     await session_pool.commit()
     return print(f' Ответственный {update_responsible_person_id} по задаче №_{search_request_id} записан в Requests.')
-
 
 
 async def get_notification_id_and_employees_id_tuples(search_request_id: int, session_pool: AsyncSession):
@@ -211,7 +222,7 @@ async def get_notification_id_and_employees_id_tuples(search_request_id: int, se
                    HistoryDistributionRequests.notification_id).where(
         HistoryDistributionRequests.reques_id == search_request_id)
     result_tmp = await session_pool.execute(query)
-    result_tuples = result_tmp.all() # возвращает список кортежей
+    result_tuples = result_tmp.all()  # возвращает список кортежей
     # .scalar_one_or_none()  # один результат или ничего. .scalar()
 
     return result_tuples
@@ -231,8 +242,6 @@ async def get_full_name_employee(get_tg_id: int, session_pool: AsyncSession):
     # .scalar_one_or_none() .scalar()
 
     return result
-
-
 
 
 # -------------------------

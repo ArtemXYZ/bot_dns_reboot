@@ -106,7 +106,8 @@ class Requests(Base):
     name_subcategory: Mapped[str] = mapped_column(String(50), nullable=False)
     #  ---------------------------- Идентификаторы
 
-    # В работе ли заявка: "at_work" , "complete" - статус запроса (insert, in_work, done или complete (, onupdate='insert') )
+    # В работе ли заявка: "at_work" , "complete" - статус запроса (insert, in_work, done или complete cancel\
+    # (, onupdate='insert') )
     request_status: Mapped[str] = mapped_column(String(150), server_default='insert')
 
     # notification_id: Mapped[int] = mapped_column(nullable=False, index=True, server_default='0') - упразднено!
