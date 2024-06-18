@@ -13,6 +13,7 @@ from filters.chats_filters import *
 
 # from menu import keyboard_menu  # Кнопки меню - клавиатура внизу
 
+from menu.inline_menu import *  # Кнопки встроенного меню - для сообщений
 from working_databases.orm_query_builder import *
 from handlers.all_states import *
 
@@ -69,11 +70,11 @@ async def pick_up_request(callback: types.CallbackQuery,
     id_tuples = await get_notification_id_and_employees_id_tuples(request_id, session)
 
     # Узнаем количество работников на эту задачу (мы единственный исполнитель или нет? Все со статусом  in_work):
-    have_personal_status_in_working =  get_all_personal_status_in_working(request_id, session)
+    have_personal_status_in_working = await get_all_personal_status_in_working(request_id, session)
 
     # ================================================= 1 ==============================================================
     # 1. Есть ли еще кто то со статусом в работе о этой задаче ? Если никого нет и я нажал первый:
-    if not have_personal_status_in_working:  #  списки и другие коллекции оцениваются как True, если они не пусты
+    if not have_personal_status_in_working:  # списки и другие коллекции оцениваются как True, если они не пусты
 
         # Перебираем всех назначенных по этой задаче:
         for row in id_tuples:
@@ -81,7 +82,7 @@ async def pick_up_request(callback: types.CallbackQuery,
             notification_employees_id, notification_id = row  # for_chat_id, message_id
 
             # Если tg_id из рассылки равен tg_id юзера нажимающего кнопку, то изменяем сообщения у остальных.
-            if  notification_employees_id == get_user_id_callback:  # for_chat_id
+            if notification_employees_id == get_user_id_callback:  # for_chat_id
 
                 # Апдейтим ответственного в бд (HistoryDistributionRequests) + апдейт статуса в работе ('in_work').
                 await update_personal_status(request_id, get_user_id_callback, session)
@@ -89,7 +90,8 @@ async def pick_up_request(callback: types.CallbackQuery,
                 # todo текст самого сообщения только сокращенный.
 
                 # # ----------------------- Отправить уведомление тому, кто нажал кнопку.
-                await bot.edit_message_text(chat_id=get_user_id_callback, message_id=notification_id,
+                await bot.edit_message_text(
+                    chat_id=get_user_id_callback, message_id=notification_id,
                     text=f'Обращение принято в работу! Вы назначены ответственным по данной задаче (№_{request_id}).')
 
                 # ----------------------- Отправить уведомление заказчику (отправителю обращения):
@@ -100,11 +102,13 @@ async def pick_up_request(callback: types.CallbackQuery,
                     # Достать имя ответственного по этой задаче
                     # employee_name = await get_full_name_employee(get_user_id_callback, session)
 
-                    send_notification_in_work = await bot.send_message(chat_id=tg_id,
+                    send_notification_in_work = await bot.send_message(
+                        chat_id=tg_id,
                         text=f'Ваше обращение №_{request_id} принято в работу, исполнитель {callback_employee_name}.',
                         reply_markup=get_callback_btns(
-                            btns={'🗣 ОТКРЫТЬ ДИСКУССИЮ': 'open_discussion',
-                                  '❎ ОТМЕНИТЬ ЗАЯВКУ': 'cancel_request'},
+                            btns={
+                                '🗣 ОТКРЫТЬ ДИСКУССИЮ': 'open_discussion',
+                                '❎ ОТМЕНИТЬ ЗАЯВКУ': 'cancel_request'},
                             sizes=(1, 1))
                     )
                     # -------------------------------------- Запоминае идентиф. уведомления заказчика
@@ -116,23 +120,27 @@ async def pick_up_request(callback: types.CallbackQuery,
                 else:
                     # Если сообщение уже доставлялось, изменяем его:
                     await bot.edit_message_text(
-                        chat_id=tg_id, message_id = check_notification,
+                        chat_id=tg_id, message_id=check_notification,
                         text=f'Ваше обращение №_{request_id} принято в работу, исполнитель {callback_employee_name}.',
                         reply_markup=get_callback_btns(
-                           btns={
-                               '🗣 ОТКРЫТЬ ДИСКУССИЮ': 'open_discussion',
-                               '❎ ОТМЕНИТЬ ЗАЯВКУ': 'cancel_request'},
-                           sizes=(1, 1))
-                        )
+                            btns={
+                                '🗣 ОТКРЫТЬ ДИСКУССИЮ': 'open_discussion',
+                                '❎ ОТМЕНИТЬ ЗАЯВКУ': 'cancel_request'},
+                            sizes=(1, 1))
+                    )
 
 
             # Если tg_id из рассылки не равен tg_id юзера нажимающего кнопку, то изменяем его сообщение \
             # (у всех остальных).
             else:
 
+                # присоединиться, ЕСЛИ НАДО.
                 await bot.edit_message_text(
                     chat_id=notification_employees_id, message_id=notification_id,
-                    text=f'Ответственным по задаче №_{request_id} назначен {callback_employee_name}')
+                    text=f'Ответственным по задаче №_{request_id} назначен {callback_employee_name}',
+                    reply_markup=get_callback_btns(btns={'📨 ЗАБРАТЬ ПОДЗАДАЧУ': 'pick_up_request'}, sizes=(1, ))
+                )
+
 
     # ================================================= 2 ==============================================================
     # 2. Есть еще кто то со статусом в работе по этой задаче.  я не первый нажал, уже кто то работает по ней:
@@ -143,7 +151,6 @@ async def pick_up_request(callback: types.CallbackQuery,
             employee_name_row = await get_full_name_employee(i, session)
             employees_names.append(employee_name_row)
 
-
         # Перебираем всех назначенных по этой задаче:
         for row in id_tuples:
             notification_employees_id, notification_id = row
@@ -151,7 +158,6 @@ async def pick_up_request(callback: types.CallbackQuery,
             # -------------------------------------- Выбираем нажавшего
             # Если tg_id из рассылки равен tg_id юзера нажимающего кнопку, то изменяем сообщения у остальных.
             if notification_employees_id == get_user_id_callback:
-
                 # Апдейтим ответственного в бд (HistoryDistributionRequests) + апдейт статуса в работе ('in_work').
                 await update_personal_status(request_id, get_user_id_callback, session)
 
@@ -161,24 +167,26 @@ async def pick_up_request(callback: types.CallbackQuery,
                     text=f'Обращение принято в работу! Вы назначены ответственным по данной задаче (№_{request_id}),'
                          f' совместно с {employees_names}.')
 
+                    # !!! добавить завершить задачу кнопки
+                ...
+
                 # ----------------------- Отправить (исправить) уведомление заказчику (отправителю обращения):
                 # проверка на наличие уже отправленного сообщения заказчику (либо айди либо нон):
                 # Упраздняем проверку, т.к. второе условие, когда уже кто то есть ответственный, \
                 # подразумивает отправку уведоления заказчику. ТАк что достаем его из базы  и редактируем:
-
 
                 # Добавляем имя нажавшего к остальным, кто работает по задаче.
                 all_employees_in_working = employees_names.append(callback_employee_name)
 
                 # Если сообщение уже доставлялось, изменяем его:
                 await bot.edit_message_text(
-                chat_id = tg_id, message_id = check_notification,
-                text = f'Ваше обращение №_{request_id} принято в работу, исполнители: {all_employees_in_working}.',
-                reply_markup = get_callback_btns(
-                btns={
-                     '🗣 ОТКРЫТЬ ДИСКУССИЮ': 'open_discussion',
-                     '❎ ОТМЕНИТЬ ЗАЯВКУ': 'cancel_request'},
-                sizes=(1, 1))
+                    chat_id=tg_id, message_id=check_notification,
+                    text=f'Ваше обращение №_{request_id} принято в работу, исполнители: {all_employees_in_working}.',
+                    reply_markup=get_callback_btns(
+                        btns={
+                            '🗣 ОТКРЫТЬ ДИСКУССИЮ': 'open_discussion',
+                            '❎ ОТМЕНИТЬ ЗАЯВКУ': 'cancel_request'},
+                        sizes=(1, 1))
                 )
 
         # изменяем его сообщение у всех остальных:
@@ -191,51 +199,8 @@ async def pick_up_request(callback: types.CallbackQuery,
     # Очистка списка
     employees_names.clear()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# todo обновление статуса в рекуест если все завершили, то завершено, если 1 взял то в работе,
+#  если второй добавляется и есть в работе в реквест то ничего
 
 
 # ----------------------------------- тестовый вариант  - не работал

@@ -244,7 +244,7 @@ async def update_personal_status(
     query = update(HistoryDistributionRequests).where(
         HistoryDistributionRequests.request_id == search_request_id,
         HistoryDistributionRequests.notification_employees_id == search_notification_employees_id
-    ).values(request_status='in_work')
+    ).values(personal_status='in_work')
     await session_pool.execute(query)
     # results = result_tmp.scalars()  #  # выдаст либо список либо пусой список. results_list_int
     await session_pool.commit()

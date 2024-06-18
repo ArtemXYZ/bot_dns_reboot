@@ -94,7 +94,7 @@ class Requests(Base):
     #  перенесено в отдельную таблицу. Теперь ответственных несколькою
 
     # Айди ответного сообщения-уведомления на заявителя (для изменения в дальнейшем текста уведомления)
-    id_notification_for_tg_id: Mapped[int] = mapped_column(nullable=False, server_default='0')  # , index=True
+    id_notification_for_tg_id: Mapped[int] = mapped_column(nullable=True)  # , index=True
 
     #  Текст обращения (problem)
     request_message: Mapped[str] = mapped_column(Text(), nullable=True)
