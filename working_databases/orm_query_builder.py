@@ -187,6 +187,7 @@ async def check_notification_id_in_history_distribution(get_notification_id: int
 
     return result
 
+
 async def get_tg_id_in_requests_history(request_id: int, session_pool: AsyncSession):
     """
      Ищем втора обращения (в базе значение tg_id по request_id в requests_history)
@@ -199,18 +200,40 @@ async def get_tg_id_in_requests_history(request_id: int, session_pool: AsyncSess
     return result
 
 
+async def get_all_personal_status_in_working(search_request_id: int, session_pool: AsyncSession):
+    """
+    Есть ли еще кто то со статусом в работе?
+    Логика: Есть кто то еще, кто взял в работу эту задачу!
+    Нам необходимо узнать есть ли еще кто то по этой задаче, кто взял ее в работу.
+    Вытаскиваем всех кто имеет статус в работе и ? может добавить тех кто уже завершил по конкретному обращению.
+    используем только количество.
 
-async def update_responsible_person_id(
-        search_request_id: int, update_responsible_person_id: int, session_pool: AsyncSession):
+    Вернет всех кто взял задачу или завершил ее.
     """
-    На вход 2 начения (где обновить - айди обращения, значение для обновления - ответственный за  задачу).
+
+    query = select(HistoryDistributionRequests.notification_employees_id).where(
+        HistoryDistributionRequests.request_id == search_request_id,
+        HistoryDistributionRequests.personal_status == 'in_work')  # != 'not_working'
+    result_tmp = await session_pool.execute(query)
+    result = result_tmp.all()  # возвращает список кортежей
+
+    return result
+
+
+async def update_personal_status(
+        search_request_id: int, search_notification_employees_id: int, session_pool: AsyncSession):
     """
-    query = update(Requests).where(Requests.id == search_request_id).values(
-        responsible_person_id=update_responsible_person_id, request_status='in_work')
+    На вход 2 начения (обновляем статус конкретного работника, кто взял в работу задачу).
+    """
+    query = update(HistoryDistributionRequests).where(
+        HistoryDistributionRequests.request_id == search_request_id,
+        HistoryDistributionRequests.notification_employees_id == search_notification_employees_id
+    ).values(request_status='in_work')
     await session_pool.execute(query)
     # results = result_tmp.scalars()  #  # выдаст либо список либо пусой список. results_list_int
     await session_pool.commit()
-    return print(f' Ответственный {update_responsible_person_id} по задаче №_{search_request_id} записан в Requests.')
+    # return print(
+    #     f' Ответственный {search_notification_employees_id} по задаче №_{search_request_id} записан в Requests.')
 
 
 async def get_notification_id_and_employees_id_tuples(search_request_id: int, session_pool: AsyncSession):
@@ -220,7 +243,7 @@ async def get_notification_id_and_employees_id_tuples(search_request_id: int, se
 
     query = select(HistoryDistributionRequests.notification_employees_id,
                    HistoryDistributionRequests.notification_id).where(
-        HistoryDistributionRequests.reques_id == search_request_id)
+        HistoryDistributionRequests.request_id == search_request_id)
     result_tmp = await session_pool.execute(query)
     result_tuples = result_tmp.all()  # возвращает список кортежей
     # .scalar_one_or_none()  # один результат или ничего. .scalar()
@@ -228,13 +251,24 @@ async def get_notification_id_and_employees_id_tuples(search_request_id: int, se
     return result_tuples
 
 
+async def update_message_id_applicant(search_request_id: int, message_id_applicant: int, session_pool: AsyncSession):
+
+    """
+    Апдейтим айди отправленного сообщения в таблицу обращений Requests (поле: id_notification_for_tg_id)/
+    Для того, что бы в последующем можно было изменять его.
+    """
+    query = update(Requests).where(Requests.id == search_request_id).values(
+        id_notification_for_tg_id=message_id_applicant)
+    await session_pool.execute(query)
+    # results = result_tmp.scalars()  #  # выдаст либо список либо пусой список. results_list_int
+    await session_pool.commit()
+
+
+
 async def get_full_name_employee(get_tg_id: int, session_pool: AsyncSession):
     """
     Сравниваем в базе значение  notification_id при нажатии кнопкми (идентифицируеми кто нажал)
     """
-
-    # employee_name_tmp = session.execute(select(Users.full_name).where(Users.id_tg == get_tg_id)
-    # employee_name = employee_name_tmp.scalar_one_or_none()
 
     query = select(Users.full_name).where(Users.id_tg == get_tg_id)
     result_tmp = await session_pool.execute(query)

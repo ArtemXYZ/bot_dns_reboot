@@ -421,7 +421,7 @@ async def skip_and_send_message_users(callback: types.CallbackQuery,
                 text=f'Поступило новое обращение: {data_request_message_to_send['request_message']}'
                 , reply_markup=get_callback_btns(
                     btns={'📨 ЗАБРАТЬ ЗАЯВКУ': 'pick_up_request',
-                          '📂 ПЕРЕДАТЬ ЗАЯВКУ': 'transfer_request'},
+                          '📂 ДЕЛЕГИРОВАТЬ ЗАЯВКУ': 'delegate_request'},  # передать часть работы.
                     sizes=(1, 1))
             )
 
@@ -438,7 +438,7 @@ async def skip_and_send_message_users(callback: types.CallbackQuery,
         except TelegramBadRequest as e:
             print(f"Ошибка при отправке сообщения для chat_id {send}: {e}")
 
-            # созрантять чат айди, кому не отправили
+            # сохрантять чат айди, кому не отправили
             await add_row_sending_error(notification_employees_id, refresh_request_message_id, session)
 
             # Отправляем админу айди и другие (возможно полные) данные по юзеру, которому не доставлено оповещение.

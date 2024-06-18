@@ -10,7 +10,7 @@
 
 # -------------------------------- Стандартные модули
 # -------------------------------- Сторонние библиотеки
-from sqlalchemy import DateTime, Float, String, Integer, Text, Boolean, func, ForeignKey, LargeBinary  #, PickleType
+from sqlalchemy import DateTime, Float, String, Integer, Text, Boolean, func, ForeignKey, LargeBinary  # , PickleType
 # JSON
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from typing import List
@@ -90,7 +90,12 @@ class Requests(Base):
     tg_id: Mapped[int] = mapped_column(ForeignKey('user_data.id_tg'), nullable=False, index=True)  # Fk
 
     # ответственное лицо - user_id(tg_id) может быть пусто = 0,значит не назначен ответственный (переназначен).
-    responsible_person_id: Mapped[int] = mapped_column(nullable=True, server_default='0')
+    # responsible_person_id: Mapped[int] = mapped_column(nullable=True, server_default='0')
+    #  перенесено в отдельную таблицу. Теперь ответственных несколькою
+
+    # Айди ответного сообщения-уведомления на заявителя (для изменения в дальнейшем текста уведомления)
+    id_notification_for_tg_id: Mapped[int] = mapped_column(nullable=False)  # , index=True
+
     #  Текст обращения (problem)
     request_message: Mapped[str] = mapped_column(Text(), nullable=True)
     # Прикрепленные документы любого типа:
@@ -106,8 +111,7 @@ class Requests(Base):
     name_subcategory: Mapped[str] = mapped_column(String(50), nullable=False)
     #  ---------------------------- Идентификаторы
 
-    # В работе ли заявка: "at_work" , "complete" - статус запроса (insert, in_work, done или complete cancel\
-    # (, onupdate='insert') )
+    # В работе ли заявка: "at_work" , "complete" - статус запроса (insert, in_work, complete, cancel
     request_status: Mapped[str] = mapped_column(String(150), server_default='insert')
 
     # notification_id: Mapped[int] = mapped_column(nullable=False, index=True, server_default='0') - упразднено!
@@ -131,8 +135,33 @@ class Requests(Base):
     one_request_to_many_histories: Mapped[list['HistoryDistributionRequests']] = relationship(
         "HistoryDistributionRequests", back_populates="many_histories_to_one_request")
 
+    # # Отношение "один ко многим" Requests с Responsible - упразднено
+    # one_request_to_many_responsible: Mapped[list['Responsible']] = relationship(
+    #     "Responsible", back_populates="many_responsible_to_one_request")
+
     # Ограничение полей:
     # __table_args__ = (ForeignKeyConstraint(['tg_id'],['RetailUsers.id_tg']))
+
+
+# class Responsible(Base): - упразднено, реализуем функционал на базе HistoryDistributionRequests
+#     __tablename__ = 'responsible_person'  # Множество ответственных по 1 задаче
+#
+#     # id responsible_person
+#     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+#
+#     responsible_person_id: Mapped[int] = mapped_column(nullable=True, server_default='0')
+#
+#     # id обращения в таблице Requests
+#     reques_id: Mapped[int] = mapped_column(ForeignKey('requests_history.id'), nullable=False,
+#                                            index=True, unique=False)
+#
+#     # Статус выполнения части работы по заявке конкретного ответственного:  (in_work, done)
+#     responsible_status: Mapped[str] = mapped_column(String(150), server_default='in_work')
+#
+#     # --------------------------- Связи один ко многим
+#     # Отношение "многие ко одному" Responsible с Requests
+#     many_responsible_to_one_request: Mapped['Requests'] = relationship("Requests",
+#                                                                        back_populates="one_request_to_many_responsible")
 
 
 
@@ -150,11 +179,16 @@ class HistoryDistributionRequests(Base):
     notification_id: Mapped[int] = mapped_column(nullable=False, index=True, unique=True)  # , server_default='0'
 
     # id обращения в таблице Requests
-    reques_id: Mapped[int] = mapped_column(ForeignKey('requests_history.id'), nullable=False,
+    request_id: Mapped[int] = mapped_column(ForeignKey('requests_history.id'), nullable=False,
                                            index=True, unique=False)
 
     # ошибка отправки уведомления True - шибка, False - отправлено без проблем.
-    sending_error: Mapped[bool] = mapped_column(nullable=False,  server_default='False')
+    sending_error: Mapped[bool] = mapped_column(nullable=False, server_default='False')
+
+    # Статус по заявке (выполнения части заявки) для конкретного оповещенного работника:  (in_work, done)
+    # Если пользователь взял в работу или не брал, завершил или в процессе. По последнему закрытие заявки.
+    personal_status: Mapped[str] = mapped_column(String(150), server_default='not_working')
+
 
     # --------------------------- Связи один ко многим
     # Отношение "многие ко одному" HistoryDistributionRequests с Requests
