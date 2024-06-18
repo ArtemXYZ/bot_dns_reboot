@@ -154,7 +154,7 @@ async def add_row_sending_error(
 
 # измененная функция update_notification_id  - работает +
 async def add_row_in_history_distribution(add_notification_employees_id: int, add_notification_id: int,
-                                          add_reques_id: int, session_pool: AsyncSession):
+                                          add_request_id: int, session_pool: AsyncSession):
     """
     На вход 3 начения (где обновить - айди обращения, значение для обновления. tg_id обратившегося пользователя)
     notification_employees_id: телеграмм id работника, которому направлено уведомление
@@ -165,7 +165,7 @@ async def add_row_in_history_distribution(add_notification_employees_id: int, ad
     data_set = HistoryDistributionRequests(
         notification_employees_id=add_notification_employees_id,
         notification_id=add_notification_id,
-        reques_id=add_reques_id
+        request_id=add_request_id
         # , sending_error = False  server_default
     )
     session_pool.add(data_set)
@@ -179,13 +179,29 @@ async def check_notification_id_in_history_distribution(get_notification_id: int
     Сравниваем в базе значение  notification_id при нажатии кнопкми (идентифицируеми кто нажал)
     """
 
-    query = select(HistoryDistributionRequests.reques_id).where(
+    query = select(HistoryDistributionRequests.request_id).where(
         HistoryDistributionRequests.notification_id == get_notification_id)
     result_tmp = await session_pool.execute(query)
     result = result_tmp.scalar_one_or_none()  # один результат или ничего.
     # .scalar_one_or_none() .scalar()
 
     return result
+
+
+
+async def check_notification_for_tg_id(request_id: int, session_pool: AsyncSession):
+    """
+     Ищем id оповещения для автора обращения (отправлялось ли уведомление заявителю?))
+    """
+
+    query = select(Requests.id_notification_for_tg_id).where(Requests.id == request_id)
+    result_tmp = await session_pool.execute(query)
+    result = result_tmp.scalar_one_or_none()  # один результат или ничего.
+
+    return result
+
+
+
 
 
 async def get_tg_id_in_requests_history(request_id: int, session_pool: AsyncSession):
