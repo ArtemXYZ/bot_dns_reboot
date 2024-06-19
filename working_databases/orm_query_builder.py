@@ -208,7 +208,7 @@ async def check_personal_status_for_tg_id(tg_id: int, request_id, session_pool: 
 
     query = select(HistoryDistributionRequests.notification_employees_id).where(
         HistoryDistributionRequests.notification_employees_id == tg_id,
-        HistoryDistributionRequests.notification_employees_id == request_id,
+        HistoryDistributionRequests.request_id == request_id,
         HistoryDistributionRequests.personal_status == 'in_work'
     )
     result_tmp = await session_pool.execute(query)

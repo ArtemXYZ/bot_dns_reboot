@@ -81,6 +81,7 @@ async def pick_up_request(callback: types.CallbackQuery,
     # ================================================= 1 ==============================================================
     # 1. Есть ли еще кто то со статусом в работе о этой задаче ? Если никого нет и я нажал первый:
     if not have_personal_status_in_working:  # списки и другие коллекции оцениваются как True, если они не пусты +
+        # Если у вас пустой список, условие if not have_personal_status_in_working: будет истинным.
 
         # Перебираем всех назначенных по этой задаче:
         for row in id_tuples:
@@ -211,7 +212,7 @@ async def pick_up_request(callback: types.CallbackQuery,
 
                     # Если id рассылки уже со статусом  в работе, то у него изменяем на другое сообщение
                     await bot.edit_message_text(
-                        chat_id=get_user_id_callback, message_id=notification_id,
+                        chat_id=notification_employees_id, message_id=notification_id,
                         text=f'По данной задаче (№_{request_id}), добавились участники: {employees_names}.',
                         reply_markup=get_callback_btns(btns={'✅ ЗАВЕРШИТЬ ПОДЗАДАЧУ': '1232',
                                                              '❎ ОТМЕНИТЬ УЧАСТИЕ': '5373'
