@@ -139,7 +139,6 @@ async def pick_up_request(callback: types.CallbackQuery,
                             sizes=(1, 1))
                     )
 
-
             # Если tg_id из рассылки не равен tg_id юзера нажимающего кнопку, то изменяем его сообщение \
             # (у всех остальных).
             else:
@@ -204,14 +203,35 @@ async def pick_up_request(callback: types.CallbackQuery,
                         sizes=(1, 1))
                 )
 
-        # изменяем его сообщение у всех остальных:
-        else:
+            # изменяем его сообщение у всех остальных:
+            else:
 
-            await bot.edit_message_text(
-                chat_id=notification_employees_id, message_id=notification_id,
-                text=f'Ответственными по задаче №_{request_id} назначены: {all_employees_in_working}',
-                reply_markup=get_callback_btns(btns={'🧩 ЗАБРАТЬ ПОДЗАДАЧУ': 'pick_up_request'}, sizes=(1,))
-            )
+                # -------------------  Проверка, является ли челоек сооучастником по задаче:
+                # роверяем  id рассылки на наличие  статуса: в работе
+
+                check_personal_status = await check_personal_status_for_tg_id(notification_employees_id,  session) # -> int or None
+
+                # Только участникам задачи:
+                if check_personal_status is not None: # содержит значение
+
+                    # Если id рассылки уже со статусом  в работе, то у него изменяем на другое сообщение
+                    await bot.edit_message_text(
+                        chat_id=get_user_id_callback, message_id=notification_id,
+                        text=f'По данной задаче (№_{request_id}), добавились участники: {employees_names}.',
+                        reply_markup=get_callback_btns(btns={'✅ ЗАВЕРШИТЬ ПОДЗАДАЧУ': '1232',
+                                                             '❎ ОТМЕНИТЬ УЧАСТИЕ': '5373'
+                                                             }, sizes=(1, 1))
+                    )
+
+                elif check_personal_status is None:
+                    # Тем, кто не соучастник по задаче (оповещенцам):
+                    await bot.edit_message_text(
+                        chat_id=notification_employees_id, message_id=notification_id,
+                        text=f'Ответственными по задаче №_{request_id} назначены: {all_employees_in_working}',
+                        reply_markup=get_callback_btns(btns={'🧩 ЗАБРАТЬ ПОДЗАДАЧУ': 'pick_up_request'}, sizes=(1,))
+                    )
+
+
 
 
 # todo обновление статуса в рекуест если все завершили, то завершено, если 1 взял то в работе,

@@ -201,6 +201,22 @@ async def check_notification_for_tg_id(request_id: int, session_pool: AsyncSessi
     return result
 
 
+async def check_personal_status_for_tg_id(tg_id: int, session_pool: AsyncSession) -> Optional[int]:
+    """
+     Ищем personal_status ==  in_work по tg_id в таблице  HistoryDistributionRequests
+    """
+
+    query = select(HistoryDistributionRequests.notification_employees_id).where(
+        HistoryDistributionRequests.notification_employees_id == tg_id,
+        HistoryDistributionRequests.personal_status == 'in_work'
+    )
+    result_tmp = await session_pool.execute(query)
+    result = result_tmp.scalar_one_or_none()  # один результат или ничего.
+
+    return result
+
+
+
 
 
 
