@@ -16,7 +16,7 @@ from filters.chats_filters import *
 from menu.inline_menu import *  # Кнопки встроенного меню - для сообщений
 from working_databases.orm_query_builder import *
 from handlers.all_states import *
-
+from handlers.data_preparation import *
 # ----------------------------------------------------------------------------------------------------------------------
 # Назначаем роутер для всех типов чартов:
 oait_router = Router()
@@ -75,6 +75,8 @@ async def pick_up_request(callback: types.CallbackQuery,
 
     # Вытаскиваем имена всех (по айди) остальных ответственных со статусом в работе:
     employees_names = await get_employees_names(have_personal_status_in_working, session)
+
+    all_employees_in_working = all_employees(employees_names , callback_employee_name)
 
     # ================================================= 1 ==============================================================
     # 1. Есть ли еще кто то со статусом в работе о этой задаче ? Если никого нет и я нажал первый:
@@ -183,14 +185,6 @@ async def pick_up_request(callback: types.CallbackQuery,
                 # Упраздняем проверку, т.к. второе условие, когда уже кто то есть ответственный, \
                 # подразумивает отправку уведоления заказчику. ТАк что достаем его из базы  и редактируем:
 
-                # Добавляем имя нажавшего к остальным, кто работает по задаче.
-                # Если Пусто
-                if employees_names is None: #
-                    all_employees_in_working = callback_employee_name
-                # Если множество сотрудников (в employees_names есть сотрудники)
-                else:
-                    all_employees_in_working = f'{employees_names}, {callback_employee_name}'  # -> "Иванов Иван, ..., "
-
 
                 # Если сообщение уже доставлялось, изменяем его:
                 await bot.edit_message_text(
@@ -209,7 +203,8 @@ async def pick_up_request(callback: types.CallbackQuery,
                 # -------------------  Проверка, является ли челоек сооучастником по задаче:
                 # роверяем  id рассылки на наличие  статуса: в работе
 
-                check_personal_status = await check_personal_status_for_tg_id(notification_employees_id,  session) # -> int or None
+                check_personal_status = await check_personal_status_for_tg_id(
+                    notification_employees_id, request_id,  session) # -> int or None
 
                 # Только участникам задачи:
                 if check_personal_status is not None: # содержит значение
@@ -223,7 +218,7 @@ async def pick_up_request(callback: types.CallbackQuery,
                                                              }, sizes=(1, 1))
                     )
 
-                elif check_personal_status is None:
+                else:
                     # Тем, кто не соучастник по задаче (оповещенцам):
                     await bot.edit_message_text(
                         chat_id=notification_employees_id, message_id=notification_id,
