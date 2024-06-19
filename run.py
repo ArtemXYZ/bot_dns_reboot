@@ -128,6 +128,7 @@ dp.include_router(general_router)
 # ---------------------------------------------------- Зацикливание работы бота
 # Отслеживание событий на сервере тг бота:
 async def run_bot():
+
     # ---------------------
     async def on_startup(bot):
         # Удаление Webhook и всех ожидающих обновлений
@@ -137,8 +138,27 @@ async def run_bot():
         await startup_on(session_pool=session_pool_LOCAL_DB)
 
     async def on_shutdown(bot):
+
         # await dp.stop_polling()
-        await shutdown_on()
+        # await shutdown_on()
+        async def shutdown_on():
+            """
+                Корректное завершение работы вашего бота (stop_polling).
+                Вызовите метод stop_polling: Если вы используете метод длительного опроса (start_polling)
+                для получения обновлений от серверов Telegram, убедитесь, что вы вызываете метод stop_polling
+                при завершении работы вашего бота. Это позволит корректно завершить процесс опроса серверов Telegram.
+            """
+            await dp.stop_polling()
+            await asyncio.sleep(1)
+            await dp.storage.close()
+            await bot.close() # Закрытие сессии бота при завершении работы
+
+            # Останавливаем процесс получения обновлений
+            # await dp.stop_polling()
+
+            print('Бот лег!')
+
+
 
     # ---------------------
     dp.startup.register(on_startup)  # действия при старте бота +
@@ -156,12 +176,18 @@ async def run_bot():
     # BotCommandScopeAllPrivateChats - для приват чартов  # todo здесь переделать разобраться!
     # BotCommandScopeDefault - для всех чартов
 
-    await dp.start_polling(bot, skip_updates=True, polling_timeout = 1, close_bot_session = True,
-                           allowed_updates=['message', 'edited_message', 'callback_query'])
+    await dp.start_polling(
+        bot, skip_updates=True, polling_timeout = 3, handle_signals=True,  close_bot_session = True,
+         allowed_updates=['message', 'edited_message', 'callback_query'] # handle_as_tasks=True,
+    )
     # , interval=1, polling_timeout = 10 - Задержка в получении обновлений:
     #  allowed_updates=ALLOWED_UPDATES, - передаем туда список разрешенных
     #  событий для бота с сервера
     # , interval=2 интервал запросов на обновление.
+#     allowed_updates: Список типов обновлений, которые бот будет получать.
+#     Может включать: 'message', `'edited_message''edited_message', 'channel_post',
+#     `'edited_channel_pos'edited_channel_post', 'inline_query', `'chosen_inline'chosen_inline_result',
+#     `'callback'callback_query', 'shipping_query', 'pre_checkout_query', 'poll', 'poll_answer', и другие.
 
 
 

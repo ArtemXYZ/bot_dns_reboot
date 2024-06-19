@@ -54,6 +54,7 @@ async def pick_up_request(callback: types.CallbackQuery,
     get_user_id_callback = callback.from_user.id
 
     callback_employee_name = await get_full_name_employee(get_user_id_callback, session)
+    employees_names = []
 
     # Сравниваем в базе значение  notification_id при нажатии кнопками (идентифицируем кто нажал), узнаем айди задачи
     request_id = await check_notification_id_in_history_distribution(get_notification_id, session)
@@ -92,7 +93,12 @@ async def pick_up_request(callback: types.CallbackQuery,
                 # # ----------------------- Отправить уведомление тому, кто нажал кнопку.
                 await bot.edit_message_text(
                     chat_id=get_user_id_callback, message_id=notification_id,
-                    text=f'Обращение принято в работу! Вы назначены ответственным по данной задаче (№_{request_id}).')
+                    text=f'Обращение принято в работу! Вы назначены ответственным по данной задаче (№_{request_id}).',
+                    reply_markup=get_callback_btns(btns={'✅ ЗАВЕРШИТЬ ПОДЗАДАЧУ': '1232',
+                                                         '❎ ОТМЕНИТЬ ПОДЗАДАЧУ': '5373'
+                                                         }, sizes=(1, 1))
+                )
+
 
                 # ----------------------- Отправить уведомление заказчику (отправителю обращения):
 
@@ -138,7 +144,7 @@ async def pick_up_request(callback: types.CallbackQuery,
                 await bot.edit_message_text(
                     chat_id=notification_employees_id, message_id=notification_id,
                     text=f'Ответственным по задаче №_{request_id} назначен {callback_employee_name}',
-                    reply_markup=get_callback_btns(btns={'📨 ЗАБРАТЬ ПОДЗАДАЧУ': 'pick_up_request'}, sizes=(1, ))
+                    reply_markup=get_callback_btns(btns={'🧩 ЗАБРАТЬ ПОДЗАДАЧУ': 'pick_up_request'}, sizes=(1, ))
                 )
 
 
@@ -146,9 +152,11 @@ async def pick_up_request(callback: types.CallbackQuery,
     # 2. Есть еще кто то со статусом в работе по этой задаче.  я не первый нажал, уже кто то работает по ней:
     else:
         # Вытаскиваем имена всех (по айди) остальных ответственных со статусом в работе:
-        employees_names = []
+
         for i in have_personal_status_in_working:
-            employee_name_row = await get_full_name_employee(i, session)
+            employee_id = i[0] # Извлекаем конкретное значение !!!
+            print(f'employee_id = {employee_id} !!!' )
+            employee_name_row = await get_full_name_employee(int(employee_id), session)
             employees_names.append(employee_name_row)
 
         # Перебираем всех назначенных по этой задаче:
@@ -165,7 +173,11 @@ async def pick_up_request(callback: types.CallbackQuery,
                 await bot.edit_message_text(
                     chat_id=get_user_id_callback, message_id=notification_id,
                     text=f'Обращение принято в работу! Вы назначены ответственным по данной задаче (№_{request_id}),'
-                         f' совместно с {employees_names}.')
+                         f' совместно с {employees_names}.',
+                    reply_markup=get_callback_btns(btns={'✅ ЗАВЕРШИТЬ ПОДЗАДАЧУ': '1232',
+                                                         '❎ ОТМЕНИТЬ ПОДЗАДАЧУ': '5373'
+                                                         }, sizes=(1, 1))
+                )
 
                     # !!! добавить завершить задачу кнопки
                 ...
@@ -194,8 +206,9 @@ async def pick_up_request(callback: types.CallbackQuery,
 
             await bot.edit_message_text(
                 chat_id=notification_employees_id, message_id=notification_id,
-                text=f'Ответственными по задаче №_{request_id} назначены: {all_employees_in_working}')
-
+                text=f'Ответственными по задаче №_{request_id} назначены: {all_employees_in_working}',
+                reply_markup=get_callback_btns(btns={'🧩 ЗАБРАТЬ ПОДЗАДАЧУ': 'pick_up_request'}, sizes=(1,))
+            )
     # Очистка списка
     employees_names.clear()
 

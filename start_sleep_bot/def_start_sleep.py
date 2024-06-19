@@ -8,12 +8,16 @@
 # -------------------------------- Стандартные модули
 # -------------------------------- Сторонние библиотеки
 # import asyncio
+# from aiogram import Bot, Dispatcher
 # from run import dp
+
 
 import numpy as np
 from sqlalchemy.ext.asyncio import AsyncSession
 # -------------------------------- Локальные модули
 from working_databases.configs import *
+
+
 
 # from dotenv import find_dotenv, load_dotenv  # Для переменных окружения
 # load_dotenv(find_dotenv())  # Загружаем переменную окружения
@@ -196,19 +200,25 @@ async def startup_on(session_pool: AsyncSession):
 
 
 # -------------------- При выключении
-async def shutdown_on():
-    """
-        Корректное завершение работы вашего бота (stop_polling).
-        Вызовите метод stop_polling: Если вы используете метод длительного опроса (start_polling)
-        для получения обновлений от серверов Telegram, убедитесь, что вы вызываете метод stop_polling
-        при завершении работы вашего бота. Это позволит корректно завершить процесс опроса серверов Telegram.
-    """
-
-    # Останавливаем процесс получения обновлений
-    # await dp.stop_polling()
-
-
-    print('Бот лег!')
+# async def shutdown_on():
+#     """
+#         Корректное завершение работы вашего бота (stop_polling).
+#         Вызовите метод stop_polling: Если вы используете метод длительного опроса (start_polling)
+#         для получения обновлений от серверов Telegram, убедитесь, что вы вызываете метод stop_polling
+#         при завершении работы вашего бота. Это позволит корректно завершить процесс опроса серверов Telegram.
+#     """
+#     await asyncio.sleep(1)
+#     await dp.storage.close()
+#     # Закрытие сессии бота при завершении работы
+#     await bot.close()
+#
+#
+#
+#     # Останавливаем процесс получения обновлений
+#     # await dp.stop_polling()
+#
+#
+#     print('Бот лег!')
 
 
 
