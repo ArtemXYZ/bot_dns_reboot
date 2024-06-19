@@ -408,7 +408,7 @@ async def skip_and_send_message_users(callback: types.CallbackQuery,
     # Получаем список id работников на рассылку:
     # mailing_list = generator_mailing_list(data_request_message_to_send)
     # mailing_list = [141407179, 143453792,  163904370,  1206297168, 1372644288]
-    mailing_list = [143453792, 500520383]    # 143453792, 500520383 - санек и маша  , 1262916285 - эльвира
+    mailing_list = [1372644288, 500520383]    # 143453792, 500520383 - санек и маша  , 1262916285 - эльвира
 
     for send in mailing_list:
         # Если пользователь удалил бота, мы не можем ему отправить уведомление о задаче, \

@@ -231,7 +231,7 @@ async def get_all_personal_status_in_working(search_request_id: int, session_poo
         HistoryDistributionRequests.request_id == search_request_id,
         HistoryDistributionRequests.personal_status == 'in_work')  # != 'not_working'
     result_tmp = await session_pool.execute(query)
-    result = result_tmp.all()  # возвращает список кортежей
+    result = result_tmp.all()  # возвращает список кортежей [(1,), (2,), (3,)] или []
 
     return result
 
@@ -292,6 +292,40 @@ async def get_full_name_employee(get_tg_id: int, session_pool: AsyncSession):
     # .scalar_one_or_none() .scalar()
 
     return result
+
+
+
+async def get_employees_names(have_personal_status_in_working, session_pool: AsyncSession):
+    """
+    На выходе: employees_names_str,
+    содержит имена сотрудников, разделенные ", ", или None, если have_personal_status_in_working пусто.
+    """
+
+    employees_names = []
+
+    # Если список не пустой (есть ответственные по задаче)
+    if have_personal_status_in_working:
+
+        # Вытаскиваем имена всех (по айди) остальных ответственных со статусом в работе:
+        for i in have_personal_status_in_working:
+            # каждая итерация цикла будет предоставлять вам один кортеж из списка.
+            employee_id = i[0]  # По этому, Извлекаем конкретное значение ( каждый кортеж содержит только одно значение)
+            # -> число без кавычек.
+            # print(f'employee_id = {employee_id} !!!')
+            employee_name_row = await get_full_name_employee(int(employee_id), session_pool)  # -> "Иванов Иван"
+            # print(f'employee_name_row = {employee_name_row} !!!')
+            employees_names.append(employee_name_row)
+            # Преобразование списка имен в строку с разделителем ", "
+
+            employees_names_str = ", ".join(employees_names)
+            # Очистка списка
+            # employees_names.clear() может быть излишним,
+            # так как переменная employees_names объявлена внутри функции и будет очищена при каждом вызове).
+
+    else:
+        employees_names_str = None
+
+    return employees_names_str
 
 
 # -------------------------
