@@ -65,18 +65,13 @@ async def pick_up_request(callback: types.CallbackQuery,
 
     # Проверка есть ли оповещение для заявителя (либо айди либо нон)
     check_notification = await check_notification_for_tg_id(request_id, session)
-    print(f'есть ли оповещение для заявителя (либо айди либо нон) {check_notification}.')
+    # print(f'есть ли оповещение для заявителя (либо айди либо нон) {check_notification}.')
 
     # Получаем список id работников кому было разослано уведомление: get_notification_id_and_employees_id_tuples
     id_tuples = await get_notification_id_and_employees_id_tuples(request_id, session)
 
     # Узнаем количество работников на эту задачу (мы единственный исполнитель или нет? Все со статусом  in_work):
     have_personal_status_in_working = await get_all_personal_status_in_working(request_id, session)  # работает
-
-    # Вытаскиваем имена всех (по айди) остальных ответственных со статусом в работе:
-    employees_names = await get_employees_names(have_personal_status_in_working, session)
-
-    all_employees_in_working = all_employees(employees_names , callback_employee_name)
 
     # ================================================= 1 ==============================================================
     # 1. Есть ли еще кто то со статусом в работе о этой задаче ? Если никого нет и я нажал первый:
@@ -108,7 +103,7 @@ async def pick_up_request(callback: types.CallbackQuery,
 
                 # ----------------------- Отправить уведомление заказчику (отправителю обращения):
 
-                # Проверка есть ли оповещение для заявителя (либо = айди либо = нон):
+                # Проверка есть ли уже оповещение для заявителя (либо = айди либо = нон):
                 if check_notification is None:
 
                     # Достать имя ответственного по этой задаче
@@ -153,7 +148,6 @@ async def pick_up_request(callback: types.CallbackQuery,
                     reply_markup=get_callback_btns(btns={'🧩 ЗАБРАТЬ ПОДЗАДАЧУ': 'pick_up_request'}, sizes=(1, ))
                 )
 
-
     # ================================================= 2 ==============================================================
     # 2. Есть еще кто то со статусом в работе по этой задаче.  я не первый нажал, уже кто то работает по ней:
     else:
@@ -169,10 +163,27 @@ async def pick_up_request(callback: types.CallbackQuery,
                 await update_personal_status(request_id, get_user_id_callback, session)
 
                 # Отправляем уведомление для нажавшего кнопку:
+                # ------------------------------------------------
+                # ! необходимо еще раз перепроверить сколько теперь ответственных, т.к произошел апдейт,
+                # а в переменных старые значения.
+                # Узнаем количество работников на эту задачу осле апдейта:
+                have_personal_status_in_working_for_if = await get_all_personal_status_in_working(request_id, session)
+
+                # Вытаскиваем имена всех (по айди) остальных ответственных со статусом в работе без нажавшего кнопку:
+                employees_names_minus_get_user_id_callback_for_if = await get_employees_names(
+                    have_personal_status_in_working_for_if, session, exception=get_user_id_callback)
+
+                # Всех нажавших кнопку:
+                all_employees_in_working_for_if = await get_employees_names(
+                    have_personal_status_in_working_for_if, session)
+
+
+
+                # ------------------------------------------------
                 await bot.edit_message_text(
                     chat_id=get_user_id_callback, message_id=notification_id,
                     text=f'Обращение принято в работу! Вы назначены ответственным по данной задаче (№_{request_id}),'
-                         f' совместно с {employees_names}.',
+                         f' совместно с {employees_names_minus_get_user_id_callback_for_if}.',
                     reply_markup=get_callback_btns(btns={'✅ ЗАВЕРШИТЬ ПОДЗАДАЧУ': '1232',
                                                          '❎ ОТМЕНИТЬ УЧАСТИЕ': '5373'
                                                          }, sizes=(1, 1))
@@ -185,12 +196,10 @@ async def pick_up_request(callback: types.CallbackQuery,
                 # проверка на наличие уже отправленного сообщения заказчику (либо айди либо нон):
                 # Упраздняем проверку, т.к. второе условие, когда уже кто то есть ответственный, \
                 # подразумивает отправку уведоления заказчику. ТАк что достаем его из базы  и редактируем:
-
-
-                # Если сообщение уже доставлялось, изменяем его:
-                await bot.edit_message_text(
+                await bot.edit_message_text( # Изменяем доставленное уведомление:
                     chat_id=tg_id, message_id=check_notification,
-                    text=f'Ваше обращение №_{request_id} принято в работу, исполнители: {all_employees_in_working}.',
+                    text=f'Ваше обращение №_{request_id} принято в работу,'
+                         f' соисполнители: {all_employees_in_working_for_if}.',
                     reply_markup=get_callback_btns(
                         btns={
                             '🗣 ОТКРЫТЬ ДИСКУССИЮ': 'open_discussion',
@@ -201,19 +210,33 @@ async def pick_up_request(callback: types.CallbackQuery,
             # изменяем его сообщение у всех остальных:
             else:
 
-                # -------------------  Проверка, является ли челоек сооучастником по задаче:
-                # роверяем  id рассылки на наличие  статуса: в работе
+                # Узнаем количество работников на эту задачу осле апдейта:
+                have_personal_status_in_working_for_else = await get_all_personal_status_in_working(request_id, session)
 
+                # Вытаскиваем имена всех (по айди) остальных ответственных со статусом в работе без нажавшего кнопку:
+                employees_names_minus_get_user_id_callback_for_else = await get_employees_names(
+                    have_personal_status_in_working_for_else, session, exception=get_user_id_callback)
+
+                # Всех нажавших кнопку:
+                all_employees_in_working_for_else = await get_employees_names(
+                    have_personal_status_in_working_for_else, session)
+
+                employee_name_for_else = await get_full_name_employee(get_user_id_callback, session)
+
+                # -------------------  Проверка, является ли человек соучастником по задаче:
+                # роверяем  id сотрудника на наличие  статуса: в работе
                 check_personal_status = await check_personal_status_for_tg_id(
                     notification_employees_id, request_id,  session) # -> int or None
 
-                # Только участникам задачи:
+                # Если сотрудник учавствует в задаче (статус 'in_work'):
                 if check_personal_status is not None: # содержит значение
 
                     # Если id рассылки уже со статусом  в работе, то у него изменяем на другое сообщение
                     await bot.edit_message_text(
                         chat_id=notification_employees_id, message_id=notification_id,
-                        text=f'По данной задаче (№_{request_id}), добавились участники: {employees_names}.',
+                        text=f'По данной задаче (№_{request_id}), добавился новый участник:'
+                             f' {employee_name_for_else},'
+                             f' соисполнители: {employees_names_minus_get_user_id_callback_for_else}.',
                         reply_markup=get_callback_btns(btns={'✅ ЗАВЕРШИТЬ ПОДЗАДАЧУ': '1232',
                                                              '❎ ОТМЕНИТЬ УЧАСТИЕ': '5373'
                                                              }, sizes=(1, 1))
@@ -223,7 +246,7 @@ async def pick_up_request(callback: types.CallbackQuery,
                     # Тем, кто не соучастник по задаче (оповещенцам):
                     await bot.edit_message_text(
                         chat_id=notification_employees_id, message_id=notification_id,
-                        text=f'Ответственными по задаче №_{request_id} назначены: {all_employees_in_working}',
+                        text=f'Ответственными по задаче №_{request_id} назначены: {all_employees_in_working_for_else}',
                         reply_markup=get_callback_btns(btns={'🧩 ЗАБРАТЬ ПОДЗАДАЧУ': 'pick_up_request'}, sizes=(1,))
                     )
 

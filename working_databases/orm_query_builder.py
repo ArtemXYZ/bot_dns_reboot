@@ -312,37 +312,70 @@ async def get_full_name_employee(get_tg_id: int, session_pool: AsyncSession):
 
 
 
-async def get_employees_names(have_personal_status_in_working, session_pool: AsyncSession):
+async def get_employees_names(have_personal_status_in_working, session_pool: AsyncSession, exception=None):
     """
+    exception - исключаем из списка сотруднка (нужно для вариаций сообщений пользователям об ответственных по задаче).
+
     На выходе: employees_names_str,
     содержит имена сотрудников, разделенные ", ", или None, если have_personal_status_in_working пусто.
+    На вход: [(1,), (2,), (3,)] или []
     """
+    # exception = None
 
     employees_names = []
 
-    # Если список не пустой (есть ответственные по задаче)
-    if have_personal_status_in_working:
+    if exception is None:
 
-        # Вытаскиваем имена всех (по айди) остальных ответственных со статусом в работе:
-        for i in have_personal_status_in_working:
-            # каждая итерация цикла будет предоставлять вам один кортеж из списка.
-            employee_id = i[0]  # По этому, Извлекаем конкретное значение ( каждый кортеж содержит только одно значение)
-            # -> число без кавычек.
-            # print(f'employee_id = {employee_id} !!!')
-            employee_name_row = await get_full_name_employee(int(employee_id), session_pool)  # -> "Иванов Иван"
-            # print(f'employee_name_row = {employee_name_row} !!!')
-            employees_names.append(employee_name_row)
-            # Преобразование списка имен в строку с разделителем ", "
+        # Если список не пустой (есть ответственные по задаче)
+        if have_personal_status_in_working:
 
-            employees_names_str = ", ".join(employees_names)
-            # Очистка списка
-            # employees_names.clear() может быть излишним,
-            # так как переменная employees_names объявлена внутри функции и будет очищена при каждом вызове).
+            # Вытаскиваем имена всех (по айди) остальных ответственных со статусом в работе:
+            for i in have_personal_status_in_working:
+                # каждая итерация цикла будет предоставлять вам один кортеж из списка.
+                employee_id = i[0]  # По этому, Извлекаем конкретное значение ( каждый кортеж содержит только одно значение)
+                # -> число без кавычек.
+                # print(f'employee_id = {employee_id} !!!')
+                employee_name_row = await get_full_name_employee(int(employee_id), session_pool)  # -> "Иванов Иван"
+                # print(f'employee_name_row = {employee_name_row} !!!')
+                employees_names.append(employee_name_row)
+                # Преобразование списка имен в строку с разделителем ", "
+
+                employees_names_str = ", ".join(employees_names)
+                # Очистка списка
+                # employees_names.clear()  #может быть излишним,
+                # так как переменная employees_names объявлена внутри функции и будет очищена при каждом вызове).
+
+        else:
+            employees_names_str = None
+
+        return employees_names_str
 
     else:
-        employees_names_str = None
+        # Если список не пустой (есть ответственные по задаче)
+        if have_personal_status_in_working:
 
-    return employees_names_str
+            # Вытаскиваем имена всех (по айди) остальных ответственных со статусом в работе:
+            for i in have_personal_status_in_working:
+
+                # каждая итерация цикла будет предоставлять вам один кортеж из списка.
+                employee_id = i[0]  # По этому, Извлекаем конкретное значение
+
+                if exception != int(employee_id):
+                    employee_name_row = await get_full_name_employee(int(employee_id), session_pool)  # -> "Иванов Иван"
+                    # print(f'employee_name_row = {employee_name_row} !!!')
+                    employees_names.append(employee_name_row)
+                    # Преобразование списка имен в строку с разделителем ", "
+
+                    employees_names_str = ", ".join(employees_names)
+                    # Очистка списка
+                    # employees_names.clear()  # может быть излишним,
+                    # так как переменная employees_names объявлена внутри функции и будет очищена при каждом вызове).
+        else:
+            employees_names_str = None
+
+        return employees_names_str
+
+
 
 
 # -------------------------

@@ -130,16 +130,16 @@ def generator_category_data(selected_subcategory: str) -> dict:
     return write_to_base
 
 
-def all_employees(employees_names: str | list , callback_employee_name: str ):
-# Добавляем имя нажавшего к остальным, кто работает по задаче.
-    # Если Пусто
-    if employees_names is None:  #
-        all_employees_in_working = callback_employee_name
-    # Если множество сотрудников (в employees_names есть сотрудники)
-    else:
-        all_employees_in_working = f'{employees_names}, {callback_employee_name}'  # -> "Иванов Иван, ..., "
-
-    return all_employees_in_working
+# def all_employees(employees_names: str | list , callback_employee_name: str ): - упразднено.
+# # Добавляем имя нажавшего к остальным, кто работает по задаче.
+#     # Если Пусто
+#     if employees_names is None:  #
+#         all_employees_in_working = callback_employee_name
+#     # Если множество сотрудников (в employees_names есть сотрудники)
+#     else:
+#         all_employees_in_working = f'{employees_names}, {callback_employee_name}'  # -> "Иванов Иван, ..., "
+#
+#     return all_employees_in_working
 
 
 
