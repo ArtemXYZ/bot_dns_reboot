@@ -201,6 +201,21 @@ async def check_notification_for_tg_id(request_id: int, session_pool: AsyncSessi
     return result
 
 
+async def get_id_inrequests_by_notification(get_id_notification_for_tg_id: int, session_pool: AsyncSession):
+
+    """
+    Из келбека вытаскиваем айди сообщения и в этой функции сравниваем его в таблице Requests. Это является
+    идентификатором обращения одновременно с обычным айди обращения.
+    """
+
+    query = select(Requests.id).where(Requests.id_notification_for_tg_id == get_id_notification_for_tg_id)
+    result_tmp = await session_pool.execute(query)
+    result = result_tmp.scalar_one_or_none()  # один результат или ничего.
+
+    return result
+
+
+
 async def check_personal_status_for_tg_id(tg_id: int, request_id, session_pool: AsyncSession):
     """
      Ищем personal_status ==  in_work по tg_id в таблице  HistoryDistributionRequests
@@ -302,10 +317,12 @@ async def get_notification_id_and_employees_id_tuples(search_request_id: int, se
 
     query = select(HistoryDistributionRequests.notification_employees_id,
                    HistoryDistributionRequests.notification_id).where(
-        HistoryDistributionRequests.request_id == search_request_id)
+        HistoryDistributionRequests.request_id == search_request_id,
+        HistoryDistributionRequests.sending_error == False)  # Исключаем ошибку доставки todo False или 'False??
     result_tmp = await session_pool.execute(query)
-    result_tuples = result_tmp.all()  # возвращает список кортежей
-    # .scalar_one_or_none()  # один результат или ничего. .scalar()
+    result_tuples = result_tmp.all()
+    # возвращает список кортежей с id работников кому было разослано уведомление +
+    # id уведомления
 
     return result_tuples
 

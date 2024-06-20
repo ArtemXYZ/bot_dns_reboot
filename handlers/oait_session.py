@@ -67,7 +67,7 @@ async def pick_up_request(callback: types.CallbackQuery,
         # Вернет один результат или ничего. ! Тут нужна проверка на пустоту (исключение ошибки, однако,
         # подразумеваетсмя,  что таких событий быть не должно по сценарию для упрощения кода.
         # --------------------------------------
-        # ------------------------------------  Получаем екст сообщения  из предыдущего стейта:
+        # ------------------------------------  Получаем екст сообщения
         request_message = await get_request_message(request_id, session)
 
         # -------------------------------------- Идентифицируем заявителя
@@ -287,6 +287,8 @@ async def pick_up_request(callback: types.CallbackQuery,
     await callback.answer()
     # Сбрасываем состояние
     await state.clear()
+
+
 @oait_router.callback_query(StateFilter(None), F.data.startswith('cancel_request'))
 async def pick_up_request(callback: types.CallbackQuery, state: FSMContext, session: AsyncSession, bot: Bot):
 
@@ -296,10 +298,64 @@ async def pick_up_request(callback: types.CallbackQuery, state: FSMContext, sess
     Возможно нужна будет кнопка, что бы после удалять это сообщение (сначала изменяем, а после удаляем).
     """
 
+    await state.set_state(AddRequests.cancel_request)
+    bot = callback.bot
 
-    # Апдейтим статус на 'cancel' в бд (Requests):
+    # -------------------------------------- Идентифицируем пользователя нажавшего кнопку
+    # Вытаскиваем message_id отправлденного уведомления :
+    get_id_notification_for_tg_id = callback.message.message_id
+    get_user_id_callback = callback.from_user.id
+    callback_employee_name = await get_full_name_employee(get_user_id_callback, session)
+
+    # Сравниваем в базе значение  notification_id при нажатии кнопками (идентифицируем кто нажал),
+    # узнаем айди задачи
+
+    request_id = await get_id_inrequests_by_notification(get_id_notification_for_tg_id, session)
+    # Вернет один результат или ничего. ! Тут нужна проверка на пустоту (исключение ошибки, однако,
+    # подразумеваетсмя,  что таких событий быть не должно по сценарию для упрощения кода.
+    # --------------------------------------
+    # ------------------------------------  Получаем екст сообщения
+    request_message = await get_request_message(request_id, session)
+    # ======================================================================================================
+
+    # 1. ================================== Апдейтим статус на 'cancel' в бд (Requests):
     await update_requests_status(request_id, 'cancel', session)
 
+
+    # 2. ================================== Оповещаем остальных участников об отмене задачи:
+    #  Находим все оповещения,которые были отправлены по данному обращению и изменяем их
+    # Получаем список id работников кому было разослано уведомление (кроме тех, что с ошибкой отправки):
+    id_tuples = await get_notification_id_and_employees_id_tuples(request_id, session)
+
+    # todo  Обработать ошибку \ событие, если сообщение было уже удалено.
+
+    # Перебираем всех назначенных по этой задаче:
+    for row in id_tuples:
+        notification_employees_id, notification_id = row
+
+        # # Если tg_id из бд равен tg_id юзера нажимающего кнопку
+        # if tg_id == get_user_id_callback:
+
+        # --------------------------------- Отправляем остальным
+        await bot.edit_message_text(
+            chat_id=notification_employees_id, message_id=notification_id,
+            text=f'Обращение (№_{request_id}) отменено, инициатор: {callback_employee_name}.\n'                    
+                 f'Текст обращения:\n'
+                 f'{request_message}',
+            reply_markup=get_callback_btns(btns={'✅ ОК': '1232'}, sizes=(1,))
+        )
+
+
+    # --------------------------------- Отправляем себе:
+    await bot.edit_message_text(
+                chat_id=get_user_id_callback, message_id=get_id_notification_for_tg_id,
+                text=f'Ваше обращение (№_{request_id}) успешно отменено!\n'
+                     f'Текст обращения:\n'
+                     f'{request_message}',
+                reply_markup=get_callback_btns(btns={'✅ ОК': '1232'}, sizes=(1,))
+    )
+
+    await callback.answer()
 
 
 

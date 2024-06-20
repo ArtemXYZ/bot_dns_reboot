@@ -28,7 +28,7 @@ class AddRequests(StatesGroup):
     transit_request_message_id = State()
     take_request_message = State()
     pick_up_request = State()
-
+    cancel_request = State()
 
 
 #
