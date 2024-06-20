@@ -408,7 +408,7 @@ async def skip_and_send_message_users(callback: types.CallbackQuery,
     # Получаем список id работников на рассылку:
     # mailing_list = generator_mailing_list(data_request_message_to_send)
     # mailing_list = [141407179, 143453792,  163904370,  1206297168, 1372644288]
-    mailing_list = [500520383, 1206297168]    # 143453792, 500520383 - санек и маша  , 1262916285 - эльвира 1372644288,
+    mailing_list = [500520383, 1206297168, 143453792]    # 143453792, 500520383 - санек и маша  , 1262916285 - эльвира 1372644288,
 
     for send in mailing_list:
         # Если пользователь удалил бота, мы не можем ему отправить уведомление о задаче, \
@@ -427,7 +427,7 @@ async def skip_and_send_message_users(callback: types.CallbackQuery,
 
             # Получаем ID отправленного сообщения
             id_notification = notification_id.message_id
-            print(f'ID отправленного сообщения: {id_notification}')
+            # print(f'ID отправленного сообщения: {id_notification}')
 
             # Инсертим данные в таблицу HistoryDistributionRequests:
             await add_row_in_history_distribution(
@@ -449,13 +449,6 @@ async def skip_and_send_message_users(callback: types.CallbackQuery,
             #     text=f'Уведомление по обращению №_{refresh_request_message_id},'
             #          f' tg_id: {data_request_message_to_send['tg_id']}, '
             #          f'не было доставлено работнику: {notification_employees_id}')
-
-
-
-
-
-
-
 
 
 
@@ -487,7 +480,7 @@ async def skip_and_send_message_users(callback: types.CallbackQuery,
     # Очищаем данные, тк, на прямую удалить сообщение выше не получится - выходит ошибка
     # (скорее всего из-за удаления сообщения выше)
 
-    await asyncio.sleep(2)
+    await asyncio.sleep(3)
 
     # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
     # Через 2 секунды возвращаем исходное главное меню.

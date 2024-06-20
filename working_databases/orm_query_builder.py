@@ -263,20 +263,35 @@ async def update_personal_status(
     # return print(
     #     f' Ответственный {search_notification_employees_id} по задаче №_{search_request_id} записан в Requests.')
 
-async def update_requests_status(
-        search_request_id: int, search_notification_employees_id: int, session_pool: AsyncSession):
+async def update_requests_status(search_request_id: int, new_request_status: str, session_pool: AsyncSession):
     """
-    На вход 2 начения (обновляем статус конкретного работника, кто взял в работу задачу).
+    # Апдейтим статус в работе Requests:
+    На вход 2 начения (обновляем статус конкретного бращения (search_request_id), если кто то взял в работу задачу или
+    наоборот завершил. Для этого есть вариативная переменная для передачи значения апдейта (new_request_status)
+
+    search_request_id (int): Идентификатор заявки, статус которой необходимо обновить.
+    new_request_status (str): Новый статус заявки.
+    session_pool (AsyncSession): Сессия для выполнения запроса.
+
+    Возвращает:
+    None
     """
-    query = update(HistoryDistributionRequests).where(
-        HistoryDistributionRequests.request_id == search_request_id,
-        HistoryDistributionRequests.notification_employees_id == search_notification_employees_id
-    ).values(personal_status='in_work')
+    query = update(Requests).where(Requests.id == search_request_id).values(request_status=new_request_status)
     await session_pool.execute(query)
-    # results = result_tmp.scalars()  #  # выдаст либо список либо пусой список. results_list_int
     await session_pool.commit()
 
 
+async def get_request_message(search_request_id: int, session_pool: AsyncSession):
+
+    """
+    Достаем текст сообщения.
+    """
+
+    query = select(Requests.request_message).where(Requests.id == search_request_id)
+    result_tmp = await session_pool.execute(query)
+    result_tuples = result_tmp.scalar_one_or_none()  # один результат или ничего
+
+    return result_tuples
 
 
 
