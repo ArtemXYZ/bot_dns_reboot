@@ -195,6 +195,8 @@ async def run_bot():
 if __name__ == "__main__":
     asyncio.run(run_bot())
 
+
+#  except KeyboardInterrupt:
 # todo типы message
 # todo message_reaction()
 # todo channel_post() .edited_channel_post() - надо запретить постить все

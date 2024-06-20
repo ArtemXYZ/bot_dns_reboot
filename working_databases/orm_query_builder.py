@@ -132,7 +132,7 @@ async def add_request_message(session: AsyncSession,
 #     # results = result_tmp.scalars()  #  # выдаст либо список либо пусой список. results_list_int
 #     await session_pool.commit()
 #     return print(f'id уведоления о поступившей задаче - записано в базу : {update_notification_id}')
-
+#
 
 # Если сообщение не отправлено (заблокировали бота, удалились) +
 async def add_row_sending_error(
@@ -216,11 +216,6 @@ async def check_personal_status_for_tg_id(tg_id: int, request_id, session_pool: 
 
     return result
 
-
-
-
-
-
 async def get_tg_id_in_requests_history(request_id: int, session_pool: AsyncSession):
     """
      Ищем втора обращения (в базе значение tg_id по request_id в requests_history)
@@ -267,6 +262,22 @@ async def update_personal_status(
     await session_pool.commit()
     # return print(
     #     f' Ответственный {search_notification_employees_id} по задаче №_{search_request_id} записан в Requests.')
+
+async def update_requests_status(
+        search_request_id: int, search_notification_employees_id: int, session_pool: AsyncSession):
+    """
+    На вход 2 начения (обновляем статус конкретного работника, кто взял в работу задачу).
+    """
+    query = update(HistoryDistributionRequests).where(
+        HistoryDistributionRequests.request_id == search_request_id,
+        HistoryDistributionRequests.notification_employees_id == search_notification_employees_id
+    ).values(personal_status='in_work')
+    await session_pool.execute(query)
+    # results = result_tmp.scalars()  #  # выдаст либо список либо пусой список. results_list_int
+    await session_pool.commit()
+
+
+
 
 
 async def get_notification_id_and_employees_id_tuples(search_request_id: int, session_pool: AsyncSession):
