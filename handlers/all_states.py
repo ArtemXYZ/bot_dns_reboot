@@ -29,7 +29,7 @@ class AddRequests(StatesGroup):
     take_request_message = State()
     pick_up_request = State()
     cancel_request = State()
-
+    delete_banner = State()
 
 #
 # texts = {

@@ -289,7 +289,7 @@ async def pick_up_request(callback: types.CallbackQuery,
 
 
 @oait_router.callback_query(StateFilter(None), F.data.startswith('cancel_request'))
-async def pick_up_request(callback: types.CallbackQuery, state: FSMContext, session: AsyncSession, bot: Bot):
+async def cancel_request(callback: types.CallbackQuery, state: FSMContext, session: AsyncSession, bot: Bot):
     """
     Отменяем обращение заявителя (апдейт статуса  в таблицу обращений о завершении, рассылка уведомлений, что задача завершена
     (возможно добавить обработку событий, когда сообщение невозможно удалить (удалено, бот недоступен и тд.)
@@ -341,7 +341,7 @@ async def pick_up_request(callback: types.CallbackQuery, state: FSMContext, sess
                 text=f'Обращение (№_{request_id}) отменено, инициатор: {callback_employee_name}.\n'
                      f'Текст обращения:\n'
                      f'{request_message}',
-                reply_markup=get_callback_btns(btns={'🗑 ОК, УДАЛИТЬ БАННЕР': '1232'}, sizes=(1,))
+                reply_markup=get_callback_btns(btns={'🗑 ОК, УДАЛИТЬ БАННЕР': 'delete_banner'}, sizes=(1,))
             )
         except TelegramBadRequest as e:
             if "message to edit not found" in str(e):
@@ -371,6 +371,41 @@ async def pick_up_request(callback: types.CallbackQuery, state: FSMContext, sess
     await callback.answer()
     # Сбрасываем состояние
     await state.clear()
+
+
+@oait_router.callback_query(StateFilter(None), F.data.startswith('delete_banner'))
+async def delete_banner(callback: types.CallbackQuery, state: FSMContext, session: AsyncSession, bot: Bot):
+    """
+    Удаляем баннер об отмене обращения заявителя (сначала изменяем, а после удаляем - ТГ АПИ).
+    """
+
+    await state.set_state(AddRequests.delete_banner)
+    bot = callback.bot
+
+    # Вытаскиваем message_id отправлденного уведомления
+    user_id_callback = callback.from_user.id
+    notification_id = callback.message.message_id
+
+    del_banner = await bot.edit_message_text(
+        chat_id=user_id_callback, message_id=notification_id,
+        text=f'Баннер удален')
+
+    await del_banner.delete()
+
+    await callback.answer()
+    # Сбрасываем состояние
+    await state.clear()
+
+
+
+
+
+
+
+
+
+
+
 
 # !!! Вся задача будет автоматически завершена. после ттого ,как последний завершит подзадачу.
 #
