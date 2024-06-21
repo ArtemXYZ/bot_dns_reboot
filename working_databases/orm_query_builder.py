@@ -264,19 +264,18 @@ async def get_all_personal_status_in_working(search_request_id: int, session_poo
 
 
 async def update_personal_status(
-        search_request_id: int, search_notification_employees_id: int, session_pool: AsyncSession):
+        search_request_id: int, search_notification_employees_id: int, new_personal_status, session_pool: AsyncSession):
     """
     На вход 2 начения (обновляем статус конкретного работника, кто взял в работу задачу).
     """
     query = update(HistoryDistributionRequests).where(
         HistoryDistributionRequests.request_id == search_request_id,
         HistoryDistributionRequests.notification_employees_id == search_notification_employees_id
-    ).values(personal_status='in_work')
+    ).values(personal_status=new_personal_status)  # 'in_work'
     await session_pool.execute(query)
     # results = result_tmp.scalars()  #  # выдаст либо список либо пусой список. results_list_int
     await session_pool.commit()
-    # return print(
-    #     f' Ответственный {search_notification_employees_id} по задаче №_{search_request_id} записан в Requests.')
+
 
 async def update_requests_status(search_request_id: int, new_request_status: str, session_pool: AsyncSession):
     """
@@ -318,7 +317,7 @@ async def get_notification_id_and_employees_id_tuples(search_request_id: int, se
     query = select(HistoryDistributionRequests.notification_employees_id,
                    HistoryDistributionRequests.notification_id).where(
         HistoryDistributionRequests.request_id == search_request_id,
-        HistoryDistributionRequests.sending_error == False)  # Исключаем ошибку доставки todo False или 'False??
+        HistoryDistributionRequests.sending_error == 'False')  # Исключаем ошибку доставки (правильно в кавычках)!!!
     result_tmp = await session_pool.execute(query)
     result_tuples = result_tmp.all()
     # возвращает список кортежей с id работников кому было разослано уведомление +

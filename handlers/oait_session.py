@@ -6,6 +6,9 @@
 # -------------------------------- Сторонние библиотеки
 from aiogram import F, Router
 from aiogram.filters import StateFilter
+
+from aiogram.exceptions import TelegramBadRequest
+
 # -------------------------------- Локальные модули
 from filters.chats_filters import *
 
@@ -18,7 +21,6 @@ from working_databases.orm_query_builder import *
 from handlers.all_states import *
 from handlers.data_preparation import *
 
-
 # ----------------------------------------------------------------------------------------------------------------------
 # Назначаем роутер для всех типов чартов:
 oait_router = Router()
@@ -28,6 +30,8 @@ oait_router.message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowe
 oait_router.edited_message.filter(ChatTypeFilter(['private']), TypeSessionFilter(allowed_types=['oait']))
 
 lock = asyncio.Lock()
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 # Приветствие для ОАИТ
 # @oait_router.message(StateFilter(None), F.text == 'next')
@@ -97,13 +101,12 @@ async def pick_up_request(callback: types.CallbackQuery,
                 if notification_employees_id == get_user_id_callback:  # for_chat_id
 
                     # Апдейтим ответственного в бд (HistoryDistributionRequests) + апдейт статуса в работе ('in_work').
-                    await update_personal_status(request_id, get_user_id_callback, session)
+                    await update_personal_status(request_id, get_user_id_callback, 'in_work', session)
 
                     # Апдейтим статус в работе 'in_work' в бд (Requests)
                     # апдейтим только в этой ветке, т.к. в остальных подразумивается, \
                     # что уже есть записть 'in_work' в Requests
                     await update_requests_status(request_id, 'in_work', session)
-
 
                     #  ----------------------- Отправить уведомление тому, кто нажал кнопку.
                     await bot.edit_message_text(
@@ -113,8 +116,7 @@ async def pick_up_request(callback: types.CallbackQuery,
                              f'Текст обращения:\n'
                              f'{request_message}'
 
-
-                        ,   # todo текст самого сообщения только сокращенный.
+                        ,  # todo текст самого сообщения только сокращенный.
                         reply_markup=get_callback_btns(btns={'✅ ЗАВЕРШИТЬ ПОДЗАДАЧУ': '1232',
                                                              '❎ ОТМЕНИТЬ ПОДЗАДАЧУ': '5373'
                                                              }, sizes=(1, 1))
@@ -167,7 +169,7 @@ async def pick_up_request(callback: types.CallbackQuery,
                         text=f'Ответственным по задаче №_{request_id} назначен {callback_employee_name}.\n'
                              f'Текст обращения:\n'
                              f'{request_message}',
-                        reply_markup=get_callback_btns(btns={'🧩 ЗАБРАТЬ ПОДЗАДАЧУ': 'pick_up_request'}, sizes=(1, ))
+                        reply_markup=get_callback_btns(btns={'🧩 ЗАБРАТЬ ПОДЗАДАЧУ': 'pick_up_request'}, sizes=(1,))
                     )
 
         # ================================================= 2 ==========================================================
@@ -182,7 +184,7 @@ async def pick_up_request(callback: types.CallbackQuery,
                 # Если tg_id из рассылки равен tg_id юзера нажимающего кнопку, то изменяем сообщения у остальных.
                 if notification_employees_id == get_user_id_callback:
                     # Апдейтим ответственного в бд (HistoryDistributionRequests) + апдейт статуса в работе ('in_work').
-                    await update_personal_status(request_id, get_user_id_callback, session)
+                    await update_personal_status(request_id, get_user_id_callback, 'in_work', session)  # 'cancel'
 
                     # Отправляем уведомление для нажавшего кнопку:
                     # ------------------------------------------------
@@ -201,8 +203,6 @@ async def pick_up_request(callback: types.CallbackQuery,
                     all_employees_in_working_for_if = await get_employees_names(
                         have_personal_status_in_working_for_if, session)
 
-
-
                     # ------------------------------------------------
                     await bot.edit_message_text(
                         chat_id=get_user_id_callback, message_id=notification_id,
@@ -216,12 +216,11 @@ async def pick_up_request(callback: types.CallbackQuery,
                                                              }, sizes=(1, 1))
                     )
 
-
                     # ----------------------- Отправить (исправить) уведомление заказчику (отправителю обращения):
                     # проверка на наличие уже отправленного сообщения заказчику (либо айди либо нон):
                     # Упраздняем проверку, т.к. второе условие, когда уже кто то есть ответственный, \
                     # подразумивает отправку уведоления заказчику. ТАк что достаем его из базы  и редактируем:
-                    await bot.edit_message_text( # Изменяем доставленное уведомление:
+                    await bot.edit_message_text(  # Изменяем доставленное уведомление:
                         chat_id=tg_id, message_id=check_notification,
                         text=f'Ваше обращение №_{request_id} принято в работу,'
                              f' соисполнители: {all_employees_in_working_for_if}.',
@@ -253,10 +252,10 @@ async def pick_up_request(callback: types.CallbackQuery,
                     # -------------------  Проверка, является ли человек соучастником по задаче:
                     # роверяем  id сотрудника на наличие  статуса: в работе
                     check_personal_status = await check_personal_status_for_tg_id(
-                        notification_employees_id, request_id,  session) # -> int or None
+                        notification_employees_id, request_id, session)  # -> int or None
 
                     # Если сотрудник учавствует в задаче (статус 'in_work'):
-                    if check_personal_status is not None: # содержит значение
+                    if check_personal_status is not None:  # содержит значение
 
                         # Если id рассылки уже со статусом  в работе, то у него изменяем на другое сообщение
                         await bot.edit_message_text(
@@ -265,7 +264,7 @@ async def pick_up_request(callback: types.CallbackQuery,
                                  f' {employee_name_for_else},'
                                  f' соисполнители: {employees_names_minus_get_user_id_callback_for_else}.\n'
                                  f'Текст обращения:\n'
-                                 f'{request_message}' ,
+                                 f'{request_message}',
                             reply_markup=get_callback_btns(btns={'✅ ЗАВЕРШИТЬ ПОДЗАДАЧУ': '1232',
                                                                  '❎ ОТМЕНИТЬ УЧАСТИЕ': '5373'
                                                                  }, sizes=(1, 1))
@@ -291,7 +290,6 @@ async def pick_up_request(callback: types.CallbackQuery,
 
 @oait_router.callback_query(StateFilter(None), F.data.startswith('cancel_request'))
 async def pick_up_request(callback: types.CallbackQuery, state: FSMContext, session: AsyncSession, bot: Bot):
-
     """
     Отменяем обращение заявителя (апдейт статуса  в таблицу обращений о завершении, рассылка уведомлений, что задача завершена
     (возможно добавить обработку событий, когда сообщение невозможно удалить (удалено, бот недоступен и тд.)
@@ -318,53 +316,64 @@ async def pick_up_request(callback: types.CallbackQuery, state: FSMContext, sess
     request_message = await get_request_message(request_id, session)
     # ======================================================================================================
 
-    # 1. ================================== Апдейтим статус на 'cancel' в бд (Requests):
+    # 1. ================================== Апдейтим статус заявки на 'cancel' в (Requests):
     await update_requests_status(request_id, 'cancel', session)
-
 
     # 2. ================================== Оповещаем остальных участников об отмене задачи:
     #  Находим все оповещения,которые были отправлены по данному обращению и изменяем их
     # Получаем список id работников кому было разослано уведомление (кроме тех, что с ошибкой отправки):
     id_tuples = await get_notification_id_and_employees_id_tuples(request_id, session)
 
-    # todo  Обработать ошибку \ событие, если сообщение было уже удалено.
 
     # Перебираем всех назначенных по этой задаче:
     for row in id_tuples:
         notification_employees_id, notification_id = row
+        print(f"notification_employees_id: {notification_employees_id} notification_id: {notification_id} ")
 
-        # # Если tg_id из бд равен tg_id юзера нажимающего кнопку
-        # if tg_id == get_user_id_callback:
+
+        # 3. Апдейтим индивидуальный статус на 'cancel' в (HistoryDistributionRequests):
+        await update_personal_status(request_id, notification_employees_id, 'cancel', session)
 
         # --------------------------------- Отправляем остальным
-        await bot.edit_message_text(
-            chat_id=notification_employees_id, message_id=notification_id,
-            text=f'Обращение (№_{request_id}) отменено, инициатор: {callback_employee_name}.\n'                    
-                 f'Текст обращения:\n'
-                 f'{request_message}',
-            reply_markup=get_callback_btns(btns={'✅ ОК': '1232'}, sizes=(1,))
-        )
-
-
-    # --------------------------------- Отправляем себе:
-    await bot.edit_message_text(
-                chat_id=get_user_id_callback, message_id=get_id_notification_for_tg_id,
-                text=f'Ваше обращение (№_{request_id}) успешно отменено!\n'
+        try:
+            await bot.edit_message_text(
+                chat_id=notification_employees_id, message_id=notification_id,
+                text=f'Обращение (№_{request_id}) отменено, инициатор: {callback_employee_name}.\n'
                      f'Текст обращения:\n'
                      f'{request_message}',
-                reply_markup=get_callback_btns(btns={'✅ ОК': '1232'}, sizes=(1,))
-    )
+                reply_markup=get_callback_btns(btns={'🗑 ОК, УДАЛИТЬ БАННЕР': '1232'}, sizes=(1,))
+            )
+        except TelegramBadRequest as e:
+            if "message to edit not found" in str(e):
+                print(f"Оповещение  №_{notification_id} для пользователя {notification_employees_id} не удалось "
+                      f"изменить, так как оно уже не существует (удалено).")
+
+    # --------------------------------- Отправляем себе:
+    try:
+        banner = await bot.edit_message_text(
+            chat_id=get_user_id_callback, message_id=get_id_notification_for_tg_id,
+            text=f'Ваше обращение (№_{request_id}) успешно отменено!\n'
+                 f'Текст обращения:\n'
+                 f'{request_message}'
+            # ,
+            # reply_markup=get_callback_btns(btns={'🗑 ОК, УДАЛИТЬ БАННЕР': '1232'}, sizes=(1,))
+        )
+
+        await asyncio.sleep(3)
+        await banner.delete()
+
+    except TelegramBadRequest as e:
+        if "message to delete not found" in str(e):
+            print(f"Оповещение по обращению  №_{request_id} для пользователя {callback_employee_name} не удалось "
+                  f"удалить, так как оно уже не существует (удалено).")
+    # -------------------------------
 
     await callback.answer()
-
-
-
+    # Сбрасываем состояние
+    await state.clear()
 
 # !!! Вся задача будет автоматически завершена. после ттого ,как последний завершит подзадачу.
-                    #
-
-
-
+#
 
 
 # ----------------------------------- тестовый вариант  - не работал
