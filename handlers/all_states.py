@@ -30,7 +30,7 @@ class AddRequests(StatesGroup):
     pick_up_request = State()
     cancel_request = State()
     delete_banner = State()
-
+    complete_subtask = State()
 #
 # texts = {
 #     'AddRequests:request_message': 'Введите текст обращения заново:'
