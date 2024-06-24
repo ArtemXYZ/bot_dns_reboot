@@ -391,6 +391,8 @@ async def get_employees_names(have_personal_status_in_working, session_pool: Asy
         # Если список не пустой (есть ответственные по задаче)
         if have_personal_status_in_working:
 
+            employees_names_str = None
+
             # Вытаскиваем имена всех (по айди) остальных ответственных со статусом в работе:
             for i in have_personal_status_in_working:
                 # каждая итерация цикла будет предоставлять вам один кортеж из списка.
@@ -415,6 +417,8 @@ async def get_employees_names(have_personal_status_in_working, session_pool: Asy
     else:
         # Если список не пустой (есть ответственные по задаче)
         if have_personal_status_in_working:
+
+            employees_names_str = None
 
             # Вытаскиваем имена всех (по айди) остальных ответственных со статусом в работе:
             for i in have_personal_status_in_working:
