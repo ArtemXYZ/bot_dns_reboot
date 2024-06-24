@@ -190,13 +190,14 @@ def clean_text(text: str):
 @general_router.edited_message()  # даже если сообщение редактируется
 @general_router.message()  # все входящие
 async def cleaner(message: types.Message):
-    if swearing_list.intersection(clean_text(message.text.lower()).split()):
-        await message.answer(f'<b>Сообщение удалено!</b>\n'
-                             f'<b>{message.from_user.first_name}</b>, попрошу конструктивно и без брани!')
-        # , parse_mode='HTML'
-        # Подобные сообщения, будут удалены!
-        await message.delete()  # Удаляем непристойные сообщения.
-        # await message.chat.ban(message.from_user.id)  # Если нужно, то в бан!
+    if message.text:
+        if swearing_list.intersection(clean_text(message.text.lower()).split()):
+            await message.answer(f'<b>Сообщение удалено!</b>\n'
+                                 f'<b>{message.from_user.first_name}</b>, попрошу конструктивно и без брани!')
+            # , parse_mode='HTML'
+            # Подобные сообщения, будут удалены!
+            await message.delete()  # Удаляем непристойные сообщения.
+            # await message.chat.ban(message.from_user.id)  # Если нужно, то в бан!
 
 # ------------------------------------------------------------------------------
 # -------------------------------------- Ответ на вариации входящих сообщений:

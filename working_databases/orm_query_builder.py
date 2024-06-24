@@ -219,6 +219,7 @@ async def get_id_inrequests_by_notification(get_id_notification_for_tg_id: int, 
 async def check_personal_status_for_tg_id(tg_id: int, request_id, session_pool: AsyncSession):
     """
      Ищем personal_status ==  in_work по tg_id в таблице  HistoryDistributionRequests
+     Если статус другой (не in_work) вернет None.
     """
 
     query = select(HistoryDistributionRequests.notification_employees_id).where(
@@ -251,7 +252,8 @@ async def get_all_personal_status_in_working(search_request_id: int, session_poo
     Вытаскиваем всех кто имеет статус в работе и ? может добавить тех кто уже завершил по конкретному обращению.
     используем только количество.
 
-    Вернет всех кто взял задачу или завершил ее.
+    Вернет всех кто взял задачу
+    (или завершил ее) - подумать
     """
 
     query = select(HistoryDistributionRequests.notification_employees_id).where(
@@ -326,14 +328,32 @@ async def get_notification_id_and_employees_id_tuples(search_request_id: int, se
     return result_tuples
 
 
-async def update_message_id_applicant(search_request_id: int, message_id_applicant: int, session_pool: AsyncSession):
+async def update_message_id_notification(search_request_id: int, message_id_new: int, belong_type: str,
+                                         session_pool: AsyncSession, search_notification_employees_id=None):
 
     """
-    Апдейтим айди отправленного сообщения в таблицу обращений Requests (поле: id_notification_for_tg_id)/
+    Апдейтим айди отправленного сообщения
+    Если belong_type соответствует 'update_request'  в таблицу обращений Requests (поле: id_notification_for_tg_id)/
     Для того, что бы в последующем можно было изменять его.
+    Аналогично для других условий (по смыслу).
     """
-    query = update(Requests).where(Requests.id == search_request_id).values(
-        id_notification_for_tg_id=message_id_applicant)
+    if belong_type == 'update_request':
+        query = update(Requests).where(Requests.id == search_request_id).values(
+            id_notification_for_tg_id=message_id_new)
+
+    elif belong_type == 'update_distribution':
+
+        if search_notification_employees_id is None:
+            print(f'Вы не указали параметр {search_notification_employees_id}, его необходимо обятельно пердавать'
+                  f' в режиме "belong_type == update_distribution".')
+        else:
+            query = update(HistoryDistributionRequests).where(
+                HistoryDistributionRequests.request_id == search_request_id,
+                HistoryDistributionRequests.notification_employees_id == search_notification_employees_id,
+            ).values(
+                notification_id=message_id_new)
+
+
     await session_pool.execute(query)
     # results = result_tmp.scalars()  #  # выдаст либо список либо пусой список. results_list_int
     await session_pool.commit()
