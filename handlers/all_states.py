@@ -31,6 +31,10 @@ class AddRequests(StatesGroup):
     cancel_request = State()
     delete_banner = State()
     complete_subtask = State()
+
+class AlarmState(StatesGroup):
+    """Шаги состояний для обращений"""
+    awaiting_response = State()
 #
 # texts = {
 #     'AddRequests:request_message': 'Введите текст обращения заново:'

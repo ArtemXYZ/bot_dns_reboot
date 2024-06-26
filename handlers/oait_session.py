@@ -9,6 +9,7 @@ from aiogram.filters import StateFilter
 
 from aiogram.exceptions import TelegramBadRequest
 
+import time
 # -------------------------------- Локальные модули
 from filters.chats_filters import *
 
@@ -513,7 +514,7 @@ async def complete_subtask(callback: types.CallbackQuery, state: FSMContext, ses
                     # Отправка ведомления: сначала  edit_message_text, если удалено, то send_message,
                     # после апдейт айди в таблице distribution
                     await decorator_edit_message(notification_employees_id, notification_id, text, reply_markup,
-                                                 request_id,  bot, session, 'update_distribution')
+                                                 request_id, bot, session, 'update_distribution')
 
                     # Апдейтим статус у остальных в (HistoryDistributionRequests): +
                     await update_personal_status(
@@ -637,296 +638,67 @@ async def complete_subtask(callback: types.CallbackQuery, state: FSMContext, ses
     # Сбрасываем состояние
     await state.clear()
 
-#  f'Поступило новое обращение: {data_request_message_to_send['request_message']}'
-# , reply_markup = get_callback_btns(
-#     btns={'📨 ЗАБРАТЬ ЗАЯВКУ': 'pick_up_request',
-#           '📂 ДЕЛЕГИРОВАТЬ ЗАЯВКУ': 'delegate_request'},  # передать часть работы.
-#     sizes=(1, 1))
-# )
-
-
-# a
+ # ------------------ отложено.
+ # Если никто не взял задачу в работу:
+# @oait_router.callback_query(F.data.startswith('skip_and_send') | F.data.startswith('pick_up_request')
+#                             | F.data.startswith('cancel_request'))
+# async def alarm_message(callback: types.CallbackQuery, state: FSMContext, session: AsyncSession, bot: Bot):
+#     """
+#     Реагируем на отправку заявки пользователем с помощью фильтра (отправка 'skip_and_send'),
+#     Отмену тревоги по 'pick_up_request'. Возобновление по последнему (завершить задачу: 'cancel_request',
 #
-# # -------------- Получаем список активных участников (соучастников с подзадачами)  по request_id:
-#         # Апдейт персонального статуса:
+#     Логика:
+#     Как только отправили (skip_and_send), получаем это в обработчике ожидаем некоторое время, проверяем состояние,
+#     какой кнопке оно соответствует и в зависимости от жэтого отправляем или не отправляем оповещение.
 #
-
-# ----------------------------------- тестовый вариант  - не работал
+#     # Устанавить состояниенельзя, тк. нарушается работа других сотояний.
+#     # По этому проверяем начение статуса в реквест.
 #
-# @oait_router.callback_query(StateFilter(AddRequests.send_message_or_add_doc), F.data.startswith('skip_and_send'))
-# async def skip_and_send_message_users(callback: types.CallbackQuery,
-#                                       state: FSMContext, session: AsyncSession, bot: Bot):  #message: types.Message,
-#     await callback.answer()
-#     print(f'refresh_data = ')
-#
-#     # Получаем данные из предыдущего стейта:
-#     back_data_tmp = await state.get_data()
+#     """
 #
 #
 #
-#     # Передадим на изменение в следущее сообщение:
-#     # edit_chat_id_final = back_data_tmp['edit_chat_id']
-#     # edit_message_id_final = back_data_tmp['edit_message_id']
-#
-#     # удаляем их для корректной передачи на запись в бд.
-#     del back_data_tmp['edit_chat_id']
-#     # edit_chat_id_new = data_write_to_base.get('edit_chat_id')
-#     del back_data_tmp['edit_message_id']
-#
-#
-#
-#     await state.clear()
-#
-#     await state.set_state(AddRequests.transit_request_message_id)
-#
-#     # обновляем изменения
-#     await state.update_data(back_data_tmp)
-#     # Значение для колонки в обращениях, что нет документов (data_request_message['doc_status'] = False)
-#     await state.update_data(doc_status=False)
-#
-#     # Запрос в БД на добавление обращения:
-#     data_request_message_to_send = await state.get_data()
-#
-#     # Вытаскиваем данные из базы после записи (обновленные всю строку полностью) и отправляем ее в другие стейты:
-#     # Забираю только айди что бы идентифицировать задачу:
-#     refresh_data = await add_request_message(session, data_request_message_to_send)
-#     print(f'refresh_data = {refresh_data}')
-#
-#     await state.update_data(requests_ia = refresh_data)
-#     back_data_transit = await state.get_data()
-#
-#
+#     data = callback.data
 #     bot = callback.bot
-#     # bot = message.bot
-#     await bot.send_message(chat_id=826087669,
-#                            text=f'Новая задача, id: {back_data_transit}' #  ЗАМЕНИТЬ НА refresh_data
-#                            , reply_markup=get_callback_btns(
-#             btns={'📨 ЗАБРАТЬ ЗАЯВКУ': 'pick_up_request',
-#                   '📂 ПЕРЕДАТЬ ЗАЯВКУ': 'transfer_request'},
-#             sizes=(1, 1))
-#                            )
+#     input_chat_id = 1262916285  # Эльвира
+#     reply_markup = get_callback_btns(btns={'🗑 ОК, УДАЛИТЬ БАННЕР': 'delete_banner'}, sizes=(1,))
+#     text = (f'Тест оповещения, если никто не взял в работу.')
 #
-#     await state.clear()
-#     await state.set_state(AddRequests.take_request_message)
-#     await state.update_data(back_data_transit)
-
-# ----------------------------------- тестовый вариант  - не работал
-
-
-# ------------------------------  тест - неудался, потом удалить
-# @oait_router.message(StateFilter(AddRequests.request_message), F.text) # , F.data - НЕ РАБОТАЕТ F.text - РАБОТАЕТ + без F.text
-# # Сообщение приходит
-# async def send_request_text_for_users(message: types.Message, state: FSMContext, session): # callback_query: types.CallbackQuery
+#     # Прилетела команда на отправку обращения (произошла рассылка уведомлений):
+#     if data.startswith('skip_and_send'):
 #
-#         transit_message_data = await state.get_data()
-#         print(f'Пришли данные в оаит: {transit_message_data}')
-#
-#         transit_message = transit_message_data.get('request_message')
-#
-# bot = callback_query.bot
-#         bot = message.bot
-#         await bot.send_message(chat_id=826087669, text=f'Новая запись в Requests: {transit_message_data}')
-#         print(f'Новая запись в Requests: {transit_message_data}')
-
-
-# ---------------------------
-#  if target_requests == 0:
+#         # Cохраняем текущее время:
+#         # start_time = time.time()
+#         # print(f'Время срабатывания в ОАИТ: {start_time}')
 #         ...
-#     else:
-
 #
-# async def get_event(): 0
-#
-#     event = await after_insert_requests()
-#     message_text = f'Новая запись в Requests: {event}'
-#
-#     await message.answer(message_text)
-
-# ------------ работает но не вариант
-# # @oait_router.message() # StateFilter(StartUser.check_next), F.data.startswith('go_next')
-# async def send_request_text_for_users(callback_query: types.CallbackQuery, state: FSMContext, session, target_requests):
-#         sdgsd = target_requests.request_message
-#         bot = callback_query.bot
-#         await bot.send_message(chat_id=0, text=f'Новая запись в Requests: {sdgsd}')
-
-
-# ----------------------------------- устарело  - работало
-# @oait_router.callback_query(StateFilter(None), F.data.startswith('pick_up_request'))
-# async def pick_up_request(callback: types.CallbackQuery,
-#                           state: FSMContext, session: AsyncSession, bot: Bot):  # message: types.Message,
-#
-#     await callback.answer()
-#
-#     # Запрос в БД на добавление обращения:
-#     # get_back_data_transit = await state.get_data()
-#     # print(f'refresh_data = {get_back_data_transit}')
-#
-#     # Вытаскиваем message_id отправлденного уведомления:
-#     get_notification_id = callback.message.message_id
-#     # print(f'get_notification_id = {get_notification_id}')
-#     get_user_id_callback = callback.from_user.id
-#
-#     # Сравниваем в базе значение  notification_id при нажатии кнопками (идентифицируем кто нажал), узнаем айди задачи
-#     request_id = await check_notification_id_in_history_distribution(get_notification_id, session)
-#     # Вернет один результат или ничего.
-#
-#     if request_id is None:
-#         #   !!Доработать
-#         print(f'Ошибка поиска уведомления о поступившем обращении) {request_id}')
-#
-#     else:
-#
-#         bot = callback.bot # только келбек, обычная передача экземпляра бота - просто отправит новое сообщение.
-#
-#         # Получаем список id работников кому было разослано уведомление: get_notification_id_and_employees_id_tuples
-#         id_tuples = await get_notification_id_and_employees_id_tuples(request_id, session)
-#
-#         # Перебираем всех и в зависимости от логики ...
-#         for row in id_tuples:
-#
-#             notification_employees_id, notification_id = row  # for_chat_id, message_id
-#
-#             # Если tg_id из рассылки равен tg_id юзера нажимающего кнопку, то изменяем сообщения у остальных.
-#             if  notification_employees_id == get_user_id_callback:  # for_chat_id
-#
-#                 # Апдейтим ответственного в бд (Responsible) + апдейт статуса в работе ('in_work').
-#                 await update_responsible_person_id(request_id, get_user_id_callback, session)
-#
-#                 # await callback.message.edit_text(
-#                 await bot.edit_message_text(chat_id=get_user_id_callback, message_id=notification_id,
-#                     text=f'Обращение принято в работу! Вы назначены ответственным по данной задаче (№_{request_id}).')
+#         # Ожидаем некоторое время:
+#         # todo добавить переменную и таблицу в базе данных под это, что бы с админки можно было менять это
+#         # await asyncio.sleep(5)
 #
 #
 #
-#                 #  Отправить уведомление заказчику (отправителю обращения):
-#                 tg_id = await get_tg_id_in_requests_history(request_id, session)  # достать айди заказчика
-#
-#                 send_notification_in_work = await bot.send_message(chat_id=tg_id,
-#                     text=f'Ваше обращение №_{request_id} принято в работу, исполнитель {employee_name}.',
-#                     reply_markup=get_callback_btns(
-#                         btns={'🗣 ОТКРЫТЬ ДИСКУССИЮ': 'open_discussion',
-#                               '❎ ОТМЕНИТЬ ЗАЯВКУ': 'cancel_request'},
-#                         sizes=(1, 1))
-#                 )
-#
-#                 # Исполнители (заменяем)
-#             #     может задержку при отправке обратки , как все прожмут.
 #
 #
-#             # Если tg_id из рассылки не равен tg_id юзера нажимающего кнопку, то изменяем его сообщение.
-#             else:
+#         # # Достать айди заявки:
+#         # request_id = 15
+#         #
+#         # # Проверяем текущий статус заявки:
+#         # request_status = await get_request_status(request_id, session)
+#         #
+#         # # Если статус заявки соответствует
+#         # if request_status == 'insert':
+#         #     # Если состояние не изменилось, отправляем сообщение
+#         #     send_message = await bot.send_message(chat_id=input_chat_id, text=text, reply_markup=reply_markup)
 #
-#                 employee_name = await get_full_name_employee(get_user_id_callback, session)
 #
-#                 await bot.edit_message_text(
-#                     chat_id=notification_employees_id, message_id=notification_id,
-#                     text=f'Ответственным по задаче №_{request_id} назначен {employee_name}')
+#     # elif data.startswith('pick_up_request'):
+#     #
+#     #
+#     # elif data.startswith('cancel_request'):
 
 
-#  ----------------- до эксперимента  !!!
-# try:
-#     # проверка на наличие уже отправленного сообщения заказчику (либо айди либо нон):
-#     # Упраздняем проверку, т.к. второе условие, когда уже кто то есть ответственный, \
-#     # подразумивает отправку уведоления заказчику. ТАк что достаем его из базы  и редактируем:
-#     await bot.edit_message_text(  # Изменяем доставленное уведомление:
-#         chat_id=tg_id, message_id=check_notification,
-#         text=f'Состав участников по вашему обращению №_{request_id} изменился,'
-#              f' соисполнители: {all_employees_in_working_for_if}.',
-#         reply_markup=get_callback_btns(
-#             btns={
-#                 '🗣 ОТКРЫТЬ ДИСКУССИЮ': 'open_discussion',
-#                 '❎ ОТМЕНИТЬ ЗАЯВКУ': 'cancel_request'},
-#             sizes=(1, 1))
-#     )
-# # Если удалено
-# except TelegramBadRequest as e:
-#     if "message to edit not found" in str(e):
-#         print(f"Оповещение  №_{notification_id} для пользователя "
-#               f"{tg_id} не удалось изменить, "
-#               f"так как оно уже не существует (удалено).")
-#
-#         # Отправляем еще одно и опять апдейтим в реквест:
-#         send_notification_again = await bot.send_message(chat_id=tg_id,
-#                                                          text=f'Работа по вашему обращению (№_{request_id}) завершена, '
-#                                                               f'ответственный: {callback_employee_name}.\n'
-#                                                               f'Текст обращения:\n'
-#                                                               f'{request_message}',
-#                                                          reply_markup=get_callback_btns(
-#                                                              btns={
-#                                                                  '🗑 ОК, УДАЛИТЬ БАННЕР': 'delete_banner'},
-#                                                              sizes=(1,)))
-
-#  ----------------- эксперимент  !!!
 
 
-# ---------------------------------------- Отправить уведомление заказчику (отправителю обращения):
-# Обработка ошибки: если пользователь удалил оповещение, то отправим еще одно:
 
 
-# Проверка есть ли уже оповещение для заявителя (либо = айди либо = нон):
-# "Смысл: Когда задача создана, всех причастных оповещает бот, но заказчика оповещает только,
-# когда задачу возьмут в работу, по этому id_notification_for_tg_id может быть пустым ! "
-# if check_notification is None:
-#     # Если сообщение не доставлялось, -  отправляем новое:
-#     send_notification_complete = await bot.send_message(chat_id=tg_id,
-#         text=f'Работа по вашему обращению (№_{request_id}) завершена, '
-#              f'ответственный: {callback_employee_name}.\n'
-#              f'Текст обращения:\n'
-#              f'{request_message}' , reply_markup=get_callback_btns(
-#             btns={'🗑 ОК, УДАЛИТЬ БАННЕР': 'delete_banner'}, sizes=(1,)))
-#     # -------------------------------------- Запоминае идентиф. уведомления заказчика
-#     # идентификатор сообщения заявителя (applicant):
-#     message_id_applicant = send_notification_complete.message_id
-#     #  Апдейтим айди отправленного сообщения в таблицу обращений Requests \
-#     #  (поле: id_notification_for_tg_id)
-#     await update_message_id_notification(request_id, message_id_applicant, session)
-
-# else:
-# Обработка ошибки: если пользователь удалил оповещение, то отправим еще одно:
-
-# try:
-#     # Если сообщение уже доставлялось, изменяем его:
-#     await bot.edit_message_text(
-#         chat_id=tg_id, message_id=check_notification,
-#         text=f'Работа по вашему обращению (№_{request_id}) завершена, '
-#              f'ответственный: {callback_employee_name}.\n'
-#              f'Текст обращения:\n'
-#              f'{request_message}'
-#         #  текст самого сообщения только сокращенный ?
-#         , reply_markup=get_callback_btns(btns={'🗑 ОК, УДАЛИТЬ БАННЕР': 'delete_banner'},
-#                                          sizes=(1,)))
-#     #  кнопку не согласен с решением продолжить возобновить.
-#
-# except TelegramBadRequest as e:
-#     if "message to edit not found" in str(e):
-#         print(f"Оповещение  №_{check_notification} для пользователя "
-#               f"{tg_id} не удалось изменить, "
-#               f"так как оно уже не существует (удалено).")
-#
-#         # Отправляем еще одно и опять апдейтим в реквест:
-#         send_notification_again = await bot.send_message(chat_id=tg_id,
-#             text=f'Работа по вашему обращению (№_{request_id}) завершена, '
-#                  f'ответственный: {callback_employee_name}.\n'
-#                  f'Текст обращения:\n'
-#                  f'{request_message}', reply_markup=get_callback_btns(
-#             btns={'🗑 ОК, УДАЛИТЬ БАННЕР': 'delete_banner'}, sizes=(1,)))
-#         #  кнопку не согласен с решением продолжить возобновить.
-
-# # --------------- Запоминае идентиф. уведомления заказчика
-# # идентификатор сообщения заявителю:
-# message_id_applicant = send_notification_again.message_id
-# await update_message_id_notification(request_id, message_id_applicant, session)
-
-# # ----------------------- Данные на отправку
-# text = (f'Работа по вашему обращению (№_{request_id}) завершена, '
-#         f'ответственный: {callback_employee_name}.\n'
-#         f'Текст обращения:\n'
-#         f'{request_message}')
-#
-# reply_markup = get_callback_btnsbtns(
-#     btns={'🗑 ОК, УДАЛИТЬ БАННЕР': 'delete_banner'}, sizes=(1,))
-#
-# # Отправка ведомления: сначала  edit_message_text, если удалено, то send_message
-# await decorator_edit_message(tg_id, check_notification, text, reply_markup, request_id,
-#                              'update_request', bot, session)
-# ---------------------------------------- Отправить уведомление заказчику (отправителю обращения):

@@ -309,6 +309,33 @@ async def get_request_message(search_request_id: int, session_pool: AsyncSession
 
     return result_tuples
 
+async def get_request_status(search_request_id: int, session_pool: AsyncSession):
+
+    """ Достаем статус обращения по его айди."""
+
+    query = select(Requests.request_status).where(Requests.id == search_request_id)
+    result_tmp = await session_pool.execute(query)
+    result_str = result_tmp.scalar_one_or_none()  # один результат или ничего
+
+    return result_str
+
+
+async def get_all_user_id_by_branch_id(search_branch_id: int, session_pool: AsyncSession):
+
+    """
+    Достаем сех пользователей принадлежащих отделу по его айди на входе.
+    branch_id = отдел
+    """
+
+    query = select(Users.id_tg).where(Users.branch_id == search_branch_id,
+                                      Users.holiday_status != 'True') #  Если в отпуске, то тру.
+    # server_default='False' - абыл внести в бд. по этому еще делаем проверку если ноль
+    result_tmp = await session_pool.execute(query)
+    # result = result_tmp.all()  # один результат или ничего
+    result = result_tmp.scalars().all()
+    return result
+
+
 
 
 async def get_notification_id_and_employees_id_tuples(search_request_id: int, session_pool: AsyncSession):

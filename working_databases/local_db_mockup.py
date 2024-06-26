@@ -63,7 +63,7 @@ class Users(Base):
     # статус сотрудника (занят ли или свободен)  # free = True, job = False (ри добавлении из бд - пусто, после апдейт
     employee_status: Mapped[bool] = mapped_column(nullable=False,
                                                   server_default='False')  # activity , server_default='Null'
-    holiday_status: Mapped[bool] = mapped_column(nullable=False)  # Если в отпуске, то тру.
+    holiday_status: Mapped[bool] = mapped_column(nullable=False, server_default='False')  # Если в отпуске, то тру.
     admin_status: Mapped[bool] = mapped_column(nullable=False, server_default='False')  # Если админ, то тру.
 
     ## --------------------------- Связи один ко многим
@@ -113,6 +113,8 @@ class Requests(Base):
 
     # В работе ли заявка: "at_work" , "complete" - статус запроса (insert, in_work, complete, cancel
     request_status: Mapped[str] = mapped_column(String(150), server_default='insert')
+
+    # alarm_status: Mapped[bool] = mapped_column(nullable=False, index=True, server_default='False') - отложено.
 
     # notification_id: Mapped[int] = mapped_column(nullable=False, index=True, server_default='0') - упразднено!
     # JSON PickleType - ельзя применять с Mapped, по этому сосздадим отдельную табличку.

@@ -33,6 +33,8 @@ from handlers.data_preparation import *
 
 from handlers.all_states import *
 
+from working_databases.distribution_machine import *
+
 # ----------------------------------------------------------------------------------------------------------------------
 # Назначаем роутер для чата под розницу:
 retail_router = Router()
@@ -372,6 +374,8 @@ async def get_request_message_users(message: types.Message,
 async def skip_and_send_message_users(callback: types.CallbackQuery,
                                       state: FSMContext, session: AsyncSession, bot: Bot):  # message: types.Message,
 
+    bot = callback.bot
+
     # Получаем данные из предыдущего стейта:
     back_data_tmp = await state.get_data()
     #
@@ -394,21 +398,37 @@ async def skip_and_send_message_users(callback: types.CallbackQuery,
     # Запрос в БД на добавление обращения:
     data_request_message_to_send = await state.get_data()
 
+    # Cохраняем текущее время до записи в бд:
+    # start_time_1 = time.time()
+
     # Вытаскиваем данные из базы после записи (обновленные всю строку полностью) и отправляем ее в другие стейты:
     # Забираю только айди что бы идентифицировать задачу:
     refresh_request_message_id = await add_request_message(session, data_request_message_to_send)  #
-    print(f'Айди обращения = {refresh_request_message_id}')
+    # print(f'Айди обращения = {refresh_request_message_id}')
+
+    # Cохраняем текущее времяпосле после записи в бд:
+    # start_time_2 = time.time()
+    # print(f'Время срабатывания в РИТЕЙЛЕ: до записи в бд: {start_time_2} после записи в бд: {start_time_2}')
 
     # ---------------------------------- рассылка поступившей задачи
     # Получаем tg_id написавшего юзера:
     # notification_employees_id = data_request_message_to_send['tg_id']
 
-    bot = callback.bot
+    # ------------------------------------ разработка !!!
+    # input_chat_id = 1262916285  # Эльвира
+
+    # Добавляем такс на проверку (очередное сообщение проверяем через 2 часа на статус)
+    # await add_new_message_in_queue(refresh_request_message_id, input_chat_id, wait_time)
+
+    # ------------------------------------ разработка !!!
+    category_id: int = data_request_message_to_send['category_id']  # категория
+    print(f'category_id 1 !!! {category_id}')
 
     # Получаем список id работников на рассылку:
-    # mailing_list = generator_mailing_list(data_request_message_to_send)
+    mailing_list = await generator_mailing_list(category_id, session)
+
     # mailing_list = [141407179, 143453792,  163904370,  1206297168, 1372644288]
-    mailing_list =[2028114300, 1285641832, 1372644288, 5589094883]    # 143453792, 500520383 - санек и маша  , 1262916285 - эльвира 1372644288,
+    # mailing_list =[1372644288]    # 143453792, 500520383 - санек и маша  , 1262916285 - эльвира 1372644288,
     # [500520383, 1206297168, 143453792
 
     for send in mailing_list:
@@ -452,13 +472,16 @@ async def skip_and_send_message_users(callback: types.CallbackQuery,
             #          f'не было доставлено работнику: {notification_employees_id}')
 
 
-
-    # ------------ работало, не нужно в связи с выявленными особенностями убрали
     # Апдейтим id в базу данных:
-    # await update_notification_id(refresh_request_message_id, id_notification, session)
-    # ------------ работало, не нужно в связи с выявленными особенностями
 
-    # ------------------------- рассылка поступившей задачи
+
+
+
+
+
+
+
+
 
     # Очистка состояния пользователя:
     await state.clear()  #
@@ -482,7 +505,7 @@ async def skip_and_send_message_users(callback: types.CallbackQuery,
     # (скорее всего из-за удаления сообщения выше)
 
     await asyncio.sleep(3)
-
+    #  ------------------------- работает +
     # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
     # Через 2 секунды возвращаем исходное главное меню.
 
@@ -495,8 +518,6 @@ async def skip_and_send_message_users(callback: types.CallbackQuery,
                                             'ЗАПРОСИТЬ СТАТУС ЗАЯВКИ': 'go_status_request'
                                             },
                                       sizes=(2, 2, 1)))
-
-
 #  ------------------------- работает +
 
 
