@@ -171,11 +171,6 @@ async def get_request_problem(callback: types.CallbackQuery, state: FSMContext):
     await state.set_state(SetCategory.main_category)
     #  CetCategory.sab_category
 
-
-#
-#
-#
-
 # # # # 1.1.0 Родитель (Ветка при создании заявки) -> Реакции на нажатие кнопок инлайнового меню на категории обращений:
 # ----------------------- callback на cancel
 @retail_router.callback_query(
@@ -422,14 +417,12 @@ async def skip_and_send_message_users(callback: types.CallbackQuery,
 
     # ------------------------------------ разработка !!!
     category_id: int = data_request_message_to_send['category_id']  # категория
-    print(f'category_id 1 !!! {category_id}')
+    # print(f'category_id 1 !!! {category_id}')
 
     # Получаем список id работников на рассылку:
     mailing_list = await generator_mailing_list(category_id, session)
+    # mailing_list =[?]
 
-    # mailing_list = [141407179, 143453792,  163904370,  1206297168, 1372644288]
-    # mailing_list =[1372644288]    # 143453792, 500520383 - санек и маша  , 1262916285 - эльвира 1372644288,
-    # [500520383, 1206297168, 143453792
 
     for send in mailing_list:
         # Если пользователь удалил бота, мы не можем ему отправить уведомление о задаче, \
@@ -712,44 +705,44 @@ async def skip_and_send_message_users(callback: types.CallbackQuery,
 # 'Показать категори',
 
 # -------------- 1.3. Ветка при изменеии заявки:
-@retail_router.message(StateFilter(None), F.text == 'Изменить заявку')
-async def get_change_request(message: types.Message):
-    await message.delete()
-    #
-    await message.answer(f'Эта функция еще в разработке! \n'
-                         f'Что будет? Запрос в локал бд - найти заяки по айди пользователя'
-                         f'Выдать список заявок и тд. -> (продумать логику) ')
-
-
-# -------------- 1.4. Ветка при удалении заявки:
-@retail_router.message(StateFilter(None), F.text == 'Удалить заявку')
-async def get_change_request(message: types.Message):
-    await message.delete()
-    #
-    await message.answer(f'Эта функция еще в разработке! \n'
-                         f'Что будет? Запрос в локал бд - найти заяки по айди пользователя'
-                         f'Выдать список заявок и тд. -> (продумать логику) ')
-
-
-# -------------- 1.5. Ветка при удалении заявки:
-@retail_router.message(StateFilter(None), F.text == 'Запросить статус заявки')
-async def get_status_request(message: types.Message):
-    await message.delete()
-    #
-    await message.answer(f'Эта функция еще в разработке! \n'
-                         f'Что будет? Запрос в локал бд - найти заяки по айди пользователя'
-                         f'Выдать список заявок и тд. -> (продумать логику) ')
-
-
-# -------------- 1.6. Ветка при удалении заявки:
-@retail_router.message(StateFilter(None), F.text == 'Перейти в чат с исполнителем')
-async def get_chat_with_worker(message: types.Message):
-    await message.delete()
-    #
-    await message.answer(f'Эта функция еще в разработке! \n'
-                         f'Что будет? Запрос в локал бд - найти активные заяки по айди пользователя'
-                         f'Выдать список заявок и тд. -> (продумать логику) ')
-    await message.answer(category_problem, parse_mode='HTML')  # !!
+# @retail_router.message(StateFilter(None), F.text == 'Изменить заявку')
+# async def get_change_request(message: types.Message):
+#     await message.delete()
+#     #
+#     await message.answer(f'Эта функция еще в разработке! \n'
+#                          f'Что будет? Запрос в локал бд - найти заяки по айди пользователя'
+#                          f'Выдать список заявок и тд. -> (продумать логику) ')
+#
+#
+# # -------------- 1.4. Ветка при удалении заявки:
+# @retail_router.message(StateFilter(None), F.text == 'Удалить заявку')
+# async def get_change_request(message: types.Message):
+#     await message.delete()
+#     #
+#     await message.answer(f'Эта функция еще в разработке! \n'
+#                          f'Что будет? Запрос в локал бд - найти заяки по айди пользователя'
+#                          f'Выдать список заявок и тд. -> (продумать логику) ')
+#
+#
+# # -------------- 1.5. Ветка при удалении заявки:
+# @retail_router.message(StateFilter(None), F.text == 'Запросить статус заявки')
+# async def get_status_request(message: types.Message):
+#     await message.delete()
+#     #
+#     await message.answer(f'Эта функция еще в разработке! \n'
+#                          f'Что будет? Запрос в локал бд - найти заяки по айди пользователя'
+#                          f'Выдать список заявок и тд. -> (продумать логику) ')
+#
+#
+# # -------------- 1.6. Ветка при удалении заявки:
+# @retail_router.message(StateFilter(None), F.text == 'Перейти в чат с исполнителем')
+# async def get_chat_with_worker(message: types.Message):
+#     await message.delete()
+#     #
+#     await message.answer(f'Эта функция еще в разработке! \n'
+#                          f'Что будет? Запрос в локал бд - найти активные заяки по айди пользователя'
+#                          f'Выдать список заявок и тд. -> (продумать логику) ')
+#     await message.answer(category_problem, parse_mode='HTML')  # !!
 
 # ----------------------------- Конец 1.0. Работа с нижней клавиатурой меню.
 

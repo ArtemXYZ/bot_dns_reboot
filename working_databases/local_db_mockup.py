@@ -60,10 +60,14 @@ class Users(Base):
 
     is_deleted: Mapped[bool] = mapped_column(nullable=True)  # в базе есть пустые значения, по этому True
 
+    # Статус человек находится в статусе дискуссии (ему в этом состояниии не должны приходить уведомления по замыслу)
+    discussion_status: Mapped[bool] = mapped_column(nullable=False, server_default='False')
+
     # статус сотрудника (занят ли или свободен)  # free = True, job = False (ри добавлении из бд - пусто, после апдейт
     employee_status: Mapped[bool] = mapped_column(nullable=False,
                                                   server_default='False')  # activity , server_default='Null'
-    holiday_status: Mapped[bool] = mapped_column(nullable=False, server_default='False')  # Если в отпуске, то тру.
+    # (, server_default='False' -  базе данных Нон стоит, по этому nullable=True)
+    holiday_status: Mapped[bool] = mapped_column(nullable=True)  # Если в отпуске, то тру.
     admin_status: Mapped[bool] = mapped_column(nullable=False, server_default='False')  # Если админ, то тру.
 
     ## --------------------------- Связи один ко многим
@@ -99,7 +103,7 @@ class Requests(Base):
     #  Текст обращения (problem)
     request_message: Mapped[str] = mapped_column(Text(), nullable=True)
     # Прикрепленные документы любого типа:
-    doc_status: Mapped[bool] = mapped_column(nullable=False)  # Вложены ли документы.
+    doc_status: Mapped[bool] = mapped_column(nullable=False, server_default='False')  # Вложены ли документы.
 
     #  ---------------------------- Идентификаторы
     # Категория обращения "Главная" (в какой отдел распределять)
@@ -114,12 +118,13 @@ class Requests(Base):
     # В работе ли заявка: "at_work" , "complete" - статус запроса (insert, in_work, complete, cancel
     request_status: Mapped[str] = mapped_column(String(150), server_default='insert')
 
+    # Просрочка взятия задачи
     # alarm_status: Mapped[bool] = mapped_column(nullable=False, index=True, server_default='False') - отложено.
 
     # notification_id: Mapped[int] = mapped_column(nullable=False, index=True, server_default='0') - упразднено!
     # JSON PickleType - ельзя применять с Mapped, по этому сосздадим отдельную табличку.
 
-    # --------------------------- Связи один ко многим
+    # ----------------------------------------------------------- Связи один ко многим
     # Отношение "многие ко одному" Requests с Users
     many_requests_to_many_users: Mapped['Users'] = relationship(
         "Users", back_populates="one_user_to_many_requests")
@@ -143,6 +148,7 @@ class Requests(Base):
 
     # Ограничение полей:
     # __table_args__ = (ForeignKeyConstraint(['tg_id'],['RetailUsers.id_tg']))
+    # -----------------------------------------------------------
 
 
 # class Responsible(Base): - упразднено, реализуем функционал на базе HistoryDistributionRequests
@@ -191,8 +197,7 @@ class HistoryDistributionRequests(Base):
     # Если пользователь взял в работу или не брал, завершил или в процессе. По последнему закрытие заявки.
     personal_status: Mapped[str] = mapped_column(String(150), server_default='not_working')
 
-
-    # --------------------------- Связи один ко многим
+    # ----------------------------------------------------------- Связи один ко многим
     # Отношение "многие ко одному" HistoryDistributionRequests с Requests
     many_histories_to_one_request: Mapped['Requests'] = relationship("Requests",
                                                                      back_populates="one_request_to_many_histories")
@@ -200,7 +205,7 @@ class HistoryDistributionRequests(Base):
     # Отношение "многие ко одному" HistoryDistributionRequests с Users
     many_histories_to_one_user: Mapped['Users'] = relationship(
         "Users", back_populates="one_user_to_many_histories")
-
+    # -----------------------------------------------------------
 
 # История обсуждения задач заказчика и исполнителя:
 class Discussion(Base):
@@ -216,8 +221,12 @@ class Discussion(Base):
     #  Текст обращения (problem)
     request_message: Mapped[str] = mapped_column(Text())
     # Прикрепленные документы любого типа:
-    doc_status: Mapped[bool] = mapped_column(nullable=False)  # Вложены ли документы.
+    doc_status: Mapped[bool] = mapped_column(nullable=False, server_default='False')  # Вложены ли документы.
 
+    # Айди сообщения того кто отправил в дискусиию
+    message_id: Mapped[int] = mapped_column(nullable=False, index=True, unique=True)
+
+    # -----------------------------------------------------------
     # Отношение "многие ко одному" Discussion c Requests
     many_discussion_to_one_requests: Mapped['Requests'] = relationship("Requests",
                                                                        back_populates="one_requests_to_many_discussion")
@@ -227,7 +236,7 @@ class Discussion(Base):
         back_populates='many_doc_to_one_discussion')
 
     # дата создания и обновления будут наследоваться автоматически.
-
+    # -----------------------------------------------------------
 
 class DocFileRequests(Base):
     """
@@ -244,10 +253,11 @@ class DocFileRequests(Base):
     file_content: Mapped[bytes] = mapped_column(LargeBinary)
     comment: Mapped[str] = mapped_column(Text())
 
+    # -----------------------------------------------------------
     # Отношение "многие ко одному" DocFileRequests с Requests
     many_doc_to_one_recuest: Mapped['Requests'] = relationship("Requests",
                                                                back_populates="one_recuest_to_many_doc")
-
+    # -----------------------------------------------------------
 
 class DocFileDiscussion(Base):
     """
@@ -264,9 +274,13 @@ class DocFileDiscussion(Base):
     file_content: Mapped[bytes] = mapped_column(LargeBinary)
     comment: Mapped[str] = mapped_column(Text())
 
+    # -----------------------------------------------------------
     # Отношение "многие ко одному" DocFileDiscussion с Discussion
     many_doc_to_one_discussion: Mapped['Discussion'] = relationship("Discussion",
                                                                     back_populates="one_discussion_to_many_doc")
+    # -----------------------------------------------------------
+
+
 
 # ------------------------------ архив
 

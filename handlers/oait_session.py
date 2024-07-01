@@ -23,7 +23,8 @@ from handlers.all_states import *
 from handlers.data_preparation import *
 
 from handlers.bot_decorators import *
-
+from menu import keyboard_menu  # Кнопки меню - клавиатура внизу
+from menu.button_generator import get_keyboard
 # ----------------------------------------------------------------------------------------------------------------------
 # Назначаем роутер для всех типов чартов:
 oait_router = Router()
@@ -120,7 +121,9 @@ async def pick_up_request(callback: types.CallbackQuery,
                              f'Текст обращения:\n'
                              f'{request_message}'  # todo текст самого сообщения только сокращенный ?
                         ,
-                        reply_markup=get_callback_btns(btns={'🗣 ОТКРЫТЬ ДИСКУССИЮ': 'open_discussion',
+                        # open_discussion_distribution - дальше мы будем понимать от кого келбек \
+                        # (от заявителя или от исполнителя) !!! нажмет исполнитель.
+                        reply_markup=get_callback_btns(btns={'🗣 ОТКРЫТЬ ДИСКУССИЮ': 'open_discussion_distribution',
                                                              '✅ ЗАВЕРШИТЬ ЗАДАЧУ': 'complete_subtask',
                                                              '❎ ОТМЕНИТЬ УЧАСТИЕ': 'abort_subtask'
                                                              }, sizes=(1, 1))
@@ -142,7 +145,7 @@ async def pick_up_request(callback: types.CallbackQuery,
                                  f' исполнитель {callback_employee_name}.',
                             reply_markup=get_callback_btns(
                                 btns={
-                                    '🗣 ОТКРЫТЬ ДИСКУССИЮ': 'open_discussion',
+                                    '🗣 ОТКРЫТЬ ДИСКУССИЮ': 'open_discussion_requests',
                                     '❎ ОТМЕНИТЬ ЗАЯВКУ': 'cancel_request'},
                                 sizes=(1, 1))
                         )
@@ -156,7 +159,7 @@ async def pick_up_request(callback: types.CallbackQuery,
 
                     else:
                         # Если сообщение уже доставлялось, изменяем его:
-                        reply_markup = get_callback_btns(btns={'🗣 ОТКРЫТЬ ДИСКУССИЮ': 'open_discussion',
+                        reply_markup = get_callback_btns(btns={'🗣 ОТКРЫТЬ ДИСКУССИЮ': 'open_discussion_requests',
                                                                '❎ ОТМЕНИТЬ ЗАЯВКУ': 'cancel_request'}, sizes=(1, 1))
                         text = (f'Ваше обращение №_{request_id} принято в работу,'
                                 f' исполнитель {callback_employee_name}.')
@@ -220,7 +223,7 @@ async def pick_up_request(callback: types.CallbackQuery,
                              f' совместно с {employees_names_minus_get_user_id_callback_for_if}.\n'
                              f'Текст обращения:\n'
                              f'{request_message}',
-                        reply_markup=get_callback_btns(btns={'🗣 ОТКРЫТЬ ДИСКУССИЮ': 'open_discussion',
+                        reply_markup=get_callback_btns(btns={'🗣 ОТКРЫТЬ ДИСКУССИЮ': 'open_discussion_distribution',
                                                              '✅ ЗАВЕРШИТЬ ПОДЗАДАЧУ': 'complete_subtask',
                                                              '❎ ОТМЕНИТЬ УЧАСТИЕ': 'abort_subtask'
                                                              }, sizes=(1, 1))
@@ -230,7 +233,7 @@ async def pick_up_request(callback: types.CallbackQuery,
                     # проверка на наличие уже отправленного сообщения заказчику (либо айди либо нон):
                     # Упраздняем проверку, т.к. второе условие, когда уже кто то есть ответственный, \
                     # подразумивает отправку уведоления заказчику. ТАк что достаем его из базы  и редактируем:
-                    reply_markup = get_callback_btns(btns={'🗣 ОТКРЫТЬ ДИСКУССИЮ': 'open_discussion',
+                    reply_markup = get_callback_btns(btns={'🗣 ОТКРЫТЬ ДИСКУССИЮ': 'open_discussion_requests',
                                                            '❎ ОТМЕНИТЬ ЗАЯВКУ': 'cancel_request'},
                                                      sizes=(1, 1))
                     text = (f'Ваше обращение №_{request_id} принято в работу,'
@@ -268,8 +271,7 @@ async def pick_up_request(callback: types.CallbackQuery,
                     if check_personal_status is not None:  # содержит значение
 
                         # Если id рассылки уже со статусом  в работе, то у него изменяем на другое сообщение
-
-                        reply_markup = get_callback_btns(btns={'🗣 ОТКРЫТЬ ДИСКУССИЮ': 'open_discussion',
+                        reply_markup = get_callback_btns(btns={'🗣 ОТКРЫТЬ ДИСКУССИЮ': 'open_discussion_distribution',
                                                                '✅ ЗАВЕРШИТЬ ПОДЗАДАЧУ': 'complete_subtask',
                                                                '❎ ОТМЕНИТЬ УЧАСТИЕ': 'abort_subtask'
                                                                }, sizes=(1, 1))
@@ -638,8 +640,231 @@ async def complete_subtask(callback: types.CallbackQuery, state: FSMContext, ses
     # Сбрасываем состояние
     await state.clear()
 
- # ------------------ отложено.
- # Если никто не взял задачу в работу:
+
+# Принимаем 2 келбека и понимаем какой тип пользователя нажал кнопку:
+@oait_router.callback_query(StateFilter(None), (F.data.startswith('open_discussion_requests') |
+                                                F.data.startswith('open_discussion_distribution')
+                                                )
+                            ) # StateFilter(None) ?
+
+async def open_discussion(callback: types.CallbackQuery, state: FSMContext, session: AsyncSession, bot: Bot):
+    """Переходим в дискуссию (чат)/ Первичное окно. """
+
+    await state.set_state(LetsChat.start_chat)
+    # ---------------------------------------
+    bot = callback.bot
+    callback_data = callback.data
+    user_id_callback = callback.from_user.id
+    callback_notification_id = callback.message.message_id
+    # ---------------------------------------
+    # Апдейт статуса в Users (что мы сейчас в режиме дискуссии):
+    await update_discussion_status(user_id_callback,True ,session)  #  ! без кавычек True
+
+    # Проверка откуда пришел келбек (какой тип пользователя нажал кнопку):
+    # -----------------------------------------------------------------------------------------------------
+    # Если это заявитель нажал кнопку:
+    if callback_data.startswith('open_discussion_requests'):
+
+        callback_startswith = 'open_discussion_requests' # Сохраняем идентификатор келбека
+
+        # Ищем в таблице Requests по id сообщения
+        request_id = await get_requests_id_in_requests_history(callback_notification_id, session)
+
+    # Если это ответственый нажал кнопку:
+    elif callback_data.startswith('open_discussion_distribution'):
+
+        callback_startswith = 'open_discussion_distribution'  # Сохраняем идентификатор келбека
+
+        # Ищем в HistoryDistributionRequests (Залезть в бд забрать данные о задаче (по айди сообщения из келбека)):
+        request_id = await check_notification_id_in_history_distribution(callback_notification_id, session)
+
+    # Получаем айди задачи
+    # -----------------------------------------------------------------------------------------------------
+
+    # Отправляем сообщение после нажатия кнопки перейти в чат.
+    lets_chat = await bot.send_message(
+        chat_id=user_id_callback,
+        text=f'Вы находитесь в режиме диалога по обращению №_{request_id}, введите текст.\n'
+             f'\n'
+             f'❗️ Сообщения будут адресованы только определенн(ому-ым) участник(у-ам), до выхода из данного режима.'
+             f'После выхода из диалоа, сообщения очистятся, что бы не мешать переписки по другим темам. '
+             f'При возобновлени диалога все сообщения будут доступны (по умолчанию 10 последних, если необходимо '
+             f'подрузить более раннюю историю нажмите "Загрузить всю историю переписки".',
+             reply_markup=get_keyboard('Выйти из дискуссии', 'Загрузить всю историю переписки',
+                                       placeholder='Введите сообщение',
+                                       sizes=(1, 1))
+    )
+
+             #  todo логика подгрузки сообщений из истории (удаляются первые, загружаются предшествующие 10 + 10)
+             #  todo   + другие варианты
+
+        # reply_markup=get_callback_btns(btns={'⏹ ОТМЕНА': 'chat_cancel'}, sizes=(1,))
+        # text=f'Вы першли в диалог по задаче №_{request_id}, введите текст.',
+
+
+    # message_id = lets_chat.message_id  # id нового сообщения
+    #
+    # # Перекидываем в стейт-дату данные для дальнейшего использования в следующем обработчике get_messege_discussion:
+    # await state.update_data(request_id=request_id, edit_chat_id=user_id_callback, edit_message_id=message_id)
+
+    await state.update_data(request_id=request_id, startswith=callback_startswith)
+    # await state.update_data(request_id=request_id, edit_chat_id=user_id_callback, edit_message_id=message_id)
+
+    await callback.answer()
+
+# Чистить ли стейт?
+
+@oait_router.message(StateFilter(LetsChat.start_chat), F.text)
+async def get_messege_discussion(message: types.Message, state: FSMContext, session: AsyncSession, bot: Bot):
+    # await message.delete()  # Удаляет введенное сообщение пользователя (для чистоты чата) ???
+
+    # Получаем данные message
+    user_id = message.from_user.id
+    insert_message_id = message.message_id
+    save_text = message.text  # Вытягиваем текст
+
+    # Получаем данные из предыдущего стейта:
+    # ---------------------------------------------------------------------
+    back_data = await state.get_data()
+    back_request_id = back_data.get('request_id')  # Получаем айди задачи.
+    back_startswith = back_data.get('startswith') # Получаем идентификатор келбека
+
+    # Получаем идентификаторы сообщения, для редактирования:
+    # beck_tg_id = data_write_to_base.get('edit_chat_id')  # tg_id = edit_chat_id ! ? нужно ли?
+    # edit_message_id_new = data_write_to_base.get('edit_message_id')
+    # ---------------------------------------------------------------------
+
+    # Сохраняем поступившее сообщение в таблицу дискуссий:
+    await add_row_in_discussion_history(back_request_id, user_id, save_text, insert_message_id, session)
+
+    # ----------------------------  Выполняем рассылку ответственным по обращению
+    # 1. ------------------ Выбираем всех кто в этой задаче включая инициатора
+
+    # Получаем айди инициатора (делаем выборку из реквест):
+    tg_id_request = await get_tg_id_in_requests_history(back_request_id, session)
+
+    # Получаем список айди ответственных (делаем выборку из distribution):
+    # ! Тут всегда будет хотя бы 1 (не нужна проверка на нон)
+    tg_id_distribution_tuple = await get_all_personal_status_in_working(back_request_id, session) # возвращает список кортежей \
+    # [(1,), (2,), (3,)] или []
+    # каждая итерация цикла будет предоставлять вам один кортеж из списка.
+    # employee_id = i[0]  # По этому, Извлекаем конкретное значение ( каждый кортеж содержит только одно значение)
+
+    # 1.  Если это заявитель пишет в чат:
+    if back_startswith == 'open_discussion_requests':
+        # Тогда его оповещать не нужно (уже его сообщение в чате есть у него)
+
+        # ----------------------------------  Оповещаем всех ответственных сотрудников по этой задаче:
+        # Перебираем всех назначенных по этой задаче:
+        for tg_id in tg_id_distribution_tuple:
+
+            # каждая итерация цикла будет предоставлять вам один кортеж из списка, по этому [0].
+            employee_id = tg_id[0]
+            tg_id_int = int(employee_id)
+
+            # Проверка статуса адресата (находится ли он в дискуссии?):
+            discussion_status_distribution = await check_discussion_status(tg_id_int, session)
+
+            # если да то отправляем в дискуссиию
+            if discussion_status_distribution is True:
+
+                # Достаем имя написавшего:
+                name_user_id = await get_full_name_employee(user_id, session)
+                # Отправляем в чат дискуссии:
+                message_by_distribution = await bot.send_message(
+                    chat_id=tg_id_int, text=f'Пишет: {name_user_id}.\n{save_text}')
+                # save_text Текст сообщения.
+
+                # Сохраняем айди сообщения в таблицу оповещения
+                ...
+
+            # если нет то меняем баннер
+            elif discussion_status_distribution is False:
+                print(f'Адресат вне режима дискуссии: {tg_id_int}')
+
+                ...
+
+
+
+
+    # 2. Если это ответственый сотрудник пишет в чат:
+    elif back_startswith == 'open_discussion_distribution':
+        # Тогда его оповещать не нужно (уже его сообщение в чате есть у него), но нужно оповестить заявителя и всех \
+        # отвественных, кроме того, что написал.
+
+        # ----------------------------------  Оповещаем заявителя по этой задаче:
+        # Проверка статуса адресата (находится ли он в дискуссии?):
+        discussion_status_requests = await check_discussion_status(tg_id_request, session)
+
+        # Если статуса адресата - в режиме дискуссии:
+        if discussion_status_requests is True:
+
+            # Достаем имя написавшего:
+            name_user_id = await get_full_name_employee(user_id, session) # tg_id_request
+
+
+            # Отправляем в чат дискуссии заявителю:
+            message_by_requests = await bot.send_message(chat_id=tg_id_request,
+                                                         text=f'Пишет: {name_user_id}.\n{save_text}')
+
+            # Сохраняем айди сообщения в таблицу оповещения
+            ...
+
+        # если нет то меняем баннер
+        elif discussion_status_requests is False:
+            print(f'Адресат вне режима дискуссии: {tg_id_request}')
+
+            ...
+
+        # ----------------------------------  Оповещаем всех ответственных сотрудников по этой задаче:
+        # Перебираем всех назначенных по этой задаче, кроме написавшего:
+        for tg_id_distribution in tg_id_distribution_tuple:
+
+            # каждая итерация цикла будет предоставлять вам один кортеж из списка, по этому [0].
+            employee_id = tg_id_distribution[0]
+            tg_id_int = int(employee_id)
+
+            # тправляем всем, кроме написавшего (айди написавшего не совпадает с ади ответственных, \
+            # если совпадет то ничего не отправляем.
+            if tg_id_int != user_id:
+
+                # Проверка статуса адресата (находится ли он в дискуссии?):
+                discussion_status_distribution = await check_discussion_status(tg_id_int, session)
+
+                # Если статуса адресата - в режиме дискуссии:
+                if discussion_status_distribution is True:
+
+                    # Достаем имя написавшего:
+                    name_user_id = await get_full_name_employee(user_id, session)
+                    # Отправляем в чат дискуссии:
+                    message_by_requests = await bot.send_message(chat_id=tg_id_int,
+                                                                 text=f'Пишет: {name_user_id}.\n{save_text}')
+
+                # если нет то меняем баннер
+                elif discussion_status_distribution is False:
+                    print(f'Адресат вне режима дискуссии: {tg_id_int}')
+
+                    ...
+
+    # await state.clear()
+    # Нужна еще одна таблица оповещений под рассылку дискуссий
+
+
+
+
+
+#
+#
+
+
+
+
+
+
+
+
+# ------------------ отложено.
+# Если никто не взял задачу в работу:
 # @oait_router.callback_query(F.data.startswith('skip_and_send') | F.data.startswith('pick_up_request')
 #                             | F.data.startswith('cancel_request'))
 # async def alarm_message(callback: types.CallbackQuery, state: FSMContext, session: AsyncSession, bot: Bot):
@@ -696,9 +921,3 @@ async def complete_subtask(callback: types.CallbackQuery, state: FSMContext, ses
 #     #
 #     #
 #     # elif data.startswith('cancel_request'):
-
-
-
-
-
-

@@ -21,17 +21,13 @@ async def generator_mailing_list(category_id: int, session_pool: AsyncSession ) 
     branch_id  =  отдел.
     """
 
-    # todo data_request_message_to_send  вынести на уровень выше за функцию или обрабатывать в ней?
-
     # Принимаем данные в сообщении, вытягиваем категорию обращения
     # category_id: int = data_request_message_to_send['category_id']  # категория
 
     # todo Пока в первом приближении это не будет использоваться (на будущее) !!!
     # todo subcategory_id: int = data_request_message_to_send['subcategory_id']  # подкатегория
 
-
-
-    # Переменные в последующем планируем динамично менять из админки:
+    # Переменные в последующем планируем динамично менять из админки: # todo на будущее вынести это в базу данных
     branch_id_analytics = 6712
     branch_id_formats = 6713
     branch_id_trade_turnover = 6711
@@ -42,7 +38,8 @@ async def generator_mailing_list(category_id: int, session_pool: AsyncSession ) 
         # выборка людей на кого пойдет задача (а будущее).
         # Выбрать весь отдел аналитики, кто не в отпуске
         all_user_id_list = await get_all_user_id_by_branch_id(branch_id_analytics, session_pool)
-        print(f'all_user_id_list 2 !!! {all_user_id_list}')
+        # print(f'all_user_id_list 2 !!! {all_user_id_list}')
+
     # Для ветки ФОРМАТЫ (problem_formats):
     elif category_id == 2:
 

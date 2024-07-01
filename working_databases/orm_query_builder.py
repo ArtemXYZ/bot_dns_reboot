@@ -156,6 +156,7 @@ async def add_row_sending_error(
 async def add_row_in_history_distribution(add_notification_employees_id: int, add_notification_id: int,
                                           add_request_id: int, session_pool: AsyncSession):
     """
+    Довая строка (вставка данных) в HistoryDistributionRequests
     На вход 3 начения (где обновить - айди обращения, значение для обновления. tg_id обратившегося пользователя)
     notification_employees_id: телеграмм id работника, которому направлено уведомление
     notification_id: id уведомления (рассылка поступившей задачи) сотруднику (id сообщения)
@@ -172,10 +173,45 @@ async def add_row_in_history_distribution(add_notification_employees_id: int, ad
     await session_pool.commit()
     # return print(f'notification_id - аписан в базу : {update_notification_id}')
 
+async def add_row_in_discussion_history(add_request_id: int, add_tg_id: int, add_request_message: str,
+                                        add_message_id: int,  session_pool: AsyncSession):
+    """
+    Добавляет запись в таблицу дискуссий. (сохраняет историю переписки по конкретной задаче).
+    """
+
+    data_set = Discussion(requests_id=add_request_id, tg_id=add_tg_id, request_message=add_request_message,
+                          message_id=add_message_id)
+    session_pool.add(data_set)
+    await session_pool.commit()
+
+
+async def update_discussion_status(search_user_id: int, new_discussion_status: str, session_pool: AsyncSession):
+    """
+    # Апдейт статуса в Users (что мы сейчас в режиме дискуссии)
+    new_discussion_status = True or False -> 'True'
+    """
+    query = update(Users).where(Users.id_tg == search_user_id).values(discussion_status=new_discussion_status)
+    await session_pool.execute(query)
+    # results = result_tmp.scalars()  #  # выдаст либо список либо пусой список. results_list_int
+    await session_pool.commit()
+
+
+async def check_discussion_status(search_user_id: int, session_pool: AsyncSession):
+    """
+    # Проверка статуса в Users (что мы сейчас в режиме дискуссии)
+    new_discussion_status = True or False
+    """
+    query = select(Users.discussion_status).where(Users.id_tg == search_user_id)
+    result_tmp = await session_pool.execute(query)
+    discussion_status  = result_tmp.scalar_one_or_none()  # один результат или ничего.
+    return discussion_status
+
+
 
 # В oait_router, после доставки оповчещения, работник нажимает на кнопку ЗАБРАТЬ ЗАЯВКУ
 async def check_notification_id_in_history_distribution(get_notification_id: int, session_pool: AsyncSession):
     """
+    Вытаскиваем request_id (номер обращения, задачяи) по id оповещения (из келбека).
     Сравниваем в базе значение  notification_id при нажатии кнопкми (идентифицируеми кто нажал)
     """
 
@@ -186,7 +222,6 @@ async def check_notification_id_in_history_distribution(get_notification_id: int
     # .scalar_one_or_none() .scalar()
 
     return result
-
 
 
 async def check_notification_for_tg_id(request_id: int, session_pool: AsyncSession):
@@ -204,6 +239,7 @@ async def check_notification_for_tg_id(request_id: int, session_pool: AsyncSessi
 async def get_id_inrequests_by_notification(get_id_notification_for_tg_id: int, session_pool: AsyncSession):
 
     """
+    Ищем id обращения по айди сообщения.
     Из келбека вытаскиваем айди сообщения и в этой функции сравниваем его в таблице Requests. Это является
     идентификатором обращения одновременно с обычным айди обращения.
     """
@@ -213,7 +249,6 @@ async def get_id_inrequests_by_notification(get_id_notification_for_tg_id: int, 
     result = result_tmp.scalar_one_or_none()  # один результат или ничего.
 
     return result
-
 
 
 async def check_personal_status_for_tg_id(tg_id: int, request_id, session_pool: AsyncSession):
@@ -233,6 +268,7 @@ async def check_personal_status_for_tg_id(tg_id: int, request_id, session_pool: 
     return result
 
 async def get_tg_id_in_requests_history(request_id: int, session_pool: AsyncSession):
+
     """
      Ищем втора обращения (в базе значение tg_id по request_id в requests_history)
     """
@@ -240,7 +276,17 @@ async def get_tg_id_in_requests_history(request_id: int, session_pool: AsyncSess
     query = select(Requests.tg_id).where(Requests.id == request_id)
     result_tmp = await session_pool.execute(query)
     result = result_tmp.scalar_one_or_none()  # один результат или ничего.
+    return result
 
+async def get_requests_id_in_requests_history(callback_notification_id: int, session_pool: AsyncSession):
+
+    """
+     Ищем id обращения (request_id) в requests_history по id_notification_for_tg_id
+    """
+
+    query = select(Requests.id).where(Requests.id_notification_for_tg_id == callback_notification_id)
+    result_tmp = await session_pool.execute(query)
+    result = result_tmp.scalar_one_or_none()  # один результат или ничего.
     return result
 
 
@@ -336,10 +382,9 @@ async def get_all_user_id_by_branch_id(search_branch_id: int, session_pool: Asyn
     return result
 
 
-
-
 async def get_notification_id_and_employees_id_tuples(search_request_id: int, session_pool: AsyncSession):
     """
+    Ищем всех, кому разослано уведомление и формируем кортеж с айди оповещения и айди юзера.
     Выборка данных по колонке notification_id на основе входящего search_request_id
     """
 
@@ -386,7 +431,6 @@ async def update_message_id_notification(search_request_id: int, message_id_new:
     await session_pool.commit()
 
 
-
 async def get_full_name_employee(get_tg_id: int, session_pool: AsyncSession):
     """
     Сравниваем в базе значение  notification_id при нажатии кнопкми (идентифицируеми кто нажал)
@@ -398,7 +442,6 @@ async def get_full_name_employee(get_tg_id: int, session_pool: AsyncSession):
     # .scalar_one_or_none() .scalar()
 
     return result
-
 
 
 async def get_employees_names(have_personal_status_in_working, session_pool: AsyncSession, exception=None):

@@ -32,14 +32,24 @@ class AddRequests(StatesGroup):
     delete_banner = State()
     complete_subtask = State()
 
+class LetsChat(StatesGroup):
+    """Шаги состояний для обращений"""
+    start_chat = State()
+
+
 class AlarmState(StatesGroup):
     """Шаги состояний для обращений"""
     awaiting_response = State()
+
+
+
 #
 # texts = {
 #     'AddRequests:request_message': 'Введите текст обращения заново:'
 #     # + ЕЩЕ
 # }
+
+
 
 class Instructor(StatesGroup):
     """Шаги состояний для кнопок инструктаж и приступить к работе:"""
