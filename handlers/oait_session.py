@@ -708,8 +708,8 @@ async def open_discussion(callback: types.CallbackQuery, state: FSMContext, sess
         # text=f'Вы першли в диалог по задаче №_{request_id}, введите текст.',
 
 
-    # message_id = lets_chat.message_id  # id нового сообщения
-    #
+    lets_chat_message_id = lets_chat.message_id  # id нового сообщения
+
     # # Перекидываем в стейт-дату данные для дальнейшего использования в следующем обработчике get_messege_discussion:
     # await state.update_data(request_id=request_id, edit_chat_id=user_id_callback, edit_message_id=message_id)
 
@@ -717,7 +717,8 @@ async def open_discussion(callback: types.CallbackQuery, state: FSMContext, sess
     # от бота (другие пользователи через бота) и от пользователя в следующем обработчике:
     #
 
-    await state.update_data(request_id=request_id, startswith=callback_startswith, message_id_list=[])
+    await state.update_data(request_id=request_id, startswith=callback_startswith,
+                            lets_chat_message_id=lets_chat_message_id, message_id_list=[])
     # await state.update_data(request_id=request_id, edit_chat_id=user_id_callback, edit_message_id=message_id)
 
     await callback.answer()
@@ -916,6 +917,7 @@ async def delete_message_discussion(callback: types.CallbackQuery, state: FSMCon
     #  Асинхронная блокировка (поможет предотвратить гонку условий при одновременном доступе нескольких пользователей):
     async with (lock):
 
+        await callback.answer()  # ОТВЕТ ДЛЯ СЕРВЕРА
         # ---------------------------------------------------------------------
         user_id = callback.from_user.id
         # input_bot = callback.bot
@@ -924,6 +926,7 @@ async def delete_message_discussion(callback: types.CallbackQuery, state: FSMCon
         # Получаем список айди всех входящих сообщений полученных и переданных в режиме дискуссии
         # от бота (другие пользователи через бота) и от пользователя:
         message_id_list = back_data.get('message_id_list')
+        lets_chat_message_id = back_data.get('lets_chat_message_id')
 
         print(f'Достаем весь список из предыдущего стейта message_id_list {message_id_list}')  # !
         # ---------------------------------------------------------------------
@@ -934,6 +937,9 @@ async def delete_message_discussion(callback: types.CallbackQuery, state: FSMCon
             # Сначала удаляем, если ошибка - изменяем (если ошибка - ничего) и удаляем.
             await decorator_elete_message(user_id, del_mesid, input_bot, session)
 
+        # Удаляеем заголовок дискуссии:
+        await decorator_elete_message(user_id, lets_chat_message_id, input_bot, session)
+
         # После того, как сообщения все удалены, очищаем состояние  \
         # (это очистит все айди сообщений из переписки в дискуссиях, что обязательно для вызова обработчика в последующем.
         await state.clear()
@@ -941,8 +947,8 @@ async def delete_message_discussion(callback: types.CallbackQuery, state: FSMCon
         # Апдейт статуса в Users (что мы сейчас в режиме дискуссии):
         await update_discussion_status(user_id, False, session)  # ! без кавычек True
 
-        await callback.answer() # ОТВЕТ ДЛЯ СЕРВЕРА
-#
+
+        #
 #
 
 
