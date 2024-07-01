@@ -686,14 +686,20 @@ async def open_discussion(callback: types.CallbackQuery, state: FSMContext, sess
         chat_id=user_id_callback,
         text=f'Вы находитесь в режиме диалога по обращению №_{request_id}, введите текст.\n'
              f'\n'
-             f'❗️ Сообщения будут адресованы только определенн(ому-ым) участник(у-ам), до выхода из данного режима.'
-             f'После выхода из диалоа, сообщения очистятся, что бы не мешать переписки по другим темам. '
-             f'При возобновлени диалога все сообщения будут доступны (по умолчанию 10 последних, если необходимо '
-             f'подрузить более раннюю историю нажмите "Загрузить всю историю переписки".',
-             reply_markup=get_keyboard('Выйти из дискуссии', 'Загрузить всю историю переписки',
-                                       placeholder='Введите сообщение',
-                                       sizes=(1, 1))
-    )
+             f'❗️ Сообщения будут адресованы только определенн(ому-ым) участник(у-ам), до выхода из данного режима. '
+             f'После выхода из диалоа, сообщения очистятся, что бы не мешать переписке по другим темам. '
+             # f'При возобновлени диалога все сообщения будут доступны (по умолчанию 10 последних, если необходимо '
+             # f'подрузить более раннюю историю нажмите "Загрузить всю историю переписки".',
+             , reply_markup=get_callback_btns(
+                                    btns={' ЗАКРЫТЬ РЕЖИМ ДИСКУССИИ': 'close_discussion_mode'
+                                          },
+                                    sizes=(1,))
+                                )
+
+             # get_keyboard('Выйти из дискуссии', 'Загрузить всю историю переписки',
+             #                           placeholder='Введите сообщение',
+             #                           sizes=(1, 1))
+
 
              #  todo логика подгрузки сообщений из истории (удаляются первые, загружаются предшествующие 10 + 10)
              #  todo   + другие варианты
@@ -707,152 +713,235 @@ async def open_discussion(callback: types.CallbackQuery, state: FSMContext, sess
     # # Перекидываем в стейт-дату данные для дальнейшего использования в следующем обработчике get_messege_discussion:
     # await state.update_data(request_id=request_id, edit_chat_id=user_id_callback, edit_message_id=message_id)
 
-    await state.update_data(request_id=request_id, startswith=callback_startswith)
+    # message_id_list - Создаем пустой список, в него мы будем помещать все айди всех входящих сообщений
+    # от бота (другие пользователи через бота) и от пользователя в следующем обработчике:
+    #
+
+    await state.update_data(request_id=request_id, startswith=callback_startswith, message_id_list=[])
     # await state.update_data(request_id=request_id, edit_chat_id=user_id_callback, edit_message_id=message_id)
 
     await callback.answer()
 
-# Чистить ли стейт?
+# Обработчик будет принимать сообщения от бота и от пользователя:
+@oait_router.message(StateFilter(LetsChat.start_chat), F.text )  #  F.text
+async def get_message_discussion(message: types.Message, state: FSMContext, session: AsyncSession, bot: Bot):
 
-@oait_router.message(StateFilter(LetsChat.start_chat), F.text)
-async def get_messege_discussion(message: types.Message, state: FSMContext, session: AsyncSession, bot: Bot):
-    # await message.delete()  # Удаляет введенное сообщение пользователя (для чистоты чата) ???
 
-    # Получаем данные message
-    user_id = message.from_user.id
-    insert_message_id = message.message_id
-    save_text = message.text  # Вытягиваем текст
 
     # Получаем данные из предыдущего стейта:
     # ---------------------------------------------------------------------
     back_data = await state.get_data()
+    # Создаем пустой список, в него мы будем помещать все айди всех входящих сообщений
+    # от бота (другие пользователи через бота) и от пользователя:
+    message_id_list = back_data.get('message_id_list') # +
+    print(f'0/ message_id_list - {message_id_list}')
+
     back_request_id = back_data.get('request_id')  # Получаем айди задачи.
-    back_startswith = back_data.get('startswith') # Получаем идентификатор келбека
+    back_startswith = back_data.get('startswith')  # Получаем идентификатор келбека
 
     # Получаем идентификаторы сообщения, для редактирования:
     # beck_tg_id = data_write_to_base.get('edit_chat_id')  # tg_id = edit_chat_id ! ? нужно ли?
     # edit_message_id_new = data_write_to_base.get('edit_message_id')
+
+    # Получаем данные message
+    # Проверяем, принадлежит ли входящее сообщение боту или нет:
+    is_bot: bool = message.from_user.is_bot
+
+    # {'insert_message_id': message_by_distribution.message_id,   'insert_user_id': user_id})
+
+    user_id = message.from_user.id
+    insert_message_id = message.message_id  # Получаем айди сообщения
+
+    save_text = message.text  # Вытягиваем текст
+
+    print(f'0/0 insert_message_id - {insert_message_id}') # +
     # ---------------------------------------------------------------------
 
-    # Сохраняем поступившее сообщение в таблицу дискуссий:
-    await add_row_in_discussion_history(back_request_id, user_id, save_text, insert_message_id, session)
 
-    # ----------------------------  Выполняем рассылку ответственным по обращению
-    # 1. ------------------ Выбираем всех кто в этой задаче включая инициатора
+    # --------------------------------- Если входящее сообщение принадлежит боту, то:
+    if is_bot:
 
-    # Получаем айди инициатора (делаем выборку из реквест):
-    tg_id_request = await get_tg_id_in_requests_history(back_request_id, session)
+        # todo проверка принадлежности сообщения (для дискуссии ли это предназначалось сообщение?) \
+        # варианты (сравнение всех айди в бд по реквесту дискуссии и оповещениям.
+        # !!! можно добавить проверку состояния
+        ...
 
-    # Получаем список айди ответственных (делаем выборку из distribution):
-    # ! Тут всегда будет хотя бы 1 (не нужна проверка на нон)
-    tg_id_distribution_tuple = await get_all_personal_status_in_working(back_request_id, session) # возвращает список кортежей \
-    # [(1,), (2,), (3,)] или []
-    # каждая итерация цикла будет предоставлять вам один кортеж из списка.
-    # employee_id = i[0]  # По этому, Извлекаем конкретное значение ( каждый кортеж содержит только одно значение)
+        message_id_list.append(insert_message_id)
 
-    # 1.  Если это заявитель пишет в чат:
-    if back_startswith == 'open_discussion_requests':
-        # Тогда его оповещать не нужно (уже его сообщение в чате есть у него)
-
-        # ----------------------------------  Оповещаем всех ответственных сотрудников по этой задаче:
-        # Перебираем всех назначенных по этой задаче:
-        for tg_id in tg_id_distribution_tuple:
-
-            # каждая итерация цикла будет предоставлять вам один кортеж из списка, по этому [0].
-            employee_id = tg_id[0]
-            tg_id_int = int(employee_id)
-
-            # Проверка статуса адресата (находится ли он в дискуссии?):
-            discussion_status_distribution = await check_discussion_status(tg_id_int, session)
-
-            # если да то отправляем в дискуссиию
-            if discussion_status_distribution is True:
-
-                # Достаем имя написавшего:
-                name_user_id = await get_full_name_employee(user_id, session)
-                # Отправляем в чат дискуссии:
-                message_by_distribution = await bot.send_message(
-                    chat_id=tg_id_int, text=f'Пишет: {name_user_id}.\n{save_text}')
-                # save_text Текст сообщения.
-
-                # Сохраняем айди сообщения в таблицу оповещения
-                ...
-
-            # если нет то меняем баннер
-            elif discussion_status_distribution is False:
-                print(f'Адресат вне режима дискуссии: {tg_id_int}')
-
-                ...
+        print(f'1/ is_bot message_id_list - {message_id_list}')
+        # Сохраняем обновленный список сообщений в состояние
+        await state.update_data(message_id_list=message_id_list)
 
 
+    # --------------------------------- Если входящее сообщение принадлежит нам (пользователю), то:
+    else:
+
+        # Сохраняем поступившее сообщение в таблицу дискуссий:
+        await add_row_in_discussion_history(back_request_id, user_id, save_text, insert_message_id, session)
+
+        message_id_list.append(insert_message_id)
+        print(f'else - {message_id_list}')
+        # Сохраняем обновленный список сообщений в состояние
+        await state.update_data(message_id_list=message_id_list)
 
 
-    # 2. Если это ответственый сотрудник пишет в чат:
-    elif back_startswith == 'open_discussion_distribution':
-        # Тогда его оповещать не нужно (уже его сообщение в чате есть у него), но нужно оповестить заявителя и всех \
-        # отвественных, кроме того, что написал.
+        # ----------------------------  Выполняем рассылку ответственным по обращению
+        # 1. ------------------ Выбираем всех кто в этой задаче включая инициатора
 
-        # ----------------------------------  Оповещаем заявителя по этой задаче:
-        # Проверка статуса адресата (находится ли он в дискуссии?):
-        discussion_status_requests = await check_discussion_status(tg_id_request, session)
+        # Получаем айди инициатора (делаем выборку из реквест):
+        tg_id_request = await get_tg_id_in_requests_history(back_request_id, session)
 
-        # Если статуса адресата - в режиме дискуссии:
-        if discussion_status_requests is True:
+        # Получаем список айди ответственных (делаем выборку из distribution):
+        # ! Тут всегда будет хотя бы 1 (не нужна проверка на нон)
+        tg_id_distribution_tuple = await get_all_personal_status_in_working(back_request_id, session)
+        # возвращает список кортежей  [(1,), (2,), (3,)] или []
+        # каждая итерация цикла будет предоставлять вам один кортеж из списка.
+        # employee_id = i[0]  # По этому, Извлекаем конкретное значение ( каждый кортеж содержит только одно значение)
 
-            # Достаем имя написавшего:
-            name_user_id = await get_full_name_employee(user_id, session) # tg_id_request
+        # 1.  Если это заявитель пишет в чат:
+        if back_startswith == 'open_discussion_requests':
+            # Тогда его оповещать не нужно (уже его сообщение в чате есть у него)
 
+            # ----------------------------------  Оповещаем всех ответственных сотрудников по этой задаче:
+            # Перебираем всех назначенных по этой задаче:
+            for tg_id in tg_id_distribution_tuple:
 
-            # Отправляем в чат дискуссии заявителю:
-            message_by_requests = await bot.send_message(chat_id=tg_id_request,
-                                                         text=f'Пишет: {name_user_id}.\n{save_text}')
-
-            # Сохраняем айди сообщения в таблицу оповещения
-            ...
-
-        # если нет то меняем баннер
-        elif discussion_status_requests is False:
-            print(f'Адресат вне режима дискуссии: {tg_id_request}')
-
-            ...
-
-        # ----------------------------------  Оповещаем всех ответственных сотрудников по этой задаче:
-        # Перебираем всех назначенных по этой задаче, кроме написавшего:
-        for tg_id_distribution in tg_id_distribution_tuple:
-
-            # каждая итерация цикла будет предоставлять вам один кортеж из списка, по этому [0].
-            employee_id = tg_id_distribution[0]
-            tg_id_int = int(employee_id)
-
-            # тправляем всем, кроме написавшего (айди написавшего не совпадает с ади ответственных, \
-            # если совпадет то ничего не отправляем.
-            if tg_id_int != user_id:
+                # каждая итерация цикла будет предоставлять вам один кортеж из списка, по этому [0].
+                employee_id = tg_id[0]
+                tg_id_int = int(employee_id)
 
                 # Проверка статуса адресата (находится ли он в дискуссии?):
                 discussion_status_distribution = await check_discussion_status(tg_id_int, session)
 
-                # Если статуса адресата - в режиме дискуссии:
+                # если да то отправляем в дискуссию
                 if discussion_status_distribution is True:
 
                     # Достаем имя написавшего:
                     name_user_id = await get_full_name_employee(user_id, session)
                     # Отправляем в чат дискуссии:
-                    message_by_requests = await bot.send_message(chat_id=tg_id_int,
-                                                                 text=f'Пишет: {name_user_id}.\n{save_text}')
+                    message_by_distribution = await bot.send_message(
+                        chat_id=tg_id_int, text=f'Пишет: {name_user_id}.\n{save_text}')
+                    # save_text Текст сообщения.
 
-                # если нет то меняем баннер
+                    # Сохраняем айди сообщения в data состояния:
+                    message_id_list.append(message_by_distribution.message_id)
+                    print(f'2/ is not bot message_id_list - {message_id_list}') # -
+                    # Сохраняем обновленный список сообщений в состояние
+                    await state.update_data(message_id_list=message_id_list)
+
+                # если нет, то меняем баннер
                 elif discussion_status_distribution is False:
                     print(f'Адресат вне режима дискуссии: {tg_id_int}')
 
                     ...
 
-    # await state.clear()
-    # Нужна еще одна таблица оповещений под рассылку дискуссий
 
 
 
+        # 2. Если это ответственный сотрудник пишет в чат:
+        elif back_startswith == 'open_discussion_distribution':
+            # Тогда его оповещать не нужно (уже его сообщение в чате есть у него), но нужно оповестить заявителя и всех \
+            # ответственных, кроме того, что написал.
+
+            # ----------------------------------  Оповещаем заявителя по этой задаче:
+            # Проверка статуса адресата (находится ли он в дискуссии?):
+            discussion_status_requests = await check_discussion_status(tg_id_request, session)
+
+            # Если статуса адресата - в режиме дискуссии:
+            if discussion_status_requests is True:
+
+                # Достаем имя написавшего:
+                name_user_id = await get_full_name_employee(user_id, session) # tg_id_request
 
 
+                # Отправляем в чат дискуссии заявителю:
+                message_by_requests = await bot.send_message(chat_id=tg_id_request,
+                                                             text=f'Пишет: {name_user_id}.\n{save_text}')
+
+                # Сохраняем айди сообщения в data состояния:
+                message_id_list.append(message_by_requests.message_id)
+                print(f'3/ is not bot message_id_list - {message_id_list}')
+                # Сохраняем обновленный список сообщений в состояние
+                await state.update_data(message_id_list=message_id_list)
+
+            # если нет, то меняем баннер
+            elif discussion_status_requests is False:
+                print(f'Адресат вне режима дискуссии: {tg_id_request}')
+
+                ...
+
+            # ----------------------------------  Оповещаем всех ответственных сотрудников по этой задаче:
+            # Перебираем всех назначенных по этой задаче, кроме написавшего:
+            for tg_id_distribution in tg_id_distribution_tuple:
+
+                # каждая итерация цикла будет предоставлять вам один кортеж из списка, по этому [0].
+                employee_id = tg_id_distribution[0]
+                tg_id_int = int(employee_id)
+
+                # отправляем всем, кроме написавшего (айди написавшего не совпадает с ади ответственных, \
+                # если совпадет то ничего не отправляем.
+                if tg_id_int != user_id:
+
+                    # Проверка статуса адресата (находится ли он в дискуссии?):
+                    discussion_status_distribution = await check_discussion_status(tg_id_int, session)
+
+                    # Если статуса адресата - в режиме дискуссии:
+                    if discussion_status_distribution is True:
+
+                        # Достаем имя написавшего:
+                        name_user_id = await get_full_name_employee(user_id, session)
+                        # Отправляем в чат дискуссии:
+                        message_by_requests = await bot.send_message(chat_id=tg_id_int,
+                                                                     text=f'Пишет: {name_user_id}.\n{save_text}')
+
+                        # Сохраняем айди сообщения в data состояния:
+                        message_id_list.append(message_by_requests.message_id)
+                        print(f'4/ Оповещаем всех ответственных сотрудников по этой задаче message_id_list - {message_id_list}')
+                        # Сохраняем обновленный список сообщений в состояние
+                        await state.update_data(message_id_list=message_id_list)
+
+                    # если нет то меняем баннер
+                    elif discussion_status_distribution is False:
+                        print(f'Адресат вне режима дискуссии: {tg_id_int}')
+
+
+
+    # await state.clear() - !!! чистить стейт нельзя иначе каждый раз надо будет открывать дискуссии.
+
+
+
+@oait_router.callback_query(StateFilter(LetsChat.start_chat), F.data.startswith('close_discussion_mode'))
+async def delete_message_discussion(callback: types.CallbackQuery, state: FSMContext, session: AsyncSession, bot: Bot):
+
+    #  Асинхронная блокировка (поможет предотвратить гонку условий при одновременном доступе нескольких пользователей):
+    async with (lock):
+
+        # ---------------------------------------------------------------------
+        user_id = callback.from_user.id
+        # input_bot = callback.bot
+        input_bot = bot
+        back_data = await state.get_data() # из предыдущего стейта:
+        # Получаем список айди всех входящих сообщений полученных и переданных в режиме дискуссии
+        # от бота (другие пользователи через бота) и от пользователя:
+        message_id_list = back_data.get('message_id_list')
+
+        print(f'Достаем весь список из предыдущего стейта message_id_list {message_id_list}')  # !
+        # ---------------------------------------------------------------------
+
+        # Удаляем всю перписку из дискуссии:
+        for del_mesid in message_id_list:
+
+            # Сначала удаляем, если ошибка - изменяем (если ошибка - ничего) и удаляем.
+            await decorator_elete_message(user_id, del_mesid, input_bot, session)
+
+        # После того, как сообщения все удалены, очищаем состояние  \
+        # (это очистит все айди сообщений из переписки в дискуссиях, что обязательно для вызова обработчика в последующем.
+        await state.clear()
+
+        # Апдейт статуса в Users (что мы сейчас в режиме дискуссии):
+        await update_discussion_status(user_id, False, session)  # ! без кавычек True
+
+        await callback.answer() # ОТВЕТ ДЛЯ СЕРВЕРА
 #
 #
 

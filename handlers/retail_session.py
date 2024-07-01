@@ -410,7 +410,7 @@ async def skip_and_send_message_users(callback: types.CallbackQuery,
     # notification_employees_id = data_request_message_to_send['tg_id']
 
     # ------------------------------------ разработка !!!
-    # input_chat_id = 1262916285  # Эльвира
+    # input_chat_id = 565437635685141436  # Эльвира
 
     # Добавляем такс на проверку (очередное сообщение проверяем через 2 часа на статус)
     # await add_new_message_in_queue(refresh_request_message_id, input_chat_id, wait_time)
@@ -420,8 +420,8 @@ async def skip_and_send_message_users(callback: types.CallbackQuery,
     # print(f'category_id 1 !!! {category_id}')
 
     # Получаем список id работников на рассылку:
-    mailing_list = await generator_mailing_list(category_id, session)
-    # mailing_list =[?]
+    # mailing_list = await generator_mailing_list(category_id, session) !
+    mailing_list =[1034809823]
 
 
     for send in mailing_list:
